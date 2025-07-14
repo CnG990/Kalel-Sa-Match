@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- PWA et App Details -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#16a34a" />
+    <meta name="background-color" content="#ffffff" />
+    <meta name="display" content="standalone" />
+    <meta name="orientation" content="portrait-primary" />
+    
+    <!-- Titre et description -->
+    <title>Terrains Synthétiques Dakar - Réservez vos terrains de foot</title>
+    <meta name="description" content="Réservez facilement vos terrains de football synthétiques à Dakar. Paiement mobile, géolocalisation, confirmation instantanée." />
+    <meta name="keywords" content="terrain, football, dakar, réservation, synthétique, sport, orange money, wave" />
+    <meta name="author" content="Terrains Synthétiques Dakar" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://terrains-synthetiques.sn/" />
+    <meta property="og:title" content="Terrains Synthétiques Dakar - Réservez vos terrains de foot" />
+    <meta property="og:description" content="Réservez facilement vos terrains de football synthétiques à Dakar. Paiement mobile, géolocalisation, confirmation instantanée." />
+    <meta property="og:image" content="/hero-bg.jpg" />
+    <meta property="og:locale" content="fr_SN" />
+    <meta property="og:site_name" content="Terrains Synthétiques Dakar" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://terrains-synthetiques.sn/" />
+    <meta property="twitter:title" content="Terrains Synthétiques Dakar - Réservez vos terrains de foot" />
+    <meta property="twitter:description" content="Réservez facilement vos terrains de football synthétiques à Dakar. Paiement mobile, géolocalisation, confirmation instantanée." />
+    <meta property="twitter:image" content="/hero-bg.jpg" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
+    <link rel="mask-icon" href="/logo.svg" color="#16a34a" />
+    
+    <!-- Apple PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="TSK" />
+    <link rel="apple-touch-startup-image" href="/icons/apple-splash-2048-2732.png" sizes="2048x2732" />
+    <link rel="apple-touch-startup-image" href="/icons/apple-splash-1668-2224.png" sizes="1668x2224" />
+    <link rel="apple-touch-startup-image" href="/icons/apple-splash-1536-2048.png" sizes="1536x2048" />
+    <link rel="apple-touch-startup-image" href="/icons/apple-splash-1125-2436.png" sizes="1125x2436" />
+    <link rel="apple-touch-startup-image" href="/icons/apple-splash-828-1792.png" sizes="828x1792" />
+    <link rel="apple-touch-startup-image" href="/icons/apple-splash-750-1334.png" sizes="750x1334" />
+    
+    <!-- Microsoft -->
+    <meta name="msapplication-TileColor" content="#16a34a" />
+    <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- Sécurité -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- Performance et optimisation -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.mapbox.com" />
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
+    
+    <!-- Mapbox CSS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    
+    <!-- Service Worker Registration - Désactivé en développement -->
+    <script>
+      // Seulement en production pour éviter les conflits avec Vite HMR
+      if ('serviceWorker' in navigator && window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      } else {
+        console.log('Service Worker désactivé en développement');
+      }
+    </script>
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SportsActivityLocation",
+      "name": "Terrains Synthétiques Dakar",
+      "description": "Plateforme de réservation de terrains de football synthétiques à Dakar",
+      "url": "https://terrains-synthetiques.sn",
+      "telephone": "+221123456789",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Dakar",
+        "addressCountry": "SN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "14.7167",
+        "longitude": "-17.4677"
+      },
+      "openingHours": "Mo-Su 06:00-23:00",
+      "priceRange": "$$",
+      "paymentAccepted": ["Orange Money", "Wave", "Carte Bancaire"],
+      "amenityFeature": [
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Terrain Synthétique",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification", 
+          "name": "Éclairage",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Vestiaires",
+          "value": true
+        }
+      ]
+    }
+    </script>
+    
+    <!-- Performance monitoring -->
+    <script>
+      window.performance && window.performance.mark && window.performance.mark('index_html_loaded');
+    </script>
+  </head>
+  <body class="h-full bg-gray-50 antialiased">
+    <div id="root" class="h-full"></div>
+    
+    <!-- Scripts -->
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Analytics placeholder -->
+    <script>
+      // Placeholder pour Google Analytics ou autre
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+  </body>
+</html>

@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  
+  /* Couleurs personnalisées Kalèl sa Match */
+  --kalel-primary: #1B4332;
+  --kalel-primary-light: #2D6A4F;
+  --kalel-primary-dark: #14332A;
+  --kalel-secondary: #E85D04;
+  --kalel-secondary-light: #F48C06;
+  --kalel-secondary-dark: #DC2F02;
+  --kalel-accent: #FFB800;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  /* Définition des couleurs personnalisées pour Tailwind */
+  --color-kalel-primary: var(--kalel-primary);
+  --color-kalel-primary-light: var(--kalel-primary-light);
+  --color-kalel-primary-dark: var(--kalel-primary-dark);
+  --color-kalel-secondary: var(--kalel-secondary);
+  --color-kalel-secondary-light: var(--kalel-secondary-light);
+  --color-kalel-secondary-dark: var(--kalel-secondary-dark);
+  --color-kalel-accent: var(--kalel-accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Classes utilitaires pour les couleurs personnalisées */
+.text-kalel-primary { color: var(--kalel-primary); }
+.text-kalel-primary-light { color: var(--kalel-primary-light); }
+.text-kalel-primary-dark { color: var(--kalel-primary-dark); }
+.text-kalel-secondary { color: var(--kalel-secondary); }
+.text-kalel-secondary-light { color: var(--kalel-secondary-light); }
+.text-kalel-secondary-dark { color: var(--kalel-secondary-dark); }
+.text-kalel-accent { color: var(--kalel-accent); }
+
+.bg-kalel-primary { background-color: var(--kalel-primary); }
+.bg-kalel-primary-light { background-color: var(--kalel-primary-light); }
+.bg-kalel-primary-dark { background-color: var(--kalel-primary-dark); }
+.bg-kalel-secondary { background-color: var(--kalel-secondary); }
+.bg-kalel-secondary-light { background-color: var(--kalel-secondary-light); }
+.bg-kalel-secondary-dark { background-color: var(--kalel-secondary-dark); }
+.bg-kalel-accent { background-color: var(--kalel-accent); }
+
+.border-kalel-primary { border-color: var(--kalel-primary); }
+.border-kalel-secondary { border-color: var(--kalel-secondary); }
+.border-kalel-accent { border-color: var(--kalel-accent); }
+
+/* Gradients personnalisés */
+.bg-gradient-kalel-primary {
+  background: linear-gradient(135deg, var(--kalel-primary), var(--kalel-primary-light));
+}
+
+.bg-gradient-kalel-secondary {
+  background: linear-gradient(135deg, var(--kalel-secondary), var(--kalel-secondary-light));
+}
+
+.bg-gradient-kalel-hero {
+  background: linear-gradient(135deg, var(--kalel-primary), var(--kalel-primary-light), var(--kalel-primary-dark));
+}
+
+/* Hover effects */
+.hover\:bg-kalel-primary:hover { background-color: var(--kalel-primary); }
+.hover\:bg-kalel-primary-dark:hover { background-color: var(--kalel-primary-dark); }
+.hover\:bg-kalel-secondary:hover { background-color: var(--kalel-secondary); }
+.hover\:bg-kalel-secondary-dark:hover { background-color: var(--kalel-secondary-dark); }
+
+.hover\:text-kalel-primary:hover { color: var(--kalel-primary); }
+.hover\:text-kalel-secondary:hover { color: var(--kalel-secondary); }
