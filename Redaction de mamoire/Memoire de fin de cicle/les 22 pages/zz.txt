@@ -1,0 +1,502 @@
+CHAPITRE IV                    
+LES  DIFFERENTS TYPES DE TEXTES 
+Dans la langue française, nous rencontrons plusieurs types de textes : le texte narratif, le texte descriptif, le dialogue ou le discours rapporté, la lettre, le texte informatif ou texte documentaire, le texte explicatif, le texte injonctif et le texte argumentatif. 
+                                   I- LE TEXTE NARRATIF 
+Dans un texte dit « narratif », on raconte ou narre, un évènement isolé ou une série d’évènements réels ou imaginaires formant une histoire. Cette narration est appelée un récit. Un enfant peut ainsi raconter une journée marquante, un écrivain rapporter une légende, un historien faire le récit d’évènements réels. Le récit d’une vie appelé biographie ou autobiographie quand l’auteur raconte sa propre vie.
+Même si les faits rapportés sont inventés ou fictifs, ils sont présentés comme ayant réellement eu lieu. 
+Pour reconnaitre un texte narratif il y’a des indices :
+-	une histoire, 
+-	un espace-temps (il était une fois, et la présence de l’imparfait et du passé simple);
+-	les personnages,
+-	le narrateur. 
+                                            II- LE TEXTE DESCRIPTIF
+Le texte descriptif c’est un texte où l’action est interrompue et laisse place à la description d’un lieu ou d’un objet, ou d’un portrait d’un personnage.
+Mais une description peut aussi constituer un texte autonome à caractère documentaire ou scientifique.
+La description précise la disposition et l’aspect des lieux, des objets ou des personnages.
+Dans la description, si le temps du récit est au présent, la description s’écrit à l’indicatif présent mais si le récit est au passé, l’indicatif imparfait signale un passage descriptif.
+                                       
+                                         III- LE DIALOGUE OU LE DISCOURS RAPPORTE 
+Dans ces situations l’auteur ou le narrateur attribue non seulement des actions, dont il fait le récit, mais aussi un discours, c’est-à-dire des paroles et des pensées à des personnages, qu’il met en scène. Pour reconnaitre un dialogue et un discours rapporté il y’a la présence des tirets, le retour à la ligne chaque fois que le récit cesse et qu’un personnage prend la parole, des guillemets.     
+IV-	LA LETTRE
+C’est un message, envoyé par divers moyens, dans une intention précise, à un destinataire déterminé (le correspondant), qui le lira de manière différée.
+Il faut distinguer la correspondance privée, d’avec la correspondance plus technique, adressée à des responsables ou des organismes, avec lesquels on n’a pas de relation personnelle : banque, service administratif. Quant à la correspondance commerciale, elle obéit à des règles particulières de secrétariat.  
+                         V- LE TEXTE INFORMATIF OU DOCUMENTAIRE
+Dans un texte documentaire, l’auteur se contente d’apporter au lecteur des informations précises qu’il ne commente pas, soit  ces informations se suffisent à elles-mêmes (sujet d’ordre scientifique), soit qu’il veuille donner au texte une allure objective (indépendante de la personnalité de l’auteur et de ses convictions personnelles).
+
+                         VI- LE TEXTE EXPLICATIF
+Contrairement au texte documentaire qui se contente d’énoncer une information, le texte explicatif, selon les cas :
+-	précise les causes ou les conséquences des évènements ;
+-	indique quel raisonnement ou quelles sources ont permis d’établir l’information ou le point de vue exposé ;
+-	indique l’intérêt ou la portée de l’information ;
+-	permet au lecteur de s’approprier réellement une information en lui donnant les moyens de la comprendre ;
+-	fournit des exemples permettant de comprendre l’information ;
+-	et enfin indique une méthode pour appliquer une information.
+          VII- LE TEXTE INJONCTIF
+Une injonction est un ordre formel. Dans le domaine de la grammaire, on qualifie d’injonctif tout texte ou toute phrase servant à donner un ordre ou une consigne. Le texte injonctif indique à son lecteur :
+-	quelle tâche il doit accomplir ;
+-	quelle méthode il doit suivre pour utiliser un appareil ou effectuer une opération ;
+-	à quelle règle il doit se conformer.
+Le mode impératif est constamment utilisé dans le texte injonctif.
+                       VIII-   LE TEXTE ARGUMENTATIF
+Dans un texte argumentatif, l’auteur vise à défendre une thèse, c’est-à-dire une affirmation qu’il ne se contente pas d’énoncer mais qu’il s’efforce de démontrer à l’aide d’arguments, d’exemples, de conclusion, de transition, de connecteurs logiques et de signes ponctuation.
+
+
+Introduction : 
+La performance de tout individu, de toute administration publique ou privée dépend en grande partie de sa capacité à communiquer. La communication écrite et orale est un des volets essentiels de l’activité d’une structure. Les occasions de rédiger et de parler sont nombreuses :  CV, demande d’emploi- demande de stage, notes, circulaire, compte rendu, réunion, exposé, entretiens…
+ Qu’est-ce que communiquer?
+Quelles sont les conditions d’une communication administrative efficace et moderne?
+Quelles sont les aptitudes et attitudes exigées d’un cadre pour assurer une rédaction administrative au sein d’une entreprise?
+Pour répondre à ces questions, la micro-informatique a mis à la portée de tous des instruments commodes pour écrire des courriers bien présentés. Mais, l’ordinateur ne fait pas tout, le rédacteur doit : 
+•	connaitre et respecter les règles de rédaction et de structuration d’un texte, c’est à dire  savoir organiser sa pensée et ses arguments;
+•	respecter les règles de disposition du courrier professionnel;
+•	être clair et convaincant, afin de mieux se faire comprendre.
+L’objectif de ce module est de vous donner les moyens, les conseils et les outils qui vous permettront d’aborder en toute confiance la rédaction des écrits professionnels.
+
+
+
+
+
+
+
+Chapitre I : Les signes de ponctuation
+La ponctuation est un ensemble de signes indispensables à l’écrit pour délimiter les phrases et pour indiquer leur type. En français, nous avons 13 signes de ponctuation qui sont :
+
+Le point (.):
+Il désigne le signe de ponctuation le plus fort, indique une fin de phrase et permet de signaler que l’on passe à une autre idée.
+EX: Les étudiants sont en vacances.
+La virgule (,): 
+Elle a trois usages essentiels à savoir : séparer, encadrer et indiquer l’inversion.
+•	Dans une proposition, la virgule sépare les éléments semblables (sujet, complément, attribut) qui ne sont pas coordonnés par et ou ni.
+EX1 : Ce matin, au baptême, vers 10h, c’est avec joie, que j’ai rencontré Ousmane.
+EX2 : Je vous présente mes sœurs : Alimatou, Fatou, Aisha et Abby. 
+•	La virgule peut servir aussi à encadrer, soit pour mettre en valeur, soit pour mettre de coté.
+EX : Je vous prie d’agréer, Monsieur le Directeur, l’expression de nos salutations distinguées.
+•	Enfin, elle sert à indiquer l’inversion de la phrase.
+EX : La plus belle voiture française, la 407.
+La présence ou l’absence d’une virgule est parfois capitale pour la compréhension.
+EX : Il n’est plus atteint par la maladie. (Il est guéri) 	
+       Il n’est plus, atteint par la maladie.  (Il est mort)
+Le point-virgule (;):
+Il permet de séparer deux aspects d’une même idée ou deux idées très proches que la virgule ne séparerait pas suffisamment et que le point séparerait trop.
+EX : la population sénégalaise est composée d’hommes qui sont chargés de subvenir aux besoins de la famille ; de femmes qui s’occupent du foyer et de jeunes qui préparent leur avenir. 
+Les deux points (:) 
+Ils s’emploient pour annoncer une citation, une énumération ou une explication.
+EX1 : - une citation  
+L’ancien président des États-Unis, John Fitzgerald Kennedy disait :<< il ne faut pas se demander ce que votre nation peut faire pour vous, mais ce que vous pouvez faire pour votre nation>>.
+EX2 : -énumération  
+J’ai quatre frères qui sont : Mamadou, Maguette, Tamsir et Seydou.
+EX3 : explication 
+Je ne peux plus prendre l’avion : j’ai perdu mon billet de voyage
+Le point d’interrogation (?) :
+Il termine toute phrase exprimant une interrogation directe.
+EX : Comment t’appelles-tu ?
+Le point d’exclamation (!) :
+ Il s’emploie après une phrase ou une expression vive traduisant un sentiment comme la colère, la surprise, l’indignation…
+EX : Moi, avoir volé une voiture!
+Il faut également mettre un point d’exclamation après les interjections (Aie! Oh! Ah! Zut! Ouf! Oups!) 
+EX : Aie! J’ai mal.
+Les points de suspension(…) :
+On emploie trois points successifs pour indiquer une phrase inachevée ou interrompue.
+EX : A l’ISI, il y a plusieurs filières : gestion, télécom, téléinformatique…
+Le trait d’union (-) :
+Il sert à unir les éléments d’un mot composé de plusieurs termes.
+EX : L’alliance Franco-sénégalaise, l’arc-en-ciel, c’est-à-dire.
+Le tiret (-) :
+Il s’emploie pour rapporter les paroles dans un dialogue et pour renforcer la ponctuation, dans les fonctions énumératives annoncées par les deux points.
+EX :Les éléments qui composent l’ordinateur sont :
+-l’écran qui …;
+-le clavier qui …;
+-l’unité centrale qui….;
+- et la souris qui…
+Les guillemets (<<>>):
+Le début d’une citation est marqué par un guillemet ouvrant (<<) et la fin de la citation par un guillemet fermant (>>).
+EX : << Tout ce qui se conçoit bien, s’énonce clairement et les mots pour le dire arrivent aisément >>. (Boileau)
+Les guillemets s’emploient aussi pour marquer l’emprunt d’un mot.
+EX : Les équipes de football ont besoin d’un bon <<coaching >>.
+Les parenthèses ( ) :
+Elles encadrent une explication, une réflexion, une référence…
+EX1 : Ce matin, au baptême, j’ai mangé du « lakh  » (une sorte de bouillie accompagnée de lait caillé).
+EX2 : Les indépendantistes appellent toujours à prendre les armes (c’est une attitude que je ne saurais apprécier) dès qu’une difficulté surgit en Afrique.
+EX3 Ramatoulaye : <<Aissatou, Aissatou, Aissatou, je t’appelle trois fois, hier, tu as divorcé, aujourd’hui je suis veuve…>> (Une si longue lettre, Mariama BA).
+L’astérisque(*) (genre masculin):
+Il indique :
+-	Après un mot, qu’il faut se reporter à une note le concernant.
+EX : 
+Pendant la lutte, les deux combattants mettent leur « nguemb»* :
+-	Avant un mot ou une phrase que la forme employée n’existe normalement pas dans la langue.
+EX : Il ne faut pas dire que je *croive, mais que je croie. (Croie, mode subjonctif)
+L’alinéa : 
+C’est la séparation que l’on établit en allant à la ligne ; c’est-à-dire en laissant incomplète la ligne en cours et en commençant la nouvelle par un retrait; l’alinéa correspond à une pause très marquée et s’emploie surtout quand on passe d’un groupe d’idées à un autre.
+
+
+
+
+
+
+
+
+Chapitre II : les connecteurs logiques 
+Définition 
+Les connecteurs logiques sont des mots de liaison qui permettent d’élaborer un raisonnement logique, une argumentation pertinente. Ils doivent être utilisés dans un raisonnement pour mieux se faire comprendre. Ils sont nombreux, mais chacun d’eux exprime une intention bien spécifique; c’est pourquoi il faut les connaitre pour les utiliser convenablement.
+Les connecteurs logiques peuvent être des conjonctions de coordinations (mais, ou, et, donc, or, ni, car) ou des locutions.
+Tableau récapitulatif de quelques connecteurs logiques (voir polycope)
+
+CHAP III : COMMENT CONSTRUIRE UN TEXTE ARGUMENTATIF
+L’ensemble des phrases forme le paragraphe et l’ensemble des paragraphes constitue le texte. Le paragraphe, l’unité de mesure d’un texte, est composé de :
+	une idée générale appelée aussi idée directrice ou idée centrale ;
+	des arguments qui permettent d’expliquer l’idée générale ;
+	des exemples qui permettent d’illustrer les arguments ;
+	une phrase de conclusion qui permet de confirmer l’idée générale ;
+	une phrase de transition qui permet de montrer que l’on passe à l’idée suivante ;
+	enfin des connecteurs logiques qui permettent de lier l’idée générale aux arguments, les arguments aux exemples, les exemples à la conclusion et la conclusion à la phrase de transition.
+Exemple :
+       Messi est le meilleur joueur du monde (ig). En effet (con.log), c’est un joueur constant (arg. 1) car (con. log) il joue presque tous les matchs de son « club » et de son équipe nationale(Ex 1); c’est aussi (con.log) un joueur qui marque beaucoup de buts (arg. 2)  étant donné que (con.log)   sur la totalité des buts marqués par son « club », il est l’auteur de presque la moitié. (Ex 2); c’est également (con.log) un passeur décisif (arg. 3) car (con.log) dans chaque match, s’il ne marque pas, il participe à la réalisation de chaque but (ex 3); enfin (con.log) il a un bon palmarès(arg. 4), dans la mesure où (con.log.) il a été nommé 6 fois ballon d’or, a remporté le championnat national, la « liga » et la ligue des champions (ex4). Donc (con.log) Messi s’avère être le meilleur joueur du monde (conclusion.) Seulement (con.log) il y a certains joueurs qui présentent les mêmes performances, c’est le cas de Ronaldo (transition).
+Exercices d’application sur les chapitres 1 2 et 3
+1.	Compléter les phrases avec le bon connecteur logique donc, pourtant, et, mais, car .
+1 Il m’a donné tous les renseignements qu’il a pu ……. il m’a encouragé à continuer mes recherches.
+2  Ce n’est pas un chef-d’œuvre …. c’est un roman agréable à lire.
+3. Elle commençait à s’inquiéter …. elle ne recevait pas de nouvelles de ses enfants.
+4. J’ai fait exactement ce que tu voulais …. comme tu voulais ……tu n’as plus aucune raison de te plaindre!
+5. Vous ne comprenez pas, …….  ce n’est pas difficile!
+6.  Il a donné  sa démission……   ce travail ne lui convenait pas.
+
+2.	Mettre les phrases dans le bon ordre pour reconstituer  le texte ()
+1.	 Enfin, certains pensent aussi qu’ils nous protègent de la folie.
+2.	 Tout le monde s’accorde pour dire que les rêves sont utiles.
+3.	 Donc, on peut dire que le rêve est un ami précieux. 
+4.	 De plus, les rêves semblent fixer les souvenirs et faciliter l’apprentissage.
+5.	En effet, on croit qu’ils aident à trouver des solutions à nos problèmes.
+3.	Mettre les phrases dans le bon ordre pour reconstituer  le texte ()
+1.	Les médias  nous présentent  souvent la vie en banlieue  sous un jour bien peu avantageux.
+2.	D’autre part, on ne peut pas  nier  que l’architecture du «  tout béton »  laisse parfois à désirer. 
+3.	Cependant c’est souvent en banlieue  que l’on peut trouver  des logements plus spacieux, le calme et l’espace vert.
+4.	 Certes, tout n’est pas rose lorsqu’on vit en banlieue, on peut se sentir éloigné des plaisirs de la ville. 
+5.	 On y parle souvent de   délinquance et de violence. 
+6.	 en outre, la municipalité multiplie les initiatives  pour rompre  l’isolement des habitants.
+7.	 que ce soit pour le logement ou pour l’alimentation.
+8.	 Enfin, les prix dans les banlieues sont nettement  inférieurs  à ceux que l’on pratique en ville.
+9.	 On peut donc trouver de nombreux avantages à la vie en banlieue 
+
+	Exercice d’application 4 : 
+Elaborer un texte argumentatif (au minimum trois paragraphes) sur la tricherie des étudiants dans les évaluations. Dites les causes, les conséquences et proposez des solutions. Organiser les idées de telle sorte d’avoir l’idée générale, les arguments, les exemples, la conclusion, la transition, les connecteurs logiques (encadrés) et tous les13 signes de ponctuation (en noir ou vert).
+
+-	La note
+Au sein d’une entreprise, les messages adressés à une personne, à une catégorie du personnel, voire à l’ensemble du personnel, sont sous forme de note. Il existe 3 types de notes qui ont chacun un objet différent, ce qui leur confère des caractéristiques différentes :
+La note de service ou note d’instructions
+La note d’information
+La note de synthèse 
+
+-	LA NOTE DE SERVICE
+
+Définition
+ La note de service est un document écrit destiné à transmettre un ordre à un ou plusieurs destinataires qui devront exécuter l’action demandée.
+            La note de service émane toujours d’un supérieur hiérarchique qui adresse un message à ses subordonnés. Elle circule toujours dans le sens -descendant.
+Rédaction
+Comme il est l’expression d’un ordre, ce document doit être rédigé de telle sorte que cet ordre puisse être compris sans équivoque. C’est la raison pour laquelle la note de service doit être :
+- claire : c’est-à-dire que le rédacteur s’efforcera d’employer des termes exacts, simples, des phrases courtes, n’hésitera pas à effectuer des énumérations et à présenter un schéma en pièce jointe.
+-Précise et concise : les ordres à exécuter sont à présenter avec toute la précision nécessaire, mais le document doit être bref (pas plus d’une page) pour permettre une lecture rapide et une application efficace.
+- d’un langage simple et d’un ton impératif : n’ayant pas à expliquer ni à justifier la décision, la note de service n’a souvent pas de préambule, ni de conclusion. Elle énonce d’emblée et simplement l’action à exécuter et si nécessaire les modalités d’application. Le ton doit être impératif.
+Présentation :
+La présentation de la note de service n’est pas normalisée. Il suffit de respecter les règles de mise en page utilisées pour ce type de document dans l’entreprise et le service. Toutefois, il existe des habitudes communes à toutes les organisations et en tout cas, un certain nombre de mentions indispensables :
+- les coordonnées de l’émetteur : le nom du rédacteur, son service, sa fonction.
+- les coordonnées des destinataires : nom, service, fonctions ;
+- la date d’émission et éventuellement le lieu ;
+- l’objet de la note : sous forme de mention précise et concise ;
+- le corps du texte : introduction, développement ;
+- la signature du rédacteur, obligatoire pour donner au document sa valeur.
+NB : les notes de services sont généralement numérotées car elles sont archivées et classées chronologiquement. Une note de service n’est pas une lettre, c’est pourquoi, elle ne doit pas commencer par un titre de civilité (pas de « Monsieur », ni de « Madame ») et ne comporte jamais de formule de politesse.
+Exemple de note de service 
+     SOCIETE X               (où)        
+Note de service N° 3    (quoi?)
+EMETTEUR : Jean FAYE, Directeur Financier       (qui?)
+DESTINATAIRE : Tout le personnel 	(à qui?)
+DATE : le 17 octobre 2019  (Quand)
+OBJET : Nouvelles conditions d’attribution des tickets  de restaurant      (pourquoi?)
+
+Après avoir  informé les délégués du personnel, la Direction financière vient de procéder à une nouvelle organisation de l’attribution des tickets de restaurant. (introduction).
+En conséquence, l’attribution des tickets de restaurant sera soumise aux règles suivantes : 
+-	Ou bien résider en dehors de l’agglomération de Dakar,
+-	Ou bien bénéficier à midi d’une pause, d’une durée inférieure à deux heures. (idée principale)
+Il est rappelé par ailleurs que les jours de congé ne donnent pas droit aux tickets de restaurant, de même que les jours où les employés, en mission, se voient rembourser leur frais réels de repas.
+
+En conséquence, les employés en déplacement devront déclarer au service « paie » mois par mois, le nombre de jour où ils  ont été en déplacement.
+En raison des délais techniques, il y aura un décalage d’un mois entre les déclarations et leurs imputations sur le nombre de tickets de restaurant.
+Par exemple, si un employé a fait deux déplacements en Novembre, c’est en Janvier qu’il verra son quota diminuer de deux tickets.
+Le service « paie» est chargé de l’application de cette nouvelle procédure, qui entrera en vigueur le 1er Novembre 2019. . (idée secondaire)
+Pour une information  complémentaire, contacter la Direction. 
+
+
+signature :                                                                          Jean Faye,             Directeur Financier
+
+-	La note d’information
+La note d’information est un document écrit qui permet d’apporter une information intéressant la vie de l’entreprise ou d’un service. Elle peut être établie spontanément par son rédacteur ou demandée par une personne souhaitant avoir des précisions sur un sujet, une réalité. La note d’information peut émaner de tout employé de l’entreprise. Elle circule donc le plus souvent dans le sens horizontal ou ascendant de la hiérarchie.
+Rédaction :
+Les qualités nécessaires à la rédaction de la note d’information sont :
+- exacte et complète : le rédacteur de ce document veillera à répondre point par point exactement et complètement au besoin d’information qui a été exprimé. Il doit donc vérifier toutes les informations qu’il présente ;
+-succincte : la note d’information doit être un document relativement court car elle doit se focaliser sur des informations essentielles sans s’attarder sur des détails inutiles ;
+-structurée : la note d’information doit être articulée de la façon suivante : Une courte introduction rappelant l’intérêt de la note ou le contexte ; un développement en deux ou trois parties et un paragraphe de conclusion.
+2- Présentation :
+Même si la présentation de la note d’information n’est pas normalisée, l’usage veut toutefois que soit respecté un certain nombre de règles, fixant notamment les mentions qui doivent obligatoirement y figurer, à savoir :
+- les coordonnées de l’émetteur : nom prénom, service, fonction ;
+- les coordonnées du ou des destinataires : nom, service, fonction ;
+- la date de la note ;
+- l’objet de la note ;
+- le corps du texte : introduction, développement et conclusion
+- la signature du rédacteur : nom, prénom, fonction et signature
+NB : comme la note de service, une note d’information n’est pas une lettre : elle ne doit pas débuter par un titre de civilité et ne comporte jamais de formule de politesse.
+Exemple de note d’information 
+
+Ville de Dakar
+Secrétariat General
+                                                                                                                      Dakar, le 26 Mai 2019
+
+Destinataires : 
+Ndiaga MBENGUE              Chef du  Service……………
+M. Paul  SAGNA                  Chef du Service (technique ou informatique)
+
+
+NOTE D’INFORMATION No X
+
+   Objet : Accueil d’un groupe de visiteurs
+
+            Un groupe de 20 étudiants en 1ere année section administration de l’ENAM accompagné de leur professeur, viendra visiter  nos services : Le 16 juin 2019 de 14h à 16h.
+              Cette visite a pour objectif l’observation des modalités techniques de traitement du courrier. Elle sera précédée d’une présentation générale de l’entreprise animée personnellement. Sera ensuite abordée l’organisation du service « correspondance.»
+
+             Il convient de réserver un accueil chaleureux à ces étudiants.
+
+                                                    Signature
+                                                            Le responsable du département
+                                                      Aliou GUEYE
+-	La note de synthèse
+Définition
+La note de synthèse est un document interne rédigé à la demande d’un cadre pour l’aider à faire le point sur un fait, une situation, un dossier …Elle circule donc d’une façon ascendante. Le résumé est le condensé d’un texte alors que la note de synthèse peut concerner plusieurs documents.
+Rédaction:
+Pour élaborer une bonne note de synthèse, certaines qualités sont indispensables :
+La concision : le but de la note de synthèse est d’éviter à une personne de se plonger dans une documentation plus ou moins volumineuse et de lui permettre ainsi de gagner du temps.
+-La clarté : en dépit de la concision du document final, la rédaction ne doit souffrir d’aucune imprécision ou confusion.
+-La précision : elle s’obtient par l‘utilisation d’un vocabulaire simple, adapté et sans approximation.
+-L’objectivité : le rédacteur ne doit pas déformer les idées ni laisser transparaitre ses préférences. 
+Dans la note de synthèse il n’y a ni conclusion, ni formule de politesse et elle doit permettre au destinataire d’aller à l’essentiel du sujet.
+La présentation
+La présentation de la note de synthèse n’est pas normalisée mais on remarque certaines constantes :
+-L’entête de la structure.
+-le nom de l’émetteur.
+-la date.
+-le destinataire de la note.
+-le titre ou l’objet de la note.
+-le corps du texte (introduction et développement).
+-la signature de l’émetteur.
+
+EXEMPLE DE NOTE DE SYNTHESE
+
+Exemple corrigé : RECOUVREMENT DES IMPAYÉS
+L’entreprise Mbaye et Frères, à Rufisque, est une PME dirigée par M. Mamadou Mbaye.
+L’activité est prospère, cependant, M. Mbaye est préoccupé car son comptable a attiré son attention sur l’évolution inquiétante des impayés.
+En effet, la procédure de la lettre de relance ne suffit plus à endiguer le flot de factures non réglées. Il a entendu parler des sociétés d’affacturages ou d’agences de recouvrement des créances. Il voudrait savoir si ce sont des expressions synonymes ou si ces appellations désignent des activités différentes.
+Il a chargé un de ses collaborateurs, M. Dème d’étudier cette question.
+ENTREPRISE MBAYE &FRERES                                      Dakar, le 20 janvier 2010
+
+M.DEME	
+
+
+                                                                              A Monsieur Mamadou MBAYE
+                                                                                   Directeur
+
+
+                                                         NOTE DE SYNTHESE
+Recouvrement des impayés
+
+
+        Deux types de sociétés ont vocation à traiter ce problème : les agences de recouvrement    de créances et les sociétés d’affacturage.
+Les agences de  recouvrement de créances 
+Ce sont des cabinets qui agissent par subrogation, c'est-à-dire au nom et à la place des entreprises-clientes pour faire payer les débiteurs négligents. leur activité peut aller  jusqu’au recouvrement judiciaire. Ils sont liés aux entreprises qui sont leurs clientes par un contrat de mandat. Ils perçoivent une commission de 10 % à 12 % mais uniquement sur les sommes effectivement récupérées
+Les  sociétés d’affacturage
+Ce sont en général des filiales de banques. Elles agissent en leur nom propre car elles rachètent les créances de leurs entreprises-clientes. Elles assurent trois types de service :
+Le recouvrement par leurs soins et pour leur compte de toutes les factures émises par les entreprises-clientes, ce qui décharge celles-ci de la gestion du compte-clients.
+La garantie du paiement intégral des factures même si elles restent finalement impayées : l’affactureur ayant racheté les créances, il supporte seul le risque de ne pas être payé
+Le financement à court terme de toutes les créances : dès la signature du contrat, l'affactureur paie à l’entreprise-cliente toutes les factures que celle-ci émet, soit à la date d’échéance, soit dès l’émission du document.
+L’affactureur est rémunère par  une commission dont le taux varie de 0.8% à 2% du montant de chaque facture, plus les agios(pret de compte)éventuels.
+
+
+
+        LA REUNION
+La réunion est une concertation qui permet aux personnes convoquées de livrer leur point de vue sur un ordre du jour déterminé. Elle doit aboutir à un certain nombre de solutions. En milieu professionnel, la réunion est courante et les sujets varient d’un contexte à un autre. Une réunion est toujours dirigée par un président de séances qui assure la police des débats. Un secrétaire de séance est aussi désigné pour rédiger le compte rendu de réunion 
+I Le rôle du président de séance
+Le président de séance a pour rôle d’ouvrir la réunion, de rappeler l’ordre du jour, de distribuer la parole aux participants qui veulent intervenir, de veiller au bon déroulement de la séance et de procéder à  la clôture de la concertation.
+1 Comment ouvrir une réunion ?
+-	Mes dames et messieurs, je déclare la séance ouverte ;
+-	Mes dames et messieurs Je déclare la réunion ouverte ;
+-	Mes dames et messieurs J’ai l’honneur de déclarer la réunion ouverte. 
+2 Comment présenter un participant étranger ?
+-	Mes dames et Messieurs, j’ai le plaisir de vous présenter Monsieur KOUAME de notre filiale d’Abidjan ;
+-	Chers collègues, nous avons l’honneur d’avoir parmi nous Monsieur ANGUILLET, Directeur de la SATREX de Libreville.
+-	3Comment rappeler un ordre du jour
+-	Nous allons à présent passer à l’ordre du jour qui porte sur …
+-	L’ordre du jour de la réunion porte…
+-	A l’ordre du jour de la réunion figure…
+-	4Comment donner la parole
+-	Je donne la parole à monsieur FALL ;
+-	La parole est à madame FALL ;
+-	Madame je vous cède la parole ;
+-	Vous avez la parole M.DIOP ;
+Apres chaque intervention, Le président reprend la parole pour remercier l’intervenant. Les exemples de remerciement sont les suivants 
+-	Je remercie M.FALL pour sa contribution ;
+-	J’aimerais remercier Madame FALL pour son intervention très intéressante.
+Apres les remerciements, le président de séance doit relancer le débat, redistribuer la parole, faire respecter le temps de parole et rappeler quelqu’un à l’ordre, à l’occasion d’une digression.
+5Les exemples pour retirer la parole sont les  suivants 
+-	Monsieur, ne nous éloignons pas du sujet ;
+-	Je regrette mais ce n’est pas à l’ordre du jour ;
+-	Revenons à notre sujet.
+6 Comment mettre fin à une séance ?
+-	Je déclare la séance levée, et je vous remercie pour votre aimable participation ;
+-	Je déclare la session ajournée (quorum''1/3 ou moitié '' non atteint) ;
+-	Je propose que nous suspendions la séance pendant quinze minutes (repos).
+II Le rôle du participant
+Contrairement au président de séance qui a tendance à monopoliser la parole, le participant ne peut s’exprimer que sur un ordre du président, quand il veut prendre la parole, il fait un signe de la main au président qui la lui donne.
+-	Comment intervenir dans une réunion ? 
+-	Je vous remercie monsieur le président, j’aimerais intervenir sur…
+-	Je vous remercie monsieur le président J’ai une question à poser
+-	Je vous remercie monsieur le président J’ai une remarque à faire
+-	Comment garder le temps parole ? 
+-	S’il vous plait Monsieur je peux terminer ; 
+-	Laissez-moi terminer ;
+-	Ne m’interrompez pas s’il vous plait ;
+-	Je n’ai pas terminé.
+III le rôle du secrétaire de séance
+Elaborer la feuille de présence, prendre des notes méthodiquement afin de faire un compte rendu fidèle.
+COMPTE RENDU DE REUNION
+Définition :
+Le compte rendu de réunion est un écrit par lequel son auteur relate de façon circonstanciée (qui ? quand ? où? comment ? quoi ?) et précise des faits auxquels il a assisté, qu’il y est participé ou non. C’est un document descriptif et non interprétatif(ne pas juger l'opinion d1 personne). Les évènements relatés peuvent être des réunions, des conférences, des évènements, des travaux, des missions…
+Rédaction et Présentation :
+La présentation du compte rendu n’est pas normalisée mais elle exige la présence de certains éléments :
+-l’entête réduit.
+-le lieu et la date.
+-le nom du rédacteur ou de son service selon le cas.
+-le titre du document : compte rendu de rendu de réunion de… indiquant son objet et précisant la date ;
+- l’objet du compte- rendu;
+-les noms, prénoms et fonction des présents, des absents et des excusés.
+-les noms et prénoms du président et du secrétaire de séance;
+-l’ordre du jour,
+-le corps du texte : l’introduction, le développement et la conclusion.
+-le lieu et la date suivis de la signature du rédacteur.
+
+
+
+
+
+Université Cheikh AntaDiop	N°……….
+École Supérieur Polytechnique	Dakar, le 07 Juin 2020
+Camp Claudel-Dakar
+Tél : 33884 22 22 
+BP 4131 Dakar Fann
+
+
+Compte Rendu de la Réunion avec les prestataires de service
+Du 19 mars 2020
+
+Objet : Rencontre avec les prestataires de service
+Étaient présents : ( voir feuille de présence )
+-1 Daouda KADAM, Directeur
+-2 François SEYE, Gestionnaire
+-3 Souleymane FAYE, Professeur
+-4 Alphousseyni SONKO, Prestataire de service
+-5 Birane DIA, Prestataire de service
+-6 Abdoulaye NGUER, Professeur
+-7 Papa Moussa THIAM, prestataire de service
+
+Absent : El hadji SECK, prestataire de service
+Président de séance : Daouda KADAM
+Secrétaire de séance : Souleymane FAYE
+
+Ordre du jour :
+1.	Informations,
+2.	Bilan des activités,
+3.	Questions diverses.
+        Le Directeur Daouda KADAM a ouvert la séance à 10h 15 mn. Il a d’abord remercié les participants pour leur présence et salué l’esprit de collaboration qui anime tout un chacun.
+I-	Informations
+        Abordant ce premier point, le Directeur a tenu à livrer des informations utiles parmi celles-ci : la création de deux nouvelles salles de classes, d’un laboratoire et d’un cyberespace pour les étudiants.
+        Les intervenants ont unanimement apprécié ces informations et souhaitent leurs réalisations dans le court terme. Monsieur François SEYE, le gestionnaire de l’établissement, après avoir pris la parole à la suite du Directeur, a affirmé que le financement ne va pas tarder. Les bailleurs de fonds sont la Banque mondiale et la Banque ouest africaine de développement.  Le financement est estimé à 28 millions de francs CFA.
+       Certains intervenants comme le Professeur Abdoulaye NGUER ont proposé la création d’un comité de suivi.
+
+
+II-	Bilan des activités
+       Abordant le deuxième point de l’ordre du jour, le Directeur a invité Monsieur SEYE, le Gestionnaire, à présenter un rapport détaillé du bilan des activités.
+       La plupart des prestataires de service ont déploré leur mise à l’écart dans les activités. Ils se sentent étrangers à la structure et souhaitent une transparence dans la gestion. Monsieur Papa Moussa THIAM donnant son point de vue sur la question, a aussi donné raison aux prestataires de service. Le bilan tout de même, a été jugé satisfaisant malgré l’absence de quelques pièces comptables.
+III-	Questions  diverses
+       Plusieurs points relatifs à l’organisation et à la qualité des services ont été soulevés. Le Gestionnaire a évoqué un laxisme du côté de certains prestataires de service qui n’honorent pas leurs engagements. Des suggestions ont été retenues :
+- améliorer la qualité des services;
+-accroître le nombre de prestataires;
+-commander des foyers lumineux en vue d’assurer l’éclairage.
+L’ordre du jour étant épuisé, le président de séance a fixé la date de la prochaine réunion le 20 Aout 2020. La séance a été levée à 12 h 15 mn.
+                                                                                            Fait à Dakar le 07 Juin 2020
+
+
+Le Président de Séance 	Le secrétaire de séance
+Daouda KADAM	   Souleymane FAYE
+               Signature                                                                          Signature
+
+
+PJ : liste de présence		
+
+NB : Ce compte rendu ne peut être détaillé. Il s’agit de guider l’étudiant pour la maîtrise de l’exercice.
+
+
+             CHAPITE 5
+L’ENTRETIEN D’EMBAUCHE
+L’entretien d’embauche est une évaluation qui permet à l’employeur de cerner la personnalité du postulant à l’emploi.
+Il s’agit d’une situation de communication, d’un échange de propos qui doit aboutir à  un résultat.
+Le candidat  à l’emploi doit convaincre son interlocuteur et lui montrer qu’il est capable d’occuper le poste à pouvoir.
+L’entretien d’embauche se prépare et le candidat donc normalement avoir des renseignements (mener une enquête) sur l’entreprise et sur le poste à pourvoir.
+1.	Comment réussir l’entretien
+	Bien le préparer. Penser à ce que vous avez à dire sur vos études et sur votre carrière ;
+	Informez-vous sur l’entreprise qui recrute ;
+	Préparez des questions sur l’entreprise, sur le stage ou le poste proposé ;
+	Soignez votre présentation. Ne fumez pas .Ne mâchez pas de chewing-gum ;
+	Arrivez à l’heure, même en avance de quelques minutes ;
+	Soyez organisé et prenez un bloc note et un stylo pour prendre des notes.
+Restez serein et soyez positif 
+	La question de la rémunération peut être abordée : donnez une fourchette de salaire.
+2.	Quelles sont les questions posées
+	Parlez-nous de vous ?
+	Quelle est votre formation ?
+	Avez-vous connaissances en informatique ?
+	Quelles sont les langues que vous parlez ?
+	Que pouvez-vous apporter à notre entreprise ?
+	Que savez –vous de notre entreprise ?
+	Pourquoi pensez-vous être en mesure d’assumer ce poste ?
+	Où avez –vous travaillé auparavant ?
+	Quelles étaient vos missions ?
+	 Quels sont vos atouts personnels ?
+	Quelles sont vos qualités ?
+3.	Quelles sont les maladresses à éviter ?
+	faire trop de compliments ;
+	interrompre l’interlocuteur ;
+	éviter de tenir des propos défavorables à l’endroit de vos anciens collaborateurs ;
+	parler d’emblée de prétention salariale ;
+	Eviter de créer un climat familier ;
+	Eviter de trop rire ;
+	Ne jamais croiser les bras ;
+	Ne jamais  croiser  les jambes ;
+NB : A la fin de l’entretien, le  candidat à l’emploi doit remercier son interlocuteur avant de prendre congé.
+4.	Les comportements des  responsables du personnel
+Certains responsables du personnel créent un climat de sécurité en étant chaleureux, d’autres par contre mettent en place un climat d’insécurité.
+A la question d’un journaliste : quel comportement adoptez-vous au cours  d’un entretien d’embauche ? Nous aurons deux avis contraires
+M.Camara
+Personnellement, je cherche à mettre le candidat à l’aise dès le départ .Je me lève pour l’accueillir avec le  sourire.
+Je l’invite à s’asseoir .Je l’encourage à s’exprimer .J’essaie de me montrer disponible, chaleureux.
+Vous savez, vous ne gagnez rien à créer un climat d’insécurité.
+Le meilleur moyen d’apprécier correctement les capacités de quelqu’un consiste à le mettre en confiance, tout au long de l’entretien,  à créer un climat de cordialité !
+M.Sylla
+Je pense que l’entretien d’embauche est l’occasion de découvrir la véritable personnalité du candidat. Pour cela, je ne fais rien pour lui faciliter la tâche. Il doit montrer qu’il est capable de s’adapter à un climat d’insécurité, de maîtriser une situation difficile.
+Par exemple, je débute l’entretien d’embauche par un accueil froid : je l’observe ostensiblement de la tête aux pieds : ses gestes, son attitude me fournissent de précieuses informations sur lui. Puis, je lui pose une question sèchement :<<Qui êtes- vous<< et je lui laisse 4 à 5minutes sans intervenir pour voir comment il va se débrouiller.
+Et je continue ainsi en lui posant des questions personnelles, surprenantes. Je vous assure qu’à la fin de l’entretien   , vous savez honnêtement ce que vaut le candidat
+	
+
+
+
+
+
+                                                                                                signature :
+                                                                                                                             (M.DEME)
+
+

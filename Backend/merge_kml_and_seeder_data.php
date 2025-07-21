@@ -57,7 +57,7 @@ $seeder_data = [
     ],
     'Stade Deggo' => [
         'description' => 'Grand terrain avec des installations complètes pour des matchs officiels.',
-        'adresse' => 'Hann Mariste, Dakar',
+        'adresse' => 'Marriste, Dakar',
         'prix_par_heure' => 25000,
         'capacite' => 22,
     ],
@@ -79,28 +79,10 @@ $seeder_data = [
         'prix_par_heure' => 19000,
         'capacite' => 18,
     ],
-    'Terrain Yoff' => [
-        'description' => 'Terrain communautaire bien entretenu, idéal pour les tournois de quartier.',
-        'adresse' => 'Yoff Virage',
-        'prix_par_heure' => 13000,
-        'capacite' => 20,
-    ],
-    'Stade de Pikine' => [
-        'description' => 'Grand stade avec terrain synthétique, équipements modernes.',
-        'adresse' => 'Pikine',
-        'prix_par_heure' => 17000,
-        'capacite' => 22,
-    ],
-    'Terrain Ouakam' => [
-        'description' => 'Terrain en bord de mer, ambiance unique pour vos matchs.',
-        'adresse' => 'Ouakam',
-        'prix_par_heure' => 21000,
-        'capacite' => 22,
-    ],
-    'Complexe HLM' => [
-        'description' => 'Terrain de quartier populaire, très fréquenté par les jeunes.',
+    'TENNIS Mini Foot Squash' => [
+        'description' => 'Complexe multisports avec terrain de mini-foot, tennis et squash.',
         'adresse' => 'HLM Grand Yoff',
-        'prix_par_heure' => 11000,
+        'prix_par_heure' => 30000,
         'capacite' => 16,
     ],
 ];
