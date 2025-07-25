@@ -35,6 +35,18 @@ use App\Http\Controllers\API\TicketController;
 |
 */
 
+// Route de statut pour tester l'API
+Route::get('/status', function () {
+    return response()->json([
+        'status' => 'OK',
+        'message' => 'API Kalel Sa Match fonctionne correctement',
+        'timestamp' => now(),
+        'version' => '1.0.0',
+        'environment' => config('app.env'),
+        'database' => 'Connected'
+    ]);
+});
+
 // Routes d'authentification (publiques)
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
