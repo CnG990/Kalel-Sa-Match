@@ -30,8 +30,11 @@ RUN composer install --no-dev --optimize-autoloader
 # Configuration des permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
+# Rendre le script exécutable
+RUN chmod +x start.sh
+
 # Exposition du port
 EXPOSE 8000
 
 # Commande de démarrage
-CMD php artisan serve --host=0.0.0.0 --port=8000 
+CMD ["./start.sh"] 
