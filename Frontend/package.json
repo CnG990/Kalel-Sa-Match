@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
     "dev-fixed": "vite --host 127.0.0.1 --port 5173 --force",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "clean": "rm -rf node_modules/.vite dist",

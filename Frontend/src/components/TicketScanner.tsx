@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Search, CheckCircle, XCircle, User, Clock, MapPin, RefreshCw } from 'lucide-react';
+import { Camera, Search, CheckCircle, User, Clock, MapPin, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 
 interface TicketValidation {
   reservation_id: number;

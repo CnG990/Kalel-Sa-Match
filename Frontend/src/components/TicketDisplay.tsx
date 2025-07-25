@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { QrCode, MapPin, Clock, Calendar, CheckCircle, AlertCircle, Download, Share, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 import { toast } from 'react-hot-toast';
 
 interface TicketData {

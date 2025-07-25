@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, AlertTriangle, Upload, Calendar, Clock } from 'lucide-react';
+import { X, AlertTriangle, Upload } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 
 interface LitigeModalProps {
   isOpen: boolean;

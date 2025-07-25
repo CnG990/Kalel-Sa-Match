@@ -96,8 +96,8 @@ class LitigeController extends Controller
                 ->select([
                     'litiges.*',
                     'terrains_synthetiques_dakar.nom as terrain_nom',
-                    'reservations.date_reservation',
-                    'reservations.heure_debut'
+                    'reservations.date_debut',
+                    'reservations.date_fin'
                 ])
                 ->orderBy('litiges.created_at', 'desc')
                 ->get();
@@ -134,8 +134,8 @@ class LitigeController extends Controller
                     'litiges.*',
                     'terrains_synthetiques_dakar.nom as terrain_nom',
                     'terrains_synthetiques_dakar.gestionnaire_id',
-                    'reservations.date_reservation',
-                    'reservations.heure_debut',
+                    'reservations.date_debut',
+                    'reservations.date_fin',
                     'client.nom as client_nom',
                     'client.email as client_email'
                 ])

@@ -296,22 +296,28 @@ const CreateLitigeModal: React.FC<CreateLitigeModalProps> = ({ onClose, onSucces
   const chargerTerrains = async () => {
     try {
       const response = await apiService.get('/terrains');
-      if (response.success) {
-        setTerrains(response.data || []);
+      if (response.success && Array.isArray(response.data)) {
+        setTerrains(response.data);
+      } else {
+        setTerrains([]);
       }
     } catch (error) {
       console.error('Erreur chargement terrains:', error);
+      setTerrains([]);
     }
   };
 
   const chargerReservations = async () => {
     try {
       const response = await apiService.get('/reservations/my-reservations');
-      if (response.success) {
-        setReservations(response.data || []);
+      if (response.success && Array.isArray(response.data)) {
+        setReservations(response.data);
+      } else {
+        setReservations([]);
       }
     } catch (error) {
       console.error('Erreur chargement réservations:', error);
+      setReservations([]);
     }
   };
 
