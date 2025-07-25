@@ -5,7 +5,11 @@ echo "🚀 Démarrage de l'application Laravel..."
 
 # Attendre que la base de données soit prête
 echo "⏳ Attente de la base de données..."
-sleep 10
+sleep 30
+
+# Vérifier la connexion à la base de données
+echo "🔍 Vérification de la connexion à la base de données..."
+php artisan tinker --execute="try { DB::connection()->getPdo(); echo '✅ Connexion à la base de données réussie'; } catch (Exception \$e) { echo '❌ Erreur de connexion: ' . \$e->getMessage(); exit(1); }"
 
 # Migrer la base de données
 echo "🗄️ Migration de la base de données..."
