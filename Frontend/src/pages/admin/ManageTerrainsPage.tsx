@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import KMLGoogleEarthImport from '../../components/KMLGoogleEarthImport';
 import CSVTerrainImport from '../../components/CSVTerrainImport';
 import TerrainManagerAssignment from '../../components/TerrainManagerAssignment';
+import TerrainPricingDisplay from '../../components/TerrainPricingDisplay';
+import TerrainSurfaceDisplay from '../../components/TerrainSurfaceDisplay';
 
 import { 
   Search, 
@@ -19,6 +21,7 @@ import {
   RefreshCw,
   Users,
   User,
+  Calculator,
   } from 'lucide-react';
 
 interface Terrain {
@@ -71,6 +74,7 @@ const ManageTerrainsPage: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [terrainToDelete, setTerrainToDelete] = useState<Terrain | null>(null);
   const [calculatingSurfaces, setCalculatingSurfaces] = useState(false);
+  const [calculatingTerrain, setCalculatingTerrain] = useState<number | null>(null);
 
 
   // Form states
@@ -82,7 +86,8 @@ const ManageTerrainsPage: React.FC = () => {
     longitude: '',
     prix_heure: '',
     capacite: '',
-    terrain_synthetique_id: ''
+    terrain_synthetique_id: '',
+    surface: ''
   });
 
   const [editForm, setEditForm] = useState({
@@ -167,7 +172,8 @@ const ManageTerrainsPage: React.FC = () => {
         longitude: parseFloat(addForm.longitude),
         prix_heure: parseFloat(addForm.prix_heure),
         capacite: parseInt(addForm.capacite),
-        terrain_synthetique_id: parseInt(addForm.terrain_synthetique_id)
+        terrain_synthetique_id: parseInt(addForm.terrain_synthetique_id),
+        surface: parseFloat(addForm.surface) || 0
       };
 
       const response = await apiService.createTerrain(terrainData);
@@ -182,7 +188,8 @@ const ManageTerrainsPage: React.FC = () => {
           longitude: '',
           prix_heure: '',
           capacite: '',
-          terrain_synthetique_id: ''
+          terrain_synthetique_id: '',
+          surface: ''
         });
         fetchTerrains();
       } else {
@@ -288,6 +295,38 @@ const ManageTerrainsPage: React.FC = () => {
       toast.error('Erreur réseau lors du calcul des surfaces', { id: 'calc-surfaces' });
     } finally {
       setCalculatingSurfaces(false);
+    }
+  };
+
+  const handleCalculateTerrainSurface = async (terrainId: number) => {
+    if (calculatingTerrain === terrainId) return;
+    
+    setCalculatingTerrain(terrainId);
+    try {
+      toast.loading(`🔄 Calcul de la surface pour ${terrains.find(t => t.id === terrainId)?.nom}...`, { id: `calc-surface-${terrainId}` });
+      
+      const response = await apiService.calculateTerrainSurface(terrainId);
+      
+      if (response.success && response.data) {
+        const { surface_calculee, terrain_nom } = response.data;
+        toast.success(
+          `✅ Surface calculée pour ${terrain_nom}: ${surface_calculee?.toLocaleString('fr-FR')} m²`,
+          { 
+            id: `calc-surface-${terrainId}`,
+            duration: 5000
+          }
+        );
+        
+        // Rafraîchir uniquement ce terrain
+        await fetchTerrains();
+      } else {
+        toast.error(response.message || 'Erreur lors du calcul de la surface', { id: `calc-surface-${terrainId}` });
+      }
+    } catch (error) {
+      console.error('Erreur calcul surface terrain:', error);
+      toast.error('Erreur réseau lors du calcul de la surface', { id: `calc-surface-${terrainId}` });
+    } finally {
+      setCalculatingTerrain(null);
     }
   };
 
@@ -641,9 +680,14 @@ const ManageTerrainsPage: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {terrain.prix_heure || terrain.prix_par_heure ? (
-                      <span className="text-green-600 font-medium">
-                        {Number(terrain.prix_heure || terrain.prix_par_heure).toLocaleString()} FCFA/h
-                      </span>
+                      <TerrainPricingDisplay
+                        terrainName={terrain.nom}
+                        basePrice={terrain.prix_heure || terrain.prix_par_heure}
+                        compact={true}
+                        showEdit={true}
+                        onEdit={() => handleEditTerrain(terrain)}
+                        terrainData={terrain}
+                      />
                     ) : (
                       <div className="flex items-center space-x-2">
                         <span className="text-gray-400">Non défini</span>
@@ -659,35 +703,110 @@ const ManageTerrainsPage: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {terrain.surface_postgis || terrain.surface ? (
-                      <div className="flex flex-col">
-                        <span className="text-gray-900 font-medium">
-                          {(terrain.surface_postgis || terrain.surface)?.toFixed(1)} m²
-                        </span>
-                        {terrain.surface_postgis && (
-                          <span className="text-xs text-green-600">
-                            ✓ Calculé PostGIS
-                          </span>
-                        )}
-                        {!terrain.surface_postgis && terrain.surface && (
-                          <span className="text-xs text-blue-600">
-                            ⊕ Valeur manuelle
-                          </span>
+                  {/* ✅ SURFACE AUTOMATIQUE POSTGIS - Plus de champ manuel */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Surface PostGIS */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                        <Calculator className="w-5 h-5 mr-2 text-green-600" />
+                        Surface Automatique (PostGIS)
+                      </h3>
+                      
+                      <TerrainSurfaceDisplay
+                        terrain={terrain}
+                        showActions={true}
+                        isCalculating={calculatingTerrain === terrain.id}
+                        onCalculate={(terrainId) => handleCalculateTerrainSurface(terrainId)}
+                      />
+                      
+                      {/* ✅ Actions de surface */}
+                      <div className="flex flex-wrap gap-2">
+                        {terrain.has_geometry ? (
+                          <button
+                            onClick={() => handleCalculateTerrainSurface(terrain.id)}
+                            disabled={calculatingTerrain === terrain.id}
+                            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                          >
+                            <RefreshCw className={`w-4 h-4 ${calculatingTerrain === terrain.id ? 'animate-spin' : ''}`} />
+                            <span>{calculatingTerrain === terrain.id ? 'Calcul...' : 'Recalculer Surface'}</span>
+                          </button>
+                        ) : (
+                          <div className="flex items-center space-x-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-lg">
+                            <Globe className="w-4 h-4" />
+                            <span className="text-sm">Géométrie requise pour calcul automatique</span>
+                          </div>
                         )}
                       </div>
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-gray-400">Non définie</span>
-                        <button
-                          onClick={() => handleCompleteData(terrain)}
-                          className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200"
-                          title="Compléter avec des données géomatiques"
-                        >
-                          Compléter
-                        </button>
+
+                      {/* ✅ Info méthode PostGIS */}
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="text-sm font-medium text-blue-800 mb-1">💡 Calcul Automatique</h4>
+                        <p className="text-xs text-blue-700">
+                          La surface est calculée automatiquement par PostGIS à partir de la géométrie du terrain.
+                          <br />
+                          <strong>Méthode :</strong> ST_Area + Transform EPSG:32628 (précision métrique)
+                        </p>
                       </div>
-                    )}
+                    </div>
+
+                    {/* Statut géométrie et actions */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                        <Globe className="w-5 h-5 mr-2 text-blue-600" />
+                        Géométrie Terrain
+                      </h3>
+
+                      <div className="space-y-3">
+                        {/* Statut géométrie */}
+                        <div className={`p-4 border rounded-lg ${
+                          terrain.has_geometry 
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-red-50 border-red-200'
+                        }`}>
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-3 h-3 rounded-full ${
+                              terrain.has_geometry ? 'bg-green-500' : 'bg-red-500'
+                            }`}></div>
+                            <div>
+                              <p className={`font-medium ${
+                                terrain.has_geometry ? 'text-green-800' : 'text-red-800'
+                              }`}>
+                                {terrain.has_geometry ? 'Géométrie définie' : 'Géométrie manquante'}
+                              </p>
+                              <p className={`text-sm ${
+                                terrain.has_geometry ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {terrain.has_geometry 
+                                  ? 'Surface calculable automatiquement' 
+                                  : 'Importez un fichier KML ou définissez les coordonnées'
+                                }
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions géométrie */}
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => {/* Action import KML */}}
+                            className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <Upload className="w-4 h-4" />
+                            <span>Importer KML</span>
+                          </button>
+                          
+                          {terrain.geometrie && (
+                            <button
+                              onClick={() => {/* Action voir géométrie */}}
+                              className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              <span>Voir sur carte</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -862,7 +981,9 @@ const ManageTerrainsPage: React.FC = () => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Surface (m²)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Surface (m²)
+              </label>
               <input
                 type="number"
                 value={editForm.surface}
@@ -870,6 +991,9 @@ const ManageTerrainsPage: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ex: 1800"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Optionnel - Sera calculé automatiquement si vous importez une géométrie KML
+              </p>
             </div>
 
 
@@ -939,88 +1063,155 @@ const ManageTerrainsPage: React.FC = () => {
       </div>
     )}
 
-    {/* Modal d'ajout de terrain */}
+    {/* Formulaire d'ajout manuel */}
     {showAddModal && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Ajouter un terrain</h3>
-            <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">Ajouter un nouveau terrain</h3>
+            <button 
+              onClick={() => setShowAddModal(false)} 
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
               ×
             </button>
           </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Nom du terrain</label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nom du terrain *
+              </label>
               <input
                 type="text"
                 value={addForm.nom}
                 onChange={(e) => setAddForm(prev => ({ ...prev, nom: e.target.value }))}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ex: Complexe Sportif Dakar"
+                required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
               <textarea
                 value={addForm.description}
                 onChange={(e) => setAddForm(prev => ({ ...prev, description: e.target.value }))}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={3}
+                placeholder="Description du terrain, tarifs spéciaux, règles..."
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Adresse</label>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Adresse *
+              </label>
               <input
                 type="text"
                 value={addForm.adresse}
                 onChange={(e) => setAddForm(prev => ({ ...prev, adresse: e.target.value }))}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ex: Corniche Ouest, Dakar"
+                required
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Latitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={addForm.latitude}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, latitude: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Longitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={addForm.longitude}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, longitude: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                />
-              </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Latitude *
+              </label>
+              <input
+                type="number"
+                step="any"
+                value={addForm.latitude}
+                onChange={(e) => setAddForm(prev => ({ ...prev, latitude: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ex: 14.6928"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Coordonnée GPS Nord (Google Maps)</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Prix/heure (FCFA)</label>
-                <input
-                  type="number"
-                  value={addForm.prix_heure}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, prix_heure: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Capacité</label>
-                <input
-                  type="number"
-                  value={addForm.capacite}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, capacite: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Longitude *
+              </label>
+              <input
+                type="number"
+                step="any"
+                value={addForm.longitude}
+                onChange={(e) => setAddForm(prev => ({ ...prev, longitude: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ex: -17.4467"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Coordonnée GPS Ouest (Google Maps)</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Prix de base par heure (FCFA) *
+              </label>
+              <input
+                type="number"
+                value={addForm.prix_heure}
+                onChange={(e) => setAddForm(prev => ({ ...prev, prix_heure: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ex: 30000"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Prix principal - options multiples configurables après</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Capacité maximale (joueurs) *
+              </label>
+              <input
+                type="number"
+                value={addForm.capacite}
+                onChange={(e) => setAddForm(prev => ({ ...prev, capacite: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ex: 22"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Nombre maximum de joueurs (11x11 = 22)</p>
+            </div>
+
+            {/* ✅ SURFACE AUTOMATIQUE POSTGIS - Champ manuel supprimé */}
+            <div className="md:col-span-2">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Calculator className="w-5 h-5 text-green-600" />
+                  <h4 className="font-medium text-green-800">Surface Automatique (PostGIS)</h4>
+                </div>
+                <p className="text-sm text-green-700 mb-2">
+                  La surface sera calculée automatiquement par PostGIS après importation de la géométrie.
+                </p>
+                <ul className="text-xs text-green-600 space-y-1">
+                  <li>• <strong>Précision :</strong> Calcul métrique EPSG:32628</li>
+                  <li>• <strong>Méthode :</strong> ST_Area + Transform PostGIS</li>
+                  <li>• <strong>Source :</strong> Géométrie KML/coordonnées</li>
+                  <li>• <strong>Mise à jour :</strong> Automatique lors des modifications</li>
+                </ul>
               </div>
             </div>
           </div>
-          <div className="mt-6 flex justify-end space-x-3">
+
+          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 mb-2">💡 Après ajout</h4>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>• Assignez un gestionnaire à ce terrain</li>
+              <li>• Importez les géométries KML pour calcul automatique des surfaces</li>
+              <li>• Configurez les options de tarification multiples si nécessaire</li>
+              <li>• Ajoutez des images via l'interface de gestion</li>
+            </ul>
+          </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
             <button
               onClick={() => setShowAddModal(false)}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
@@ -1029,9 +1220,10 @@ const ManageTerrainsPage: React.FC = () => {
             </button>
             <button
               onClick={handleAddTerrain}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              disabled={!addForm.nom || !addForm.latitude || !addForm.longitude || !addForm.prix_heure || !addForm.capacite}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Ajouter
+              Ajouter le terrain
             </button>
           </div>
         </div>

@@ -29,7 +29,8 @@ interface Terrain {
 }
 
 // Configuration de base
-const BASE_URL = 'http://127.0.0.1:8000';
+// Utiliser variable d'environnement pour l'URL de base
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 const API_BASE = `${BASE_URL}/api`;
 
 class ApiService {
@@ -80,39 +81,18 @@ class ApiService {
     search?: string;
     sort_by?: string;
     sort_direction?: 'asc' | 'desc';
-  } = {}): Promise<ApiResponse<PaginatedData<Terrain>>> {
-    try {
-      const queryParams = new URLSearchParams();
-      
-      // Paramètres par défaut optimisés
-      queryParams.set('per_page', (params.per_page || 50).toString());
-      queryParams.set('page', (params.page || 1).toString());
-      
-      if (params.search) {
-        queryParams.set('search', params.search);
-      }
-      
-      if (params.sort_by) {
-        queryParams.set('sort_by', params.sort_by);
-        queryParams.set('sort_direction', params.sort_direction || 'asc');
-      }
-
-      console.log(`🔄 API Call: ${this.apiURL}/terrains?${queryParams.toString()}`);
-
-      const response = await fetch(`${this.apiURL}/terrains?${queryParams.toString()}`, {
-        method: 'GET',
-        headers: this.getHeaders(),
-      });
-
-      const result = await this.handleResponse<PaginatedData<Terrain>>(response);
-      
-      console.log(`✅ API Success: ${result.data?.data?.length || 0} terrains loaded`);
-      
-      return result;
-    } catch (error: any) {
-      console.error('❌ API Error getTerrains:', error);
-      throw error;
-    }
+  } = {}): Promise<ApiResponse> {
+    // Cache-busting pour forcer le rafraîchissement des données
+    const cacheBuster = `_t=${Date.now()}`;
+    const searchParams = new URLSearchParams({
+      ...params,
+      _t: Date.now().toString()
+    }).toString();
+    
+    const response = await fetch(`${this.apiURL}/terrains?${searchParams}`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
   }
 
   // Authentification
@@ -315,12 +295,23 @@ class ApiService {
   }
 
   async souscrireAbonnement(abonnementId: number, preferences: any): Promise<ApiResponse> {
-    const response = await fetch(`${this.apiURL}/abonnements/${abonnementId}/subscribe`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(preferences),
-    });
-    return this.handleResponse(response);
+    console.log('🔄 Souscription abonnement:', { abonnementId, preferences });
+    
+    try {
+      const response = await fetch(`${this.apiURL}/abonnements/${abonnementId}/subscribe`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(preferences),
+      });
+      
+      console.log('📡 Réponse abonnement:', response.status, response.statusText);
+      const result = await this.handleResponse(response);
+      console.log('✅ Résultat abonnement:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Erreur souscription abonnement:', error);
+      throw error;
+    }
   }
 
   async requestRefund(reservationId: number, refundData?: {
@@ -874,6 +865,15 @@ class ApiService {
   // Calculer automatiquement les surfaces des terrains avec PostGIS
   async calculateTerrainSurfaces(): Promise<ApiResponse> {
     const response = await fetch(`${this.apiURL}/admin/terrains/calculate-surfaces`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  // Calculer la surface d'un terrain spécifique avec PostGIS
+  async calculateTerrainSurface(terrainId: number): Promise<ApiResponse> {
+    const response = await fetch(`${this.apiURL}/admin/terrains/${terrainId}/calculate-surface`, {
       method: 'POST',
       headers: this.getHeaders(),
     });
@@ -1465,6 +1465,197 @@ class ApiService {
       }),
     });
     return this.handleResponse(response);
+  }
+
+  // Système de fidélité
+  async calculerFidelite(terrainId: number): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/fidelite/calculer/${terrainId}`, {
+        headers: this.getHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur calcul fidélité:', error);
+      throw error;
+    }
+  }
+
+  async appliquerReductionFidelite(data: {
+    terrain_id: number;
+    prix_original: number;
+    type_abonnement: string;
+  }): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/fidelite/appliquer-reduction`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur application réduction:', error);
+      throw error;
+    }
+  }
+
+  async getHistoriqueReductions(): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/fidelite/historique`, {
+        headers: this.getHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur historique réductions:', error);
+      throw error;
+    }
+  }
+
+  // Système de litiges
+  async creerLitige(data: {
+    terrain_id: number;
+    type_litige: string;
+    sujet: string;
+    description: string;
+    priorite: string;
+    reservation_id?: number | null;
+    preuves?: string[];
+  }): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/litiges`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur création litige:', error);
+      throw error;
+    }
+  }
+
+  async getMesLitiges(): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/litiges/mes-litiges`, {
+        headers: this.getHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur récupération litiges:', error);
+      throw error;
+    }
+  }
+
+  async getDetailsLitige(id: number): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/litiges/${id}`, {
+        headers: this.getHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur détails litige:', error);
+      throw error;
+    }
+  }
+
+  async ajouterMessageLitige(id: number, data: {
+    message: string;
+    type_message: string;
+    pieces_jointes?: string[];
+  }): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/litiges/${id}/messages`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur ajout message litige:', error);
+      throw error;
+    }
+  }
+
+  async escaladerLitige(id: number): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/litiges/${id}/escalader`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur escalade litige:', error);
+      throw error;
+    }
+  }
+
+  async fermerLitige(id: number, data: {
+    resolution: string;
+    satisfaction_client?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/litiges/${id}/fermer`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur fermeture litige:', error);
+      throw error;
+    }
+  }
+
+  // Système de tickets/QR codes
+  async getTicket(reservationId: number): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/tickets/reservation/${reservationId}`, {
+        headers: this.getHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur récupération ticket:', error);
+      throw error;
+    }
+  }
+
+  async scanTicket(data: { qr_data: string }): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/tickets/scan`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur scan ticket:', error);
+      throw error;
+    }
+  }
+
+  async validateTicketByCode(data: { code_ticket: string }): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/tickets/validate-code`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur validation code ticket:', error);
+      throw error;
+    }
+  }
+
+  async getValidationsHistory(): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/tickets/validations-history`, {
+        headers: this.getHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('❌ Erreur historique validations:', error);
+      throw error;
+    }
   }
 }
 

@@ -1,1 +1,0 @@
-<?php echo "=== DIAGNOSTIC TERRAIN ===\n"; $api = file_get_contents("http://127.0.0.1:8000/api/terrains"); $data = json_decode($api, true); $terrains = $data['data']['data'] ?? []; echo "Total: " . count($terrains) . "\n"; foreach($terrains as $t) { echo ($t['est_actif'] ? "🟢" : "🔴") . " ID{$t['id']}: {$t['nom']}\n"; } ?> 

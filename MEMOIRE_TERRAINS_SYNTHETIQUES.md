@@ -908,8 +908,6 @@ CREATE INDEX idx_terrains_geom ON terrains_synthetiques_dakar USING GIST(geom);
 - **Description** : Terrain officiel avec installations complètes
 
 **Terrain Sacré Cœur** (Sacré Cœur, Dakar) :
-- **Prix moyen** : 27,500 FCFA/h
-- **Capacité** : 22 joueurs
 - **Tarification détaillée** :
   - **5x5** : 15,000 FCFA/h
   - **8x8** : 30,000 FCFA/h

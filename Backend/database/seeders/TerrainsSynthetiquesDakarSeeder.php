@@ -13,11 +13,11 @@ class TerrainsSynthetiquesDakarSeeder extends Seeder
         $terrains = [
             [
                 'nom' => 'Complexe Be Sport',
-                'description' => 'Complexe Be Sport - 45,000 FCFA/h. Complexe sportif avec plusieurs terrains synthétiques de différentes tailles. Type: Football, Surface: gazon synthétique. Idéal pour les matchs amicaux et les entraînements.',
+                'description' => 'Complexe Be Sport - Tarifs variables selon terrain et jour. Petit terrain : 30,000 FCFA. Grand terrain : 45,000 FCFA (lundi-mercredi), 60,000 FCFA (jeudi-dimanche). Surface gazon synthétique.',
                 'adresse' => 'Route de l\'Aéroport, près de l\'ancien aéroport, Dakar',
                 'latitude' => 14.741066,
                 'longitude' => -17.46907,
-                'prix_heure' => 45000,
+                'prix_heure' => 45000, // Prix moyen du grand terrain
                 'capacite' => 22,
                 'surface' => null,
                 'image_principale' => '/terrain-foot.jpg',
@@ -26,11 +26,11 @@ class TerrainsSynthetiquesDakarSeeder extends Seeder
             ],
             [
                 'nom' => 'Fara Foot',
-                'description' => 'Fara Foot - 35,000 FCFA/h. Terrain synthétique sur la corniche près de Radisson. Un terrain moderne pour le football à 5. Ambiance conviviale garantie.',
+                'description' => 'Fara Foot - Tarifs selon horaires. 8h-15h : 30,000 FCFA/h. 16h-6h : 40,000 FCFA/h. Terrain synthétique sur la corniche près de Radisson.',
                 'adresse' => 'Fann-Point E-Amitié, Corniche, Dakar',
                 'latitude' => 14.697691,
                 'longitude' => -17.47252,
-                'prix_heure' => 35000,
+                'prix_heure' => 35000, // Prix moyen entre jour/nuit
                 'capacite' => 10,
                 'surface' => null,
                 'image_principale' => '/terrain-foot.jpg',
@@ -39,11 +39,11 @@ class TerrainsSynthetiquesDakarSeeder extends Seeder
             ],
             [
                 'nom' => 'Fit Park Academy',
-                'description' => 'Fit Park Academy - 80,000 FCFA/h. Académie de football avec terrains de différentes tailles. Complexe multisports avec terrains de foot de qualité supérieure.',
+                'description' => 'Fit Park Academy - Tarifs selon taille terrain. 4x4/5x5 : 30,000 FCFA. 8x8/9x9 : 80,000 FCFA. 11x11 : 120,000 FCFA. Académie avec terrains multiples.',
                 'adresse' => 'Route de la Corniche Ouest, Magic Land, Fann, Dakar',
                 'latitude' => 14.674941,
                 'longitude' => -17.463753,
-                'prix_heure' => 80000,
+                'prix_heure' => 80000, // Prix terrain 8x8/9x9 (le plus utilisé)
                 'capacite' => 22,
                 'surface' => null,
                 'image_principale' => '/terrain-foot.jpg',
@@ -65,11 +65,11 @@ class TerrainsSynthetiquesDakarSeeder extends Seeder
             ],
             [
                 'nom' => 'Sowfoot',
-                'description' => 'Sowfoot - 27,500 FCFA/h. Complexe sportif avec terrains synthétiques. Terrain de quartier bien entretenu, parfait pour les passionnés.',
+                'description' => 'Sowfoot - Tarifs selon taille et jour. 5x5 : 15,000 FCFA (dimanche 90mn), 20,000 FCFA (vendredi-samedi 1h). 8x8 : 35,000 FCFA (dimanche-jeudi 1h30), 40,000 FCFA (vendredi-samedi 1h). Crampons interdits, tout-terrains seulement.',
                 'adresse' => 'Central Park Avenue Malick Sy X, Autoroute, Dakar',
                 'latitude' => 14.683578,
                 'longitude' => -17.441002,
-                'prix_heure' => 27500,
+                'prix_heure' => 25000, // Prix moyen entre 5x5 et 8x8
                 'capacite' => 18,
                 'surface' => null,
                 'image_principale' => '/terrain-foot.jpg',
@@ -78,11 +78,11 @@ class TerrainsSynthetiquesDakarSeeder extends Seeder
             ],
             [
                 'nom' => 'Stade Deggo',
-                'description' => 'Stade Deggo - 22,500 FCFA/h. Grand terrain avec des installations complètes pour des matchs officiels.',
+                'description' => 'Stade Deggo - 25,000 FCFA/h. Grand terrain avec des installations complètes pour des matchs officiels.',
                 'adresse' => 'Marriste, Dakar',
                 'latitude' => 14.732331,
                 'longitude' => -17.433923,
-                'prix_heure' => 22500,
+                'prix_heure' => 25000,
                 'capacite' => 22,
                 'surface' => null,
                 'image_principale' => '/terrain-foot.jpg',
@@ -91,11 +91,11 @@ class TerrainsSynthetiquesDakarSeeder extends Seeder
             ],
             [
                 'nom' => 'Terrain ASC Jaraaf',
-                'description' => 'Terrain ASC Jaraaf - 16,500 FCFA/h. Terrain historique du club ASC Jaraaf, pelouse synthétique de qualité.',
+                'description' => 'Terrain ASC Jaraaf - 25,000 FCFA/h. Terrain historique du club ASC Jaraaf, pelouse synthétique de qualité.',
                 'adresse' => 'Médina, Dakar',
                 'latitude' => 14.6928,
                 'longitude' => -17.4467,
-                'prix_heure' => 16500,
+                'prix_heure' => 25000,
                 'capacite' => 22,
                 'surface' => null,
                 'image_principale' => '/terrain-foot.jpg',
@@ -117,11 +117,11 @@ class TerrainsSynthetiquesDakarSeeder extends Seeder
             ],
             [
                 'nom' => 'Temple du Foot',
-                'description' => 'Temple du Foot - 42,500 FCFA/h (moyenne). Complexe avec 3 terrains : Anfield, Camp Nou (salle), Old Trafford. Réservation par Wave. Heures creuses (10h-18h) et pleines (18h-23h). Capacité 6x6, 5x5.',
+                'description' => 'Temple du Foot - Tarifs selon horaires. Heures creuses (10h-18h) : 35,000 FCFA. Heures pleines (18h-23h) : 50,000 FCFA. Complexe avec 3 terrains : Anfield, Camp Nou (salle), Old Trafford. Capacité 6x6, 5x5. Réservation par Wave.',
                 'adresse' => 'Dakar',
                 'latitude' => 14.6868,
                 'longitude' => -17.4547,
-                'prix_heure' => 42500,
+                'prix_heure' => 42500, // Prix moyen entre heures creuses et pleines
                 'capacite' => 18,
                 'surface' => null,
                 'image_principale' => '/terrain-foot.jpg',
@@ -143,11 +143,11 @@ class TerrainsSynthetiquesDakarSeeder extends Seeder
             ],
             [
                 'nom' => 'Terrain Sacré Cœur',
-                'description' => 'Terrain Sacré Cœur - 27,500 FCFA/h (moyenne). Centre de loisirs avec terrains de football. Tarifs détaillés : 5x5 (15,000f), 8x8 (30,000f), 10x10 (50,000f), 11x11 (60,000f).',
+                'description' => 'Terrain Sacré Cœur - Tarifs selon taille terrain. 5x5 : 15,000 FCFA. 8x8 : 30,000 FCFA. 10x10 : 50,000 FCFA. 11x11 : 60,000 FCFA. Centre de loisirs avec terrains multiples.',
                 'adresse' => 'Sacré Cœur, Dakar',
                 'latitude' => 14.7136,
                 'longitude' => -17.4635,
-                'prix_heure' => 27500,
+                'prix_heure' => 35000, // Prix moyen entre 8x8 et 10x10 (les plus utilisés)
                 'capacite' => 22,
                 'surface' => null,
                 'image_principale' => '/terrain-foot.jpg',

@@ -20,6 +20,9 @@ use App\Http\Controllers\API\RefundController;
 use App\Http\Controllers\API\ManagerTerrainController;
 use App\Models\TerrainSynthetiquesDakar;
 use App\Models\Reservation;
+use App\Http\Controllers\API\FideliteController;
+use App\Http\Controllers\API\LitigeController;
+use App\Http\Controllers\API\TicketController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,6 +63,9 @@ Route::prefix('terrains')->group(function () {
     Route::get('/{id}', [TerrainController::class, 'show']);
 });
 
+// Routes publiques pour vérification de disponibilité (avant connexion)
+Route::post('/reservations/check-availability', [ReservationController::class, 'checkAvailability']);
+
 // Routes protégées par authentification
 Route::middleware('auth:sanctum')->group(function () {
     
@@ -83,9 +89,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [ReservationController::class, 'destroy']);
         Route::post('/{id}/confirm', [ReservationController::class, 'confirm']);
         Route::post('/{id}/cancel', [ReservationController::class, 'cancel']);
-        
-        // Vérification de disponibilité
-        Route::post('/check-availability', [ReservationController::class, 'checkAvailability']);
     });
 
     // Paiements
@@ -105,7 +108,41 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/recurring', [AbonnementController::class, 'createRecurringSubscription']);
         Route::get('/my-subscriptions', [AbonnementController::class, 'mySubscriptions']);
         Route::post('/cancel/{id}', [AbonnementController::class, 'cancel']);
+        
+        // ✅ Nouvelles routes pour gestionnaires et admins
+        Route::get('/manager/subscriptions', [AbonnementController::class, 'getManagerSubscriptions']);
+        Route::get('/admin/subscriptions', [AbonnementController::class, 'getAdminSubscriptions']);
+        Route::put('/{id}/status', [AbonnementController::class, 'updateSubscriptionStatus']);
     });
+
+    // Système de fidélité
+    Route::prefix('fidelite')->group(function () {
+        Route::get('/calculer/{terrainId}', [FideliteController::class, 'calculerFidelite']);
+        Route::post('/appliquer-reduction', [FideliteController::class, 'appliquerReductionFidelite']);
+        Route::get('/historique', [FideliteController::class, 'historiqueReductions']);
+    });
+
+    // Système de litiges
+    Route::prefix('litiges')->group(function () {
+        Route::post('/', [LitigeController::class, 'creerLitige']);
+        Route::get('/mes-litiges', [LitigeController::class, 'mesLitiges']);
+        Route::get('/{id}', [LitigeController::class, 'detailsLitige']);
+        Route::post('/{id}/messages', [LitigeController::class, 'ajouterMessage']);
+        Route::post('/{id}/escalader', [LitigeController::class, 'escaladerLitige']);
+        Route::post('/{id}/fermer', [LitigeController::class, 'fermerLitige']);
+    });
+
+    // Système de tickets/QR codes
+    Route::prefix('tickets')->group(function () {
+        Route::get('/reservation/{id}', [TicketController::class, 'getTicket']);
+        Route::post('/scan', [TicketController::class, 'scanTicket']);
+        Route::post('/validate-code', [TicketController::class, 'validateByCode']);
+        Route::get('/validations-history', [TicketController::class, 'getValidationsHistory']);
+    });
+
+    // Routes pour les tickets utilisateur
+    Route::get('/user/tickets', [TicketController::class, 'getUserTickets']);
+    Route::get('/tickets/{id}/download', [TicketController::class, 'downloadTicket']);
 
     // Support
     Route::prefix('support')->group(function () {
@@ -216,6 +253,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::post('/terrains/import-kml-batch', [AdminController::class, 'importKMLBatch']);
     Route::get('/terrains/postgis-stats', [AdminController::class, 'getPostGISStats']);
     Route::post('/terrains/calculate-surfaces', [AdminController::class, 'calculateTerrainSurfaces']);
+    Route::post('/terrains/{id}/calculate-surface', [AdminController::class, 'calculateTerrainSurface']);
     Route::get('/finances', [AdminController::class, 'getAdminFinances']);
     Route::get('/disputes', [AdminController::class, 'getAllDisputes']);
     Route::get('/support/tickets', [AdminController::class, 'getAllSupportTickets']);

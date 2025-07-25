@@ -112,74 +112,56 @@ const MapPage: React.FC = () => {
   const terrainsStatiques: Terrain[] = [
       {
         id: 1,
-        nom: "Stade Demba Diop",
-        adresse: "Sicap Liberté, Dakar",
+        nom: "Complexe Be Sport",
+        adresse: "Route de l'Aéroport",
         latitude: 14.6937,
         longitude: -17.4441,
-        prix_heure: 25000,
+        prix_heure: 45000, // Prix correct selon le mémoire
         est_actif: true
       },
       {
         id: 2,
-        nom: "Complexe Sportif Marius Ndiaye",
-        adresse: "Ouakam, Dakar",
+        nom: "Fara Foot",
+        adresse: "Fann-Point E-Amitié",
         latitude: 14.7167,
         longitude: -17.4833,
-        prix_heure: 30000,
+        prix_heure: 35000, // Prix correct selon le mémoire
         est_actif: true
       },
       {
         id: 3,
-        nom: "Terrain ASC Liberté 6",
-        adresse: "Liberté 6, Dakar",
+        nom: "Fit Park Academy",
+        adresse: "Magic Land",
         latitude: 14.6892,
         longitude: -17.4516,
-        prix_heure: 15000,
+        prix_heure: 80000, // Prix correct selon le mémoire
         est_actif: true
       },
       {
         id: 4,
-        nom: "Complexe Be Sport",
-        adresse: "Route de l'Aéroport, Dakar",
-        latitude: 14.7394,
-        longitude: -17.4902,
-        prix_heure: 35000,
+        nom: "Skate Parc",
+        adresse: "Corniche Ouest",
+        latitude: 14.6648,
+        longitude: -17.4381,
+        prix_heure: 30000, // Prix correct selon le mémoire
         est_actif: true
       },
       {
         id: 5,
-        nom: "Terrain Diaraf",
-        adresse: "Diaraf, Dakar",
-        latitude: 14.6648,
-        longitude: -17.4381,
-        prix_heure: 20000,
+        nom: "Sowfoot",
+        adresse: "Central Park Avenue Malick Sy",
+        latitude: 14.7213,
+        longitude: -17.4623,
+        prix_heure: 25000, // Prix de base (options: 15k-40k)
         est_actif: true
       },
       {
         id: 6,
-        nom: "Stade Iba Mar Diop",
-        adresse: "Sicap, Dakar",
-        latitude: 14.6850,
-        longitude: -17.4500,
-        prix_heure: 22000,
-        est_actif: true
-      },
-      {
-        id: 7,
-        nom: "Terrain Mini Foot Premier Projets",
-        adresse: "Keur Massar, Dakar",
+        nom: "Stade Deggo",
+        adresse: "Marriste",
         latitude: 14.7800,
         longitude: -17.3200,
-        prix_heure: 18000,
-        est_actif: true
-      },
-      {
-        id: 8,
-        nom: "TEMPLE DU FOOT DAKAR",
-        adresse: "Plateau, Dakar",
-        latitude: 14.6928,
-        longitude: -17.4467,
-        prix_heure: 40000,
+        prix_heure: 25000, // Prix correct selon le mémoire
         est_actif: true
       }
     ];

@@ -1,4 +1,4 @@
-# Terrains-Synthetiques
+# 🏟️ Terrains Synthétiques Dakar
 
 Application web complète pour la gestion et la réservation de terrains de football synthétiques.
 
@@ -51,7 +51,6 @@ Application web complète pour la gestion et la réservation de terrains de foot
 - Git
 
 ### Installation du Frontend
-
 ```bash
 cd Frontend
 npm install
@@ -59,7 +58,6 @@ npm run dev
 ```
 
 ### Installation du Backend
-
 ```bash
 cd Backend
 composer install
@@ -82,10 +80,10 @@ Utilisez les scripts de démarrage inclus :
 
 ```bash
 # Windows
-start-dev.bat
+.\deploy.ps1 production
 
-# PowerShell
-start-dev.ps1
+# Linux/Mac
+./deploy.sh production
 ```
 
 ## 📁 Structure du Projet
@@ -104,7 +102,11 @@ Terrains-Synthetiques/
 │   │   ├── Models/          # Modèles Eloquent
 │   │   └── Services/        # Services métier
 │   └── database/           # Migrations et seeders
-└── kml/                    # Fichiers KML pour l'import
+├── kml/                    # Fichiers KML pour l'import
+├── images/                 # Images du projet
+├── deploy.sh              # Script de déploiement Linux
+├── deploy.ps1             # Script de déploiement Windows
+└── README.md              # Ce fichier
 ```
 
 ## 🔐 Authentification
@@ -149,4 +151,4 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
 - Équipe de développement
 - Utilisateurs beta testeurs
-- Communauté open source 
+- Communauté open source

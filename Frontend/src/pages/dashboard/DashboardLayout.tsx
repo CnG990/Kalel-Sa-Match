@@ -12,6 +12,8 @@ import {
   Home,
   Menu,
   X,
+  Ticket,
+  AlertTriangle,
 } from 'lucide-react';
 
 const SidebarLink: React.FC<{ 
@@ -75,6 +77,8 @@ const DashboardLayout: React.FC = () => {
     { to: "/dashboard", icon: <LayoutDashboard size={20} />, text: "Aperçu" },
     { to: "/dashboard/profile", icon: <User size={20} />, text: "Mon Profil" },
     { to: "/dashboard/reservations", icon: <Calendar size={20} />, text: "Réservations" },
+    { to: "/dashboard/tickets", icon: <Ticket size={20} />, text: "Mes Tickets" },
+    { to: "/dashboard/litiges", icon: <AlertTriangle size={20} />, text: "Mes Litiges" },
     { to: "/dashboard/map", icon: <Map size={20} />, text: "Carte" },
     { to: "/dashboard/settings", icon: <Settings size={20} />, text: "Paramètres" },
   ];
