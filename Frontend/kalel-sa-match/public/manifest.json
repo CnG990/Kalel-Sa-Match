@@ -17,5 +17,19 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Voir les terrains",
+      "short_name": "Terrains",
+      "description": "Voir tous les terrains disponibles",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
   ]
 } 
