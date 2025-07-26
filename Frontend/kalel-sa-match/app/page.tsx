@@ -233,18 +233,7 @@ export default function HomePage() {
               </div>
             </Link>
             <div className="flex space-x-4">
-              <Link 
-                href="/connexion" 
-                className="text-gray-700 hover:text-kalel-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100"
-              >
-                Connexion
-              </Link>
-              <Link 
-                href="/inscription" 
-                className="bg-gradient-kalel-primary hover:bg-kalel-primary-dark text-white px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                Inscription
-              </Link>
+              {/* Navigation simplifiée - boutons supprimés */}
             </div>
           </div>
         </div>
@@ -277,26 +266,7 @@ export default function HomePage() {
                 Simple, rapide et sécurisé avec paiement mobile money.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <Link
-                  href="/inscription"
-                  className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-kalel-secondary hover:bg-kalel-secondary-dark transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Commencer maintenant
-                </Link>
-                <Link
-                  href="/connexion"
-                  className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-base font-medium rounded-lg text-white bg-transparent hover:bg-white hover:text-kalel-primary transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  Se connecter
-                </Link>
-              </div>
+              {/* Boutons d'action supprimés pour une interface plus épurée */}
 
               {/* Statistiques simplifiées */}
               <div className="grid grid-cols-3 gap-6 mt-8 max-w-md mx-auto">
@@ -357,17 +327,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-6 leading-relaxed">
                 Inscrivez-vous gratuitement en quelques clics. Renseignez vos informations et votre profil sera créé instantanément.
               </p>
-              <div className="flex justify-center">
-                <Link
-                  href="/inscription"
-                  className="inline-flex items-center px-6 py-3 bg-kalel-primary hover:bg-kalel-primary-dark text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  S'inscrire maintenant
-                </Link>
-              </div>
+              {/* Bouton d'inscription supprimé */}
             </div>
 
             {/* Étape 2 */}
@@ -442,26 +402,7 @@ export default function HomePage() {
               <p className="text-xl mb-8 opacity-90">
                 Rejoignez des milliers de joueurs qui font confiance à Kalèl sa Match
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/inscription"
-                  className="inline-flex items-center px-8 py-4 bg-white text-kalel-primary rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Créer mon compte gratuitement
-                </Link>
-                <Link
-                  href="/connexion"
-                  className="inline-flex items-center px-8 py-4 border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-kalel-primary transition-all duration-200"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  J'ai déjà un compte
-                </Link>
-              </div>
+              {/* Boutons d'action supprimés pour une interface épurée */}
             </div>
           </div>
         </div>
