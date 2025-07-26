@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Configuration de base pour l'API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://b0385fbb1e44.ngrok-free.app/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kalel-sa-match-api.loca.lt/api';
 
 // Configuration d'axios avec intercepteurs
 const apiClient = axios.create({

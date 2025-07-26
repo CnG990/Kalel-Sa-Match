@@ -75,7 +75,7 @@ const MapPageDebug: React.FC = () => {
     try {
       addLog('📡 Appel API terrains...');
       
-              const response = await fetch('https://b0385fbb1e44.ngrok-free.app/api/terrains/all-for-map');
+              const response = await fetch('https://kalel-sa-match-api.loca.lt/api/terrains/all-for-map');
       addLog(`📡 Réponse API: ${response.status}`);
 
       if (!response.ok) {
