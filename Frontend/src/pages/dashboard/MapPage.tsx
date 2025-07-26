@@ -519,7 +519,7 @@ const MapPage: React.FC = () => {
         addDebugInfo('🌐 Tentative connexion API...');
         const startTime = Date.now();
         
-                 const response = await fetch('https://kalel-sa-match-backend.onrender.com/api/terrains/all-for-map', {
+                 const response = await fetch('https://b0385fbb1e44.ngrok-free.app/api/terrains/all-for-map', {
            method: 'GET',
            headers: {
              'Accept': 'application/json',
