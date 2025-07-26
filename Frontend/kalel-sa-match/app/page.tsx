@@ -13,6 +13,9 @@ export default function HomePage() {
   // Force redeploy - Updated API endpoint
   const API_URL = 'https://kalel-sa-match-api.loca.lt/api';
   
+  // Force redeploy - Remove old ngrok URL completely
+  const OLD_NGROK_URL = 'https://ad07ffba09ee.ngrok-free.app/api'; // DEPRECATED
+  
   const [terrains, setTerrains] = useState<Terrain[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
