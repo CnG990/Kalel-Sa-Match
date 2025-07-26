@@ -36,6 +36,19 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: false,
       },
+      // Redirections pour toutes les routes non trouvées
+      {
+        source: '/:path*',
+        destination: '/',
+        permanent: false,
+        has: [
+          {
+            type: 'header',
+            key: 'accept',
+            value: '(?!.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$).*',
+          },
+        ],
+      },
     ]
   },
   env: {
