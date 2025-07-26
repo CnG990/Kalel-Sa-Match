@@ -1,70 +1,55 @@
-# Dependencies
+# Fichiers temporaires
+*.tmp
+*.temp
+*.log
+
+# Fichiers de développement
+test-*.php
+start-*.php
+use-existing-ngrok.php
+check-frontend-simple.php
+
+# Fichiers ngrok
+ngrok.exe
+ngrok.zip
+*.bat
+
+# Fichiers PowerShell temporaires
+*.ps1
+
+# Fichiers de configuration locale
+.env.local
+.env.backup
+
+# Fichiers de cache
+*.cache
+
+# Fichiers de logs
+logs/
+*.log
+
+# Fichiers de sauvegarde
+*.bak
+*.backup
+
+# Fichiers de développement Laravel
+Backend/storage/logs/*
+Backend/bootstrap/cache/*
+
+# Fichiers de dépendances
 node_modules/
 vendor/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Production builds
-Frontend/dist/
-Frontend/build/
+# Fichiers système
+.DS_Store
+Thumbs.db
 
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# IDE files
+# Fichiers IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Cache
-.cache/
-*.cache
-
-# Temporary files
-*.tmp
-*.temp
-
-# Backup files
-backup_*/
-
-# Laravel specific
-Backend/storage/framework/cache/*
-Backend/storage/framework/sessions/*
-Backend/storage/framework/views/*
-Backend/storage/logs/*.log
-
-# Keep empty directories
-!Backend/storage/framework/cache/.gitkeep
-!Backend/storage/framework/sessions/.gitkeep
-!Backend/storage/framework/views/.gitkeep
-!Backend/storage/logs/.gitkeep
-
-# Database
-*.sqlite
-*.db
-
-# Uploads
-Backend/storage/app/public/uploads/*
-!Backend/storage/app/public/uploads/.gitkeep
-
-# Testing
-coverage/
-.nyc_output/
-
-# Misc
-*.tgz
-*.tar.gz
+# Fichiers de test
+tests/
+test/
