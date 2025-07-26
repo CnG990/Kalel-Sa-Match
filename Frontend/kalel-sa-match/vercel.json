@@ -52,5 +52,5 @@
       ]
     }
   ],
-  "comment": "API URL updated to localtunnel - Force redeploy - Remove old ngrok URL completely"
+  "comment": "API URL updated to localtunnel - Force redeploy - Remove old ngrok URL completely - Cache busting added"
 } 

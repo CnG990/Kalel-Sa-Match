@@ -24,6 +24,10 @@ export default function HomePage() {
   const FORCE_API_URL = 'https://kalel-sa-match-api.loca.lt/api';
   console.log(`🔧 Force API URL: ${FORCE_API_URL}`);
   
+  // Force redeploy - Add cache busting parameter
+  const CACHE_BUST = `?v=${TIMESTAMP}`;
+  console.log(`🔄 Cache bust: ${CACHE_BUST}`);
+  
   const [terrains, setTerrains] = useState<Terrain[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
