@@ -23,6 +23,9 @@ use App\Models\Reservation;
 use App\Http\Controllers\API\FideliteController;
 use App\Http\Controllers\API\LitigeController;
 use App\Http\Controllers\API\TicketController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -426,6 +429,97 @@ Route::get('/test-cors', function () {
         'cors' => 'working',
         'message' => 'CORS fonctionne correctement'
     ]);
+});
+
+// Routes de diagnostic pour Render
+Route::get('/test-db', function () {
+    try {
+        DB::connection()->getPdo();
+        return response()->json([
+            'status' => 'OK',
+            'message' => 'Base de données accessible',
+            'connection' => config('database.default'),
+            'database' => config('database.connections.pgsql.database')
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'status' => 'ERROR',
+            'message' => 'Erreur de connexion à la base de données',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::get('/test-table/{table}', function ($table) {
+    try {
+        $exists = Schema::hasTable($table);
+        $count = $exists ? DB::table($table)->count() : 0;
+        
+        return response()->json([
+            'table' => $table,
+            'exists' => $exists,
+            'count' => $count,
+            'status' => $exists ? 'OK' : 'MISSING'
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'table' => $table,
+            'exists' => false,
+            'error' => $e->getMessage(),
+            'status' => 'ERROR'
+        ], 500);
+    }
+});
+
+Route::post('/force-migrate', function () {
+    try {
+        // Exécuter les migrations
+        Artisan::call('migrate', ['--force' => true]);
+        
+        // Vérifier les tables créées
+        $tables = ['users', 'terrains_synthetiques_dakar', 'reservations', 'abonnements', 'paiements'];
+        $results = [];
+        
+        foreach ($tables as $table) {
+            $exists = Schema::hasTable($table);
+            $results[$table] = $exists;
+        }
+        
+        return response()->json([
+            'status' => 'OK',
+            'message' => 'Migrations exécutées avec succès',
+            'tables' => $results
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'status' => 'ERROR',
+            'message' => 'Erreur lors des migrations',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::get('/migration-status', function () {
+    try {
+        $migrations = DB::table('migrations')->get();
+        $tables = ['users', 'terrains_synthetiques_dakar', 'reservations', 'abonnements', 'paiements'];
+        $tableStatus = [];
+        
+        foreach ($tables as $table) {
+            $tableStatus[$table] = Schema::hasTable($table);
+        }
+        
+        return response()->json([
+            'migrations_count' => $migrations->count(),
+            'tables_status' => $tableStatus,
+            'database' => config('database.connections.pgsql.database')
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'status' => 'ERROR'
+        ], 500);
+    }
 });
 
 // QR Code routes
