@@ -117,12 +117,24 @@ export class TerrainService {
 
   public async getAllTerrains(params?: TerrainSearchParams): Promise<Terrain[]> {
     try {
-      const response: AxiosResponse<TerrainResponse> = await apiClient.get('/terrains', {
+      // Utiliser l'endpoint all-for-map qui fonctionne correctement
+      const response: AxiosResponse<TerrainResponse> = await apiClient.get('/terrains/all-for-map', {
         params
       });
       
       if (response.data.success) {
-        return response.data.data.terrains;
+        // L'API all-for-map retourne directement les terrains dans data
+        const terrainsData = response.data.data;
+        
+        // Vérifier si terrainsData est un tableau
+        if (Array.isArray(terrainsData)) {
+          return terrainsData;
+        } else if (terrainsData && terrainsData.terrains && Array.isArray(terrainsData.terrains)) {
+          return terrainsData.terrains;
+        } else {
+          console.warn('⚠️ Format de données inattendu:', terrainsData);
+          return [];
+        }
       }
       
       throw new Error(response.data.message || 'Erreur lors de la récupération des terrains');

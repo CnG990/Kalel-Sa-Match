@@ -53,7 +53,7 @@ export default function HomePage() {
         setLoading(true)
         setError(null)
         const terreainsData = await terrainService.getAllTerrains({
-          per_page: 6 // Afficher seulement 6 terrains sur la page d'accueil
+          // Afficher tous les terrains disponibles
         })
         setTerrains(terreainsData)
       } catch (err) {
