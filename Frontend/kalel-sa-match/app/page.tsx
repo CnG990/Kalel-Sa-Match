@@ -16,6 +16,10 @@ export default function HomePage() {
   // Force redeploy - Remove old ngrok URL completely
   const OLD_NGROK_URL = 'https://ad07ffba09ee.ngrok-free.app/api'; // DEPRECATED
   
+  // Force redeploy - Add timestamp to force cache busting
+  const TIMESTAMP = Date.now();
+  console.log(`🕐 Timestamp: ${TIMESTAMP} - Force redeploy`);
+  
   const [terrains, setTerrains] = useState<Terrain[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
