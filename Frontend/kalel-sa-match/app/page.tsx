@@ -20,6 +20,10 @@ export default function HomePage() {
   const TIMESTAMP = Date.now();
   console.log(`🕐 Timestamp: ${TIMESTAMP} - Force redeploy`);
   
+  // Force redeploy - Add explicit API URL override
+  const FORCE_API_URL = 'https://kalel-sa-match-api.loca.lt/api';
+  console.log(`🔧 Force API URL: ${FORCE_API_URL}`);
+  
   const [terrains, setTerrains] = useState<Terrain[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
