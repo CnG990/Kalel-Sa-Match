@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $middleware->api(append: [
             \Illuminate\Http\Middleware\HandleCors::class,
+            \App\Http\Middleware\CorsMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

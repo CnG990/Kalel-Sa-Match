@@ -21,6 +21,21 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: false,
       },
+      {
+        source: '/dashboard/map/',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/terrains/',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/dashboard/',
+        destination: '/',
+        permanent: false,
+      },
     ]
   },
   env: {

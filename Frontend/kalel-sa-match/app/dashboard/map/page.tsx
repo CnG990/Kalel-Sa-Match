@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function MapPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Rediriger vers la page d'accueil car la carte n'est pas encore implémentée
-    router.push('/');
-  }, [router]);
+    // Redirection immédiate
+    window.location.href = '/';
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -20,6 +19,14 @@ export default function MapPage() {
         <p className="text-sm text-gray-500 mt-2">
           Cette fonctionnalité sera bientôt disponible
         </p>
+        <div className="mt-4">
+          <a 
+            href="/" 
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            Cliquez ici si la redirection ne fonctionne pas
+          </a>
+        </div>
       </div>
     </div>
   );
