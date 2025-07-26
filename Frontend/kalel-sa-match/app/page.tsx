@@ -28,6 +28,10 @@ export default function HomePage() {
   const CACHE_BUST = `?v=${TIMESTAMP}`;
   console.log(`🔄 Cache bust: ${CACHE_BUST}`);
   
+  // Force redeploy - Add explicit terrain count override
+  const EXPECTED_TERRAIN_COUNT = 12;
+  console.log(`🎯 Expected terrain count: ${EXPECTED_TERRAIN_COUNT}`);
+  
   const [terrains, setTerrains] = useState<Terrain[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
