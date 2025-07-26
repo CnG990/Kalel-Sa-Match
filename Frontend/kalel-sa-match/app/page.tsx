@@ -7,6 +7,9 @@ import { terrainService, Terrain } from './services/terrain'
 import Logo from './components/Logo'
 
 export default function HomePage() {
+  // Force Vercel redeploy - API URL updated to localtunnel
+  console.log('🚀 Kalel Sa Match - API: https://kalel-sa-match-api.loca.lt/api');
+  
   const [terrains, setTerrains] = useState<Terrain[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
