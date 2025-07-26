@@ -75,7 +75,7 @@ const MapPageDebug: React.FC = () => {
     try {
       addLog('📡 Appel API terrains...');
       
-      const response = await fetch('http://127.0.0.1:8000/api/terrains/all-for-map');
+      const response = await fetch('https://ad07ffba09ee.ngrok-free.app/api/terrains/all-for-map');
       addLog(`📡 Réponse API: ${response.status}`);
 
       if (!response.ok) {
