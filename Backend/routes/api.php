@@ -50,6 +50,20 @@ Route::get('/status', function () {
     ]);
 });
 
+// Route de test CORS spécifique
+Route::options('/cors-test', function () {
+    return response('', 200);
+});
+
+Route::post('/cors-test', function () {
+    return response()->json([
+        'status' => 'CORS OK',
+        'message' => 'Test CORS réussi',
+        'timestamp' => now(),
+        'headers' => request()->headers->all()
+    ]);
+});
+
 // Routes d'authentification (publiques)
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);

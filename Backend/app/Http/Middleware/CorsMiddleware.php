@@ -9,19 +9,20 @@ class CorsMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        $response = $next($request);
+        // Ne traiter que les requêtes non-OPTIONS (Laravel gère les OPTIONS)
+        if ($request->isMethod('OPTIONS')) {
+            return $next($request);
+        }
 
+        // Pour les autres requêtes, traiter normalement puis ajouter les headers CORS
+        $response = $next($request);
+        
         // Headers CORS pour toutes les requêtes
         $response->headers->set('Access-Control-Allow-Origin', 'https://kalel-sa-match.vercel.app');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Requested-With');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
-
-        // Gestion spéciale des requêtes OPTIONS (preflight)
-        if ($request->isMethod('OPTIONS')) {
-            $response->setStatusCode(200);
-            $response->setContent('');
-        }
+        $response->headers->set('Access-Control-Max-Age', '86400');
 
         return $response;
     }
