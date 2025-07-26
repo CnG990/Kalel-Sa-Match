@@ -38,7 +38,7 @@ const TerrainImagesManager: React.FC<TerrainImagesManagerProps> = ({
   const [images, setImages] = useState<TerrainImage[]>(() => {
     return existingImages.map((url, index) => ({
       id: `existing_${index}`,
-              url: url.startsWith('http') ? url : `https://ad07ffba09ee.ngrok-free.app/storage/${url}`,
+              url: url.startsWith('http') ? url : `https://b0385fbb1e44.ngrok-free.app/storage/${url}`,
       isPrimary: index === 0
     }));
   });

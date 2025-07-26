@@ -35,7 +35,7 @@ const RegisterClientPage: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await fetch('https://ad07ffba09ee.ngrok-free.app/api/auth/register', {
+              const response = await fetch('https://b0385fbb1e44.ngrok-free.app/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

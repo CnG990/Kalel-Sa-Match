@@ -71,7 +71,7 @@ const TerrainInfoPage: React.FC = () => {
   const loadTerrainInfo = async () => {
     try {
       // Ajouter cache-busting pour s'assurer d'avoir les données fraîches
-      const response = await fetch(`https://ad07ffba09ee.ngrok-free.app/api/terrains/${id}?_=${Date.now()}`);
+              const response = await fetch(`https://b0385fbb1e44.ngrok-free.app/api/terrains/${id}?_=${Date.now()}`);
       const data = await response.json();
       if (data.success) {
         console.log('Terrain data loaded:', data.data); // Debug
@@ -85,7 +85,7 @@ const TerrainInfoPage: React.FC = () => {
   const loadCreneaux = async () => {
     if (!terrain || !id) return;
     try {
-      const response = await fetch(`https://ad07ffba09ee.ngrok-free.app/api/terrains/check-availability?terrain_id=${id}&date=${selectedDate}&duree_heures=1`);
+              const response = await fetch(`https://b0385fbb1e44.ngrok-free.app/api/terrains/check-availability?terrain_id=${id}&date=${selectedDate}&duree_heures=1`);
       const data = await response.json();
       if (data.success) {
         // Obtenir l'heure actuelle complète

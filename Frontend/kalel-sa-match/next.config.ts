@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
     ]
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://ad07ffba09ee.ngrok-free.app/api',
+            NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://b0385fbb1e44.ngrok-free.app/api',
   },
 }
 
