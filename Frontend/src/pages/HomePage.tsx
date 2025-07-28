@@ -17,36 +17,7 @@ const HomePage: React.FC = () => {
             <p className="text-xl md:text-2xl mb-8 text-green-100">
               Réservez facilement les meilleurs terrains synthétiques de la capitale
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {/* Carte autonome - FONCTIONNE SANS AUTH */}
-              <button
-                onClick={() => window.open('/dashboard/map', '_blank')}
-                className="bg-white text-green-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 flex items-center space-x-3 justify-center"
-              >
-                <MapPin className="w-6 h-6" />
-                <span>🗺️ Voir la carte des terrains</span>
-                <ExternalLink className="w-5 h-5" />
-              </button>
-              
-              <Link
-                to="/terrains"
-                className="bg-green-500 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-green-400 flex items-center space-x-3 justify-center"
-              >
-                <span>📋 Liste des terrains</span>
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-
-            {/* Status info */}
-            <div className="mt-8 inline-flex items-center space-x-4 bg-white bg-opacity-20 rounded-lg px-6 py-3">
-              <div className="text-sm font-medium">
-                ✅ 8 terrains disponibles
-              </div>
-              <div className="text-sm font-medium">
-                🚀 Port 5174 • API Port 8000
-              </div>
-            </div>
+            {/* Les boutons et infos ont été retirés ici */}
           </div>
         </div>
       </section>
