@@ -109,56 +109,58 @@ Merci !`;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-orange-500 via-orange-600 to-green-600 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex justify-center mb-8">
-                         <img 
-               src="/logo sans background.png" 
-               alt="Kalel Sa Match Logo" 
-               className="w-32 h-32 object-contain"
-             />
-          </div>
-          <h1 className="text-5xl font-bold mb-6">
-            Kalel Sa Match
-          </h1>
-          <p className="text-xl mb-8 max-w-3xl mx-auto">
-            La solution complète de gestion et réservation de terrains de football synthétiques au Sénégal
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors flex items-center space-x-2"
-            >
-              <Play className="w-5 h-5" />
-              <span>Voir la démo</span>
-            </button>
-            <button 
-              onClick={() => document.getElementById('catalogue-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-colors"
-            >
-              Télécharger le catalogue
-            </button>
-          </div>
-        </div>
-      </section>
+                    {/* Hero Section */}
+       <section className="bg-gradient-to-br from-orange-500 via-orange-600 to-green-600 text-white py-20 relative overflow-hidden">
+         <div className="container mx-auto px-4 text-center relative z-10">
+           <div className="flex justify-center mb-8">
+             <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 shadow-2xl">
+               <img 
+                 src="/logo sans background.png" 
+                 alt="Kalel Sa Match Logo" 
+                 className="w-40 h-40 object-contain drop-shadow-lg"
+               />
+             </div>
+           </div>
+           <h1 className="text-6xl font-bold mb-6 drop-shadow-lg">
+             Kalel Sa Match
+           </h1>
+           <p className="text-xl mb-8 max-w-3xl mx-auto opacity-95">
+             La solution complète de gestion et réservation de terrains de football synthétiques au Sénégal
+           </p>
+           <div className="flex flex-col sm:flex-row gap-6 justify-center">
+             <button 
+               onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth' })}
+               className="bg-white text-orange-600 px-8 py-4 rounded-xl font-semibold hover:bg-orange-50 transition-all duration-300 flex items-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105"
+             >
+               <Play className="w-6 h-6" />
+               <span>Voir la démo</span>
+             </button>
+             <button 
+               onClick={() => document.getElementById('catalogue-section')?.scrollIntoView({ behavior: 'smooth' })}
+               className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+             >
+               Télécharger le catalogue
+             </button>
+           </div>
+         </div>
+       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
-            Fonctionnalités principales
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-green-500 rounded-lg flex items-center justify-center mb-6">
-                <Calendar className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-4 text-gray-800">Réservation en ligne</h3>
-              <p className="text-gray-600">
-                Système de réservation 24/7 avec calendrier interactif et confirmation instantanée
-              </p>
-            </div>
+             {/* Features Section */}
+       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
+         <div className="container mx-auto px-4">
+           <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
+             Fonctionnalités principales
+           </h2>
+           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                         <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 border border-gray-100">
+               <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-green-500 rounded-lg flex items-center justify-center mb-6 shadow-lg">
+                 <Calendar className="w-8 h-8 text-white" />
+               </div>
+               <h3 className="text-xl font-semibold mb-4 text-gray-800">Réservation en ligne</h3>
+               <p className="text-gray-600">
+                 Système de réservation 24/7 avec calendrier interactif et confirmation instantanée
+               </p>
+             </div>
 
             <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-green-500 rounded-lg flex items-center justify-center mb-6">
@@ -213,8 +215,8 @@ Merci !`;
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20 bg-white">
+             {/* Benefits Section */}
+       <section className="py-20 bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
             Avantages pour votre entreprise
@@ -274,8 +276,8 @@ Merci !`;
         </div>
       </section>
 
-      {/* Technical Specs */}
-      <section className="py-20 bg-gray-50">
+             {/* Technical Specs */}
+       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
             Spécifications techniques
@@ -313,8 +315,8 @@ Merci !`;
         </div>
       </section>
 
-      {/* Catalogue Download Section */}
-      <section id="catalogue-section" className="py-20 bg-white">
+             {/* Catalogue Download Section */}
+       <section id="catalogue-section" className="py-20 bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
             Télécharger le catalogue
@@ -397,8 +399,8 @@ Merci !`;
         </div>
       </section>
 
-      {/* Demo Request Section */}
-      <section id="demo-section" className="py-20 bg-gray-50">
+             {/* Demo Request Section */}
+       <section id="demo-section" className="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
             Recevoir une démo
@@ -558,15 +560,15 @@ Merci !`;
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="py-20 bg-white">
+             {/* Contact Section */}
+       <section className="py-20 bg-gradient-to-br from-orange-500 via-orange-600 to-green-600 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-8 text-gray-800">
-            Prêt à commencer ?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Contactez-nous dès aujourd'hui pour découvrir comment Kalel Sa Match peut transformer la gestion de vos terrains
-          </p>
+                     <h2 className="text-4xl font-bold mb-8 text-white">
+             Prêt à commencer ?
+           </h2>
+           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+             Contactez-nous dès aujourd'hui pour découvrir comment Kalel Sa Match peut transformer la gestion de vos terrains
+           </p>
           <button 
             onClick={handleContactUs}
             className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-colors"
