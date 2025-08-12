@@ -65,6 +65,9 @@ import GeoImportPage from './pages/admin/GeoImportPage';
 // Test page
 import AdminTestPage from './pages/AdminTestPage';
 
+// Catalogue page
+import CataloguePage from './pages/catalogue/CataloguePage';
+
 // Composant de redirection intelligente
 const SmartRedirect = () => {
   const { user, isLoading } = useAuth();
@@ -121,6 +124,9 @@ function App() {
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
+
+          {/* Catalogue Route - Public */}
+          <Route path="/catalogue" element={<CataloguePage />} />
 
           {/* Dashboard Routes (Client uniquement) */}
           <Route 
