@@ -114,7 +114,7 @@ Merci !`;
         <div className="container mx-auto px-4 text-center">
           <div className="flex justify-center mb-8">
                          <img 
-               src="/logo.png" 
+               src="/logo sans background.png" 
                alt="Kalel Sa Match Logo" 
                className="w-32 h-32 object-contain"
              />
