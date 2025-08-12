@@ -113,11 +113,11 @@ Merci !`;
       <section className="bg-gradient-to-br from-orange-500 via-orange-600 to-green-600 text-white py-20">
         <div className="container mx-auto px-4 text-center">
           <div className="flex justify-center mb-8">
-            <img 
-              src="/logo sans background.png" 
-              alt="Kalel Sa Match Logo" 
-              className="w-32 h-32 object-contain"
-            />
+                         <img 
+               src="/logo.png" 
+               alt="Kalel Sa Match Logo" 
+               className="w-32 h-32 object-contain"
+             />
           </div>
           <h1 className="text-5xl font-bold mb-6">
             Kalel Sa Match
