@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { X, Calendar, Clock, CreditCard, AlertTriangle, Repeat } from 'lucide-react';
 import apiService from '../services/api';
 import toast from 'react-hot-toast';
-
-import type { TerrainOption } from '../types/terrainTypes';
 
 interface RecurringSubscriptionModalProps {
   isOpen: boolean;
@@ -12,12 +9,10 @@ interface RecurringSubscriptionModalProps {
   terrainId?: number;
   terrainNom?: string;
   prixHeure?: number;
-  selectedOption?: TerrainOption | null;
   onSuccess?: () => void;
 }
 
-// Jours de la semaine générés dynamiquement (plus maintenable)
-const getJoursSemaine = () => [
+const JOURS_SEMAINE = [
   { id: 1, nom: 'Lundi', short: 'L' },
   { id: 2, nom: 'Mardi', short: 'M' },
   { id: 3, nom: 'Mercredi', short: 'M' },
@@ -33,10 +28,8 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
   terrainId,
   terrainNom,
   prixHeure = 0,
-  selectedOption = null,
   onSuccess
 }) => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
@@ -58,9 +51,6 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
     acompte: 0,
     coutParSeance: 0,
   });
-
-  // Utiliser la fonction pour obtenir les jours de la semaine
-  const JOURS_SEMAINE = getJoursSemaine();
 
   // Détection mobile
   useEffect(() => {
@@ -106,34 +96,12 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
   }, [formData, prixHeure]);
 
   const handleJourToggle = (jourId: number) => {
-    // ✅ VALIDATION DES CONTRAINTES TERRAIN
-    if (selectedOption?.allowedDays && !selectedOption.allowedDays.includes(jourId)) {
-      const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-      const allowedDayNames = selectedOption.allowedDays.map(d => dayNames[d]).join(', ');
-      toast.error(`Cette option n'est disponible que : ${allowedDayNames}`);
-      return;
-    }
-
     setFormData(prev => ({
       ...prev,
       jours_semaine: prev.jours_semaine.includes(jourId)
         ? prev.jours_semaine.filter(id => id !== jourId)
         : [...prev.jours_semaine, jourId]
     }));
-  };
-
-  // ✅ VALIDATION DES HEURES
-  const validateTimeConstraints = (time: string): boolean => {
-    if (!selectedOption?.allowedHours || !time) return true;
-    
-    const hour = parseInt(time.split(':')[0]);
-    const { start, end } = selectedOption.allowedHours;
-    
-    if (hour < start || hour > end) {
-      toast.error(`Cette option n'est disponible que de ${start}h à ${end}h`);
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -162,77 +130,27 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
     setLoading(true);
     
     try {
-      // ✅ CALCUL DES CHAMPS MANQUANTS
-      const dureeSeance = formData.heure_fin && formData.heure_debut ? 
-        (new Date(`1970-01-01T${formData.heure_fin}`).getTime() - 
-         new Date(`1970-01-01T${formData.heure_debut}`).getTime()) / (1000 * 60 * 60) : 1;
-      
-      const nbSeances = formData.jours_semaine.length;
-      
       const response = await apiService.createRecurringSubscription({
         terrain_id: terrainId,
         ...formData,
-        // ✅ AJOUT DES CHAMPS REQUIS
-        nb_seances: nbSeances,
-        duree_seance: dureeSeance,
-        prix_total: calculatedValues.coutTotal,
       });
 
       if (response.success) {
-        // ✅ Redirection directe vers la page de paiement sans popup
-        navigate('/payment', {
-          state: {
-            subscriptionDetails: {
-              // ✅ Données de base de l'abonnement récurrent
-              subscriptionId: response.data.id,
-              terrainName: terrainNom,
-              abonnementType: `Abonnement ${formData.type_recurrence}`,
-              abonnementDescription: `Abonnement ${formData.type_recurrence} - ${formData.jours_semaine.length} jour(s) par semaine`,
-              price: response.data.prix_total,
-              originalPrice: calculatedValues.coutTotal,
-              
-              // ✅ Détails des séances
-              sessionsPerWeek: formData.jours_semaine.length,
-              sessionDuration: dureeSeance,
-              totalSessions: calculatedValues.nombreSeances,
-              
-              // ✅ Dates et durée
-              date_debut: formData.date_debut,
-              date_fin: formData.date_fin,
-              duration: Math.ceil((new Date(formData.date_fin).getTime() - new Date(formData.date_debut).getTime()) / (1000 * 60 * 60 * 24)),
-              
-              // ✅ Configuration récurrente
-              type_recurrence: formData.type_recurrence,
-              jours_semaine: formData.jours_semaine,
-              heure_debut: formData.heure_debut,
-              heure_fin: formData.heure_fin,
-              duree_seance: dureeSeance,
-              nb_seances: nbSeances,
-              
-              // ✅ Calculs détaillés
-              coutParSeance: calculatedValues.coutParSeance,
-              nombreSeances: calculatedValues.nombreSeances,
-              acompte: calculatedValues.acompte,
-              
-              // ✅ Options de paiement
-              paymentOptions: {
-                immediate: {
-                  montant: response.data.prix_total,
-                  description: 'Paiement intégral immédiat'
-                },
-                per_match: {
-                  montant_par_match: Math.round(calculatedValues.coutParSeance),
-                  description: 'Paiement à chaque utilisation'
-                }
-              },
-              
-              // ✅ Statut et instructions
-              statut: response.data.statut,
-              instructions: `Abonnement ${formData.type_recurrence} - ${calculatedValues.nombreSeances} séances programmées`
-            }
-          }
-        });
+        toast.success('Abonnement récurrent créé avec succès !');
+        onSuccess?.();
         onClose();
+        
+        // Reset form
+        setFormData({
+          type_recurrence: 'hebdomadaire',
+          jours_semaine: [],
+          heure_debut: '',
+          heure_fin: '',
+          date_debut: '',
+          date_fin: '',
+          mode_paiement: 'acompte',
+          pourcentage_acompte: 40,
+        });
       } else {
         toast.error(response.message || 'Erreur lors de la création');
       }
@@ -315,55 +233,23 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
               📆 Jours de la semaine
             </label>
             <div className={`gap-2 ${isMobile ? 'grid grid-cols-4' : 'grid grid-cols-7'}`}>
-              {JOURS_SEMAINE.map(jour => {
-                const isAllowed = !selectedOption?.allowedDays || selectedOption.allowedDays.includes(jour.id);
-                const isSelected = formData.jours_semaine.includes(jour.id);
-                
-                return (
-                  <button
-                    key={jour.id}
-                    type="button"
-                    onClick={() => handleJourToggle(jour.id)}
-                    disabled={!isAllowed}
-                    className={`touch-target rounded-lg font-medium transition-colors ${
-                      isMobile ? 'py-3 text-sm' : 'py-2 px-3'
-                    } ${
-                      !isAllowed 
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                        : isSelected
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    title={!isAllowed ? 'Jour non autorisé pour cette option' : ''}
-                  >
-                    {isMobile ? jour.short : jour.nom}
-                  </button>
-                );
-              })}
+              {JOURS_SEMAINE.map(jour => (
+                <button
+                  key={jour.id}
+                  type="button"
+                  onClick={() => handleJourToggle(jour.id)}
+                  className={`touch-target rounded-lg font-medium transition-colors ${
+                    isMobile ? 'py-3 text-sm' : 'py-2 px-3'
+                  } ${
+                    formData.jours_semaine.includes(jour.id)
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {isMobile ? jour.short : jour.nom}
+                </button>
+              ))}
             </div>
-            
-            {/* ✅ AFFICHAGE DES CONTRAINTES */}
-            {selectedOption?.allowedDays && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <span className="font-medium">Contrainte terrain :</span> Cette option n'est disponible que certains jours
-                </p>
-              </div>
-            )}
-            
-            {selectedOption?.restrictions && selectedOption.restrictions.length > 0 && (
-              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800 font-medium mb-1">Restrictions :</p>
-                <ul className="text-sm text-amber-700 space-y-1">
-                  {selectedOption.restrictions.map((restriction, index) => (
-                    <li key={index} className="flex items-center">
-                      <span className="w-1.5 h-1.5 bg-amber-600 rounded-full mr-2"></span>
-                      {restriction}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
 
           {/* Horaires */}
@@ -375,11 +261,7 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
               <input
                 type="time"
                 value={formData.heure_debut}
-                onChange={(e) => {
-                  if (validateTimeConstraints(e.target.value)) {
-                    setFormData(prev => ({ ...prev, heure_debut: e.target.value }));
-                  }
-                }}
+                onChange={(e) => setFormData(prev => ({ ...prev, heure_debut: e.target.value }))}
                 className={`w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                   isMobile ? 'mobile-form-input' : 'px-3 py-2'
                 }`}
@@ -393,11 +275,7 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
               <input
                 type="time"
                 value={formData.heure_fin}
-                onChange={(e) => {
-                  if (validateTimeConstraints(e.target.value)) {
-                    setFormData(prev => ({ ...prev, heure_fin: e.target.value }));
-                  }
-                }}
+                onChange={(e) => setFormData(prev => ({ ...prev, heure_fin: e.target.value }))}
                 className={`w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                   isMobile ? 'mobile-form-input' : 'px-3 py-2'
                 }`}

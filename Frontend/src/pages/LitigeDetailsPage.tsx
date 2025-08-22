@@ -24,7 +24,7 @@ interface LitigeDetails {
   sujet: string;
   description: string;
   priorite: string;
-  statut: string;
+  statut: 'nouveau' | 'en_cours' | 'resolu' | 'ferme' | 'escalade';
   niveau_escalade: string;
   terrain_nom: string;
   terrain_adresse: string;
@@ -344,7 +344,7 @@ const LitigeDetailsPage: React.FC = () => {
                   </button>
                 )}
                 
-                {litige.statut === 'resolu' && (
+                {(litige.statut as string === 'resolu' || litige.statut as string === 'ferme') && (
                   <button
                     onClick={fermerLitige}
                     className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm flex items-center justify-center"

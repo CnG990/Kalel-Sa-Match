@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { 
   MapPin, 
-  Clock, 
   Users, 
   Shield, 
   CreditCard, 
   Smartphone, 
   Calendar, 
-  Star,
   CheckCircle,
   ArrowRight,
   Play,

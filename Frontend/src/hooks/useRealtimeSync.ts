@@ -57,7 +57,7 @@ export const useRealtimeSync = (options: UseRealtimeSyncOptions = {}) => {
       setIsPolling(true);
       setError(null);
 
-              const response = await fetch(`https://b0385fbb1e44.ngrok-free.app/api/terrains/realtime-updates?last_update=${encodeURIComponent(lastUpdateRef.current)}`);
+      const response = await fetch(`http://127.0.0.1:8000/api/terrains/realtime-updates?last_update=${encodeURIComponent(lastUpdateRef.current)}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -212,7 +212,7 @@ export const useMapRealtimeSync = (): RealtimeSyncComplete => {
           return;
         }
         
-        const response = await fetch('https://b0385fbb1e44.ngrok-free.app/api/terrains/realtime-updates', {
+        const response = await fetch('http://127.0.0.1:8000/api/terrains/realtime-updates', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

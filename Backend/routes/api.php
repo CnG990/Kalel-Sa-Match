@@ -6,6 +6,7 @@ use App\Http\Controllers\API\ReservationController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\PaiementController;
 use App\Http\Controllers\API\AbonnementController;
+use App\Http\Controllers\API\AbonnementConditionsController;
 use App\Http\Controllers\API\SupportController;
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\GestionnaireController;
@@ -128,6 +129,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/process', [PaiementController::class, 'process']);
         Route::post('/mobile-money', [PaiementController::class, 'mobileMoney']);
         Route::post('/webhook', [PaiementController::class, 'webhook']);
+        Route::post('/subscription', [PaiementController::class, 'processSubscriptionPayment']);
+        Route::post('/reservation', [PaiementController::class, 'processReservationPayment']);
     });
 
     // Abonnements
@@ -142,6 +145,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/manager/subscriptions', [AbonnementController::class, 'getManagerSubscriptions']);
         Route::get('/admin/subscriptions', [AbonnementController::class, 'getAdminSubscriptions']);
         Route::put('/{id}/status', [AbonnementController::class, 'updateSubscriptionStatus']);
+        
+        // Conditions et préférences d'abonnement
+        Route::get('/conditions/{terrainId}', [AbonnementConditionsController::class, 'getConditionsTerrain']);
+        Route::get('/historique/{terrainId}', [AbonnementConditionsController::class, 'getHistoriqueReservations']);
+        Route::post('/verifier-disponibilite', [AbonnementConditionsController::class, 'verifierDisponibilite']);
+        Route::post('/verifier-disponibilite-abonnement', [AbonnementConditionsController::class, 'verifierDisponibiliteAbonnement']);
+        Route::post('/calculer-prix', [AbonnementConditionsController::class, 'calculerPrixAbonnement']);
     });
 
     // Système de fidélité
@@ -283,6 +293,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::get('/terrains/postgis-stats', [AdminController::class, 'getPostGISStats']);
     Route::post('/terrains/calculate-surfaces', [AdminController::class, 'calculateTerrainSurfaces']);
     Route::post('/terrains/{id}/calculate-surface', [AdminController::class, 'calculateTerrainSurface']);
+    
+    // Prix variables des terrains
+    Route::get('/terrains/{id}/prix-variables', [AdminController::class, 'getPrixVariables']);
+    Route::post('/terrains/calculer-prix', [AdminController::class, 'calculerPrix']);
+    
     Route::get('/finances', [AdminController::class, 'getAdminFinances']);
     Route::get('/disputes', [AdminController::class, 'getAllDisputes']);
     Route::get('/support/tickets', [AdminController::class, 'getAllSupportTickets']);

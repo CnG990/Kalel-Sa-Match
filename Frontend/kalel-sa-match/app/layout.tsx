@@ -20,11 +20,6 @@ export const metadata: Metadata = {
   description: "Réservez facilement les meilleurs terrains synthétiques de Dakar. Paiement mobile money, réservation instantanée, terrains vérifiés.",
   keywords: "terrain football, Dakar, réservation, synthétique, mobile money, Orange Money, Wave",
   authors: [{ name: "Kalèl sa Match" }],
-  icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
-  },
-  manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {

@@ -136,10 +136,10 @@ class AdminController extends Controller
                     'g.nom as gestionnaire_nom',
                     'g.prenom as gestionnaire_prenom',
                     'g.email as gestionnaire_email',
-                    // Calculs PostGIS
-                    DB::raw('CASE WHEN t.geom IS NOT NULL THEN ST_Area(ST_Transform(t.geom, 32628)) ELSE NULL END as surface_calculee'),
-                    DB::raw('CASE WHEN t.geom IS NOT NULL THEN ST_AsGeoJSON(t.geom) ELSE NULL END as geometrie_geojson'),
-                    DB::raw('CASE WHEN t.geom IS NOT NULL THEN true ELSE false END as has_geometry')
+                    // Calculs PostGIS - Utiliser geom_polygon pour les surfaces
+                    DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN ST_Area(ST_Transform(t.geom_polygon, 32628)) ELSE NULL END as surface_calculee'),
+                    DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN ST_AsGeoJSON(t.geom_polygon) ELSE NULL END as geometrie_geojson'),
+                    DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN true ELSE false END as has_geometry')
                 ]);
             
             // Recherche par nom, adresse
@@ -164,6 +164,13 @@ class AdminController extends Controller
                     ];
                 }
 
+                // Récupérer les prix variables
+                $prixVariables = DB::table('prix_terrains')
+                    ->where('terrain_id', $terrain->id)
+                    ->where('est_actif', true)
+                    ->select(['taille', 'nom_terrain_specifique', 'periode', 'jour_semaine', 'prix', 'duree', 'heure_debut', 'heure_fin'])
+                    ->get();
+
                 return [
                     'id' => $terrain->id,
                     'nom' => $terrain->nom ?? 'Terrain',
@@ -184,6 +191,7 @@ class AdminController extends Controller
                     'gestionnaire_id' => $terrain->gestionnaire_id,
                     'gestionnaire' => $gestionnaire,
                     'est_actif' => (bool) $terrain->est_actif,
+                    'prix_variables' => $prixVariables,
                     'created_at' => $terrain->created_at,
                     'updated_at' => $terrain->updated_at,
                 ];
@@ -220,6 +228,103 @@ class AdminController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la récupération des terrains',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupérer les prix variables d'un terrain
+     */
+    public function getPrixVariables($terrainId)
+    {
+        try {
+            $prixVariables = DB::table('prix_terrains')
+                ->where('terrain_id', $terrainId)
+                ->where('est_actif', true)
+                ->orderBy('prix', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $prixVariables,
+                'message' => 'Prix variables récupérés avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des prix variables',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Calculer le prix selon les critères
+     */
+    public function calculerPrix(Request $request)
+    {
+        try {
+            $terrainId = $request->terrain_id;
+            $taille = $request->taille;
+            $periode = $request->periode;
+            $jour = $request->jour;
+            $heure = $request->heure;
+            $nomTerrainSpecifique = $request->nom_terrain_specifique;
+
+            $query = DB::table('prix_terrains')
+                ->where('terrain_id', $terrainId)
+                ->where('est_actif', true);
+
+            if ($taille) {
+                $query->where('taille', $taille);
+            }
+
+            if ($periode) {
+                $query->where('periode', $periode);
+            }
+
+            if ($jour) {
+                $query->where('jour_semaine', $jour);
+            }
+
+            if ($heure) {
+                $query->where('heure_debut', '<=', $heure)
+                      ->where('heure_fin', '>=', $heure);
+            }
+
+            if ($nomTerrainSpecifique) {
+                $query->where('nom_terrain_specifique', $nomTerrainSpecifique);
+            }
+
+            $prix = $query->first();
+
+            if ($prix) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $prix,
+                    'message' => 'Prix calculé avec succès'
+                ]);
+            } else {
+                // Retourner le prix par défaut du terrain
+                $terrain = DB::table('terrains_synthetiques_dakar')
+                    ->where('id', $terrainId)
+                    ->first();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'prix' => $terrain->prix_heure,
+                        'duree' => '1h',
+                        'message' => 'Prix par défaut utilisé'
+                    ],
+                    'message' => 'Prix par défaut utilisé'
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du calcul du prix',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -2662,7 +2767,7 @@ class AdminController extends Controller
             
             // Calculer la surface avec PostGIS
             $surface = DB::selectOne("
-                SELECT ST_Area(ST_Transform(geom, 32628)) as surface 
+                SELECT ST_Area(ST_Transform(geom_polygon, 32628)) as surface 
                 FROM terrains_synthetiques_dakar 
                 WHERE id = ?
             ", [$terrain->id]);
@@ -2765,9 +2870,9 @@ class AdminController extends Controller
             $stats = DB::selectOne("
                 SELECT 
                     COUNT(*) as total_terrains,
-                    COUNT(CASE WHEN geom IS NOT NULL THEN 1 END) as avec_postgis,
-                    ROUND(SUM(CASE WHEN geom IS NOT NULL THEN ST_Area(ST_Transform(geom, 32628)) ELSE 0 END), 2) as surface_totale_postgis,
-                    ROUND(AVG(CASE WHEN geom IS NOT NULL THEN ST_Area(ST_Transform(geom, 32628)) END), 2) as surface_moyenne_postgis
+                    COUNT(CASE WHEN geom_polygon IS NOT NULL THEN 1 END) as avec_postgis,
+                    ROUND(SUM(CASE WHEN geom_polygon IS NOT NULL THEN ST_Area(ST_Transform(geom_polygon, 32628)) ELSE 0 END), 2) as surface_totale_postgis,
+                    ROUND(AVG(CASE WHEN geom_polygon IS NOT NULL THEN ST_Area(ST_Transform(geom_polygon, 32628)) END), 2) as surface_moyenne_postgis
                 FROM terrains_synthetiques_dakar
             ");
 
@@ -2976,18 +3081,18 @@ class AdminController extends Controller
             $updated = DB::statement("
                 UPDATE terrains_synthetiques_dakar 
                 SET 
-                    surface_postgis = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
-                    surface_calculee = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
-                    has_geometry = (geom IS NOT NULL),
+                    surface_postgis = ROUND(ST_Area(ST_Transform(geom_polygon, 32628))::numeric, 2),
+                    surface_calculee = ROUND(ST_Area(ST_Transform(geom_polygon, 32628))::numeric, 2),
+                    has_geometry = (geom_polygon IS NOT NULL),
                     updated_at = NOW()
-                WHERE geom IS NOT NULL
+                WHERE geom_polygon IS NOT NULL
             ");
 
             // Obtenir le nombre de terrains mis à jour
             $count = DB::selectOne("
                 SELECT COUNT(*) as count 
                 FROM terrains_synthetiques_dakar 
-                WHERE geom IS NOT NULL AND surface_postgis IS NOT NULL
+                WHERE geom_polygon IS NOT NULL AND surface_postgis IS NOT NULL
             ");
 
             // Obtenir les statistiques des surfaces PostGIS
@@ -2995,7 +3100,7 @@ class AdminController extends Controller
                 SELECT 
                     COUNT(*) as total_terrains,
                     COUNT(CASE WHEN surface_postgis IS NOT NULL THEN 1 END) as avec_surface_postgis,
-                    COUNT(CASE WHEN geom IS NOT NULL THEN 1 END) as avec_geometrie,
+                    COUNT(CASE WHEN geom_polygon IS NOT NULL THEN 1 END) as avec_geometrie,
                     ROUND(AVG(surface_postgis), 2) as surface_moyenne,
                     ROUND(SUM(surface_postgis), 2) as surface_totale,
                     ROUND(MIN(surface_postgis), 2) as surface_min,
@@ -3040,9 +3145,9 @@ class AdminController extends Controller
             // Vérifier si le terrain a une géométrie
             $geometryCheck = DB::selectOne("
                 SELECT 
-                    geom IS NOT NULL as has_geom,
-                    ST_GeometryType(geom) as geom_type,
-                    ST_SRID(geom) as srid
+                    geom_polygon IS NOT NULL as has_geom,
+                    ST_GeometryType(geom_polygon) as geom_type,
+                    ST_SRID(geom_polygon) as srid
                 FROM terrains_synthetiques_dakar 
                 WHERE id = ?
             ", [$id]);
@@ -3058,16 +3163,16 @@ class AdminController extends Controller
             $result = DB::selectOne("
                 UPDATE terrains_synthetiques_dakar 
                 SET 
-                    surface_postgis = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
-                    surface_calculee = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
+                    surface_postgis = ROUND(ST_Area(ST_Transform(geom_polygon, 32628))::numeric, 2),
+                    surface_calculee = ROUND(ST_Area(ST_Transform(geom_polygon, 32628))::numeric, 2),
                     has_geometry = true,
                     updated_at = NOW()
                 WHERE id = ?
                 RETURNING 
                     surface_postgis,
                     nom,
-                    ST_GeometryType(geom) as type_geometrie,
-                    ST_Area(ST_Transform(geom, 32628)) as surface_brute
+                    ST_GeometryType(geom_polygon) as type_geometrie,
+                    ST_Area(ST_Transform(geom_polygon, 32628)) as surface_brute
             ", [$id]);
 
             if (!$result) {
@@ -3108,11 +3213,11 @@ class AdminController extends Controller
             DB::statement("
                 UPDATE terrains_synthetiques_dakar 
                 SET 
-                    surface_postgis = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
-                    surface_calculee = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
-                    has_geometry = (geom IS NOT NULL),
+                    surface_postgis = ROUND(ST_Area(ST_Transform(geom_polygon, 32628))::numeric, 2),
+                    surface_calculee = ROUND(ST_Area(ST_Transform(geom_polygon, 32628))::numeric, 2),
+                    has_geometry = (geom_polygon IS NOT NULL),
                     updated_at = NOW()
-                WHERE id = ? AND geom IS NOT NULL
+                WHERE id = ? AND geom_polygon IS NOT NULL
             ", [$terrainId]);
 
             return true;

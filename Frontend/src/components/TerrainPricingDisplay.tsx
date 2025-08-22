@@ -31,32 +31,46 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
   const [showAllOptions, setShowAllOptions] = useState(false);
 
   const getOptionsForTerrain = (terrain: string, data?: any): TerrainOption[] => {
-    // Use terrain description to extract pricing information dynamically
+    // Utiliser les prix variables de la base de données si disponibles
+    const prixVariables = data?.prix_variables || [];
+    
+    if (prixVariables.length > 0) {
+      return prixVariables.map((prix: any, index: number) => ({
+        id: `prix-${index}`,
+        name: `${prix.taille || ''} ${prix.nom_terrain_specifique || ''} ${prix.periode || ''} ${prix.jour_semaine || ''}`.trim(),
+        price: prix.prix,
+        capacity: data?.capacite || 22,
+        description: `${prix.duree || '1h'} - ${prix.heure_debut || ''} ${prix.heure_fin || ''}`.trim(),
+        duration: prix.duree === '90mn' ? 1.5 : prix.duree === '1h30' ? 1.5 : 1,
+        timeSlot: prix.heure_debut && prix.heure_fin ? `${prix.heure_debut}-${prix.heure_fin}` : undefined
+      }));
+    }
+    
+    // Fallback: utiliser les prix fixes
     const description = data?.description || '';
     
     switch (terrain) {
       case 'Complexe Be Sport':
-        // Parse from description or use calculated values
         if (description.includes('Petit terrain') && description.includes('Grand terrain')) {
           return [
             {
               id: 'be-sport-petit',
               name: 'Petit terrain',
-              price: Math.round(basePrice * 0.67), // 30k when base is 45k
+              price: 30000,
               capacity: 14,
               description: 'Terrain petit format'
             },
             {
               id: 'be-sport-grand-semaine',
               name: 'Grand terrain (Lun-Mer)',
-              price: basePrice,
+              price: 45000,
               capacity: 22,
               description: 'Grand terrain - Lundi à Mercredi'
             },
             {
               id: 'be-sport-grand-weekend',
               name: 'Grand terrain (Jeu-Dim)',
-              price: Math.round(basePrice * 1.33), // 60k when base is 45k
+              price: 60000,
               capacity: 22,
               description: 'Grand terrain - Jeudi à Dimanche'
             }
@@ -70,7 +84,7 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
             {
               id: 'fara-jour',
               name: 'Tarif jour (8h-15h)',
-              price: Math.round(basePrice * 0.86), // 30k when base is 35k
+              price: 30000,
               capacity: data?.capacite || 10,
               description: 'Réservation de jour',
               timeSlot: '08:00-15:00'
@@ -78,7 +92,7 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
             {
               id: 'fara-nuit',
               name: 'Tarif nuit (16h-6h)',
-              price: Math.round(basePrice * 1.14), // 40k when base is 35k
+              price: 40000,
               capacity: data?.capacite || 10,
               description: 'Réservation de nuit',
               timeSlot: '16:00-06:00'
@@ -93,21 +107,21 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
             {
               id: 'fit-5x5',
               name: 'Terrain 4x4 / 5x5',
-              price: Math.round(basePrice * 0.375), // 30k when base is 80k
+              price: 30000,
               capacity: 10,
               description: 'Petit terrain pour matchs à 5'
             },
             {
               id: 'fit-8x8',
               name: 'Terrain 8x8 / 9x9',
-              price: basePrice,
+              price: 80000,
               capacity: 18,
               description: 'Terrain moyen format'
             },
             {
               id: 'fit-11x11',
               name: 'Terrain 11x11',
-              price: Math.round(basePrice * 1.5), // 120k when base is 80k
+              price: 120000,
               capacity: 22,
               description: 'Grand terrain officiel'
             }
@@ -121,7 +135,7 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
             {
               id: 'sowfoot-5x5-dimanche',
               name: '5x5 Dimanche (90mn)',
-              price: Math.round(basePrice * 0.6), // 15k when base is 25k
+              price: 15000,
               capacity: 10,
               description: 'Terrain 5x5 - Dimanche 90 minutes',
               duration: 1.5
@@ -129,7 +143,7 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
             {
               id: 'sowfoot-5x5-weekend',
               name: '5x5 Vendredi-Samedi (1h)',
-              price: Math.round(basePrice * 0.8), // 20k when base is 25k
+              price: 20000,
               capacity: 10,
               description: 'Terrain 5x5 - Vendredi-Samedi 1 heure',
               duration: 1
@@ -137,7 +151,7 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
             {
               id: 'sowfoot-8x8-semaine',
               name: '8x8 Dimanche-Jeudi (1h30)',
-              price: Math.round(basePrice * 1.4), // 35k when base is 25k
+              price: 35000,
               capacity: 16,
               description: 'Terrain 8x8 - Dimanche-Jeudi 1h30',
               duration: 1.5
@@ -145,7 +159,7 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
             {
               id: 'sowfoot-8x8-weekend',
               name: '8x8 Vendredi-Samedi (1h)',
-              price: Math.round(basePrice * 1.6), // 40k when base is 25k
+              price: 40000,
               capacity: 16,
               description: 'Terrain 8x8 - Vendredi-Samedi 1 heure',
               duration: 1
@@ -159,41 +173,52 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
           const baseCapacity = data?.capacite || 18;
           return [
             {
-              id: 'temple-creuses',
-              name: 'Heures creuses (10h-18h)',
-              price: Math.round(basePrice * 0.82), // 35k when base is 42.5k
+              id: 'temple-anfield-creuses',
+              name: 'Anfield - Heures creuses (10h-18h)',
+              price: 35000,
               capacity: Math.round(baseCapacity * 0.67),
-              description: 'Tarif heures creuses',
+              description: 'Terrain Anfield - heures creuses',
               timeSlot: '10:00-18:00'
             },
             {
-              id: 'temple-pleines',
-              name: 'Heures pleines (18h-23h)',
-              price: Math.round(basePrice * 1.18), // 50k when base is 42.5k
+              id: 'temple-anfield-pleines',
+              name: 'Anfield - Heures pleines (18h-23h)',
+              price: 50000,
               capacity: Math.round(baseCapacity * 0.67),
-              description: 'Tarif heures pleines',
+              description: 'Terrain Anfield - heures pleines',
               timeSlot: '18:00-23:00'
             },
             {
-              id: 'temple-anfield',
-              name: 'Terrain Anfield (6x6)',
-              price: basePrice,
-              capacity: Math.round(baseCapacity * 0.67),
-              description: 'Terrain spécialisé Anfield'
+              id: 'temple-camp-nou-creuses',
+              name: 'Camp Nou - Heures creuses (10h-18h)',
+              price: 35000,
+              capacity: Math.round(baseCapacity * 0.56),
+              description: 'Terrain Camp Nou - heures creuses',
+              timeSlot: '10:00-18:00'
             },
             {
-              id: 'temple-camp-nou',
-              name: 'Camp Nou (salle)',
-              price: basePrice,
+              id: 'temple-camp-nou-pleines',
+              name: 'Camp Nou - Heures pleines (18h-23h)',
+              price: 50000,
               capacity: Math.round(baseCapacity * 0.56),
-              description: 'Terrain en salle Camp Nou'
+              description: 'Terrain Camp Nou - heures pleines',
+              timeSlot: '18:00-23:00'
             },
             {
-              id: 'temple-old-trafford',
-              name: 'Old Trafford (5x5)',
-              price: basePrice,
+              id: 'temple-old-trafford-creuses',
+              name: 'Old Trafford - Heures creuses (10h-18h)',
+              price: 40000,
               capacity: Math.round(baseCapacity * 0.56),
-              description: 'Terrain Old Trafford'
+              description: 'Terrain Old Trafford - heures creuses',
+              timeSlot: '10:00-18:00'
+            },
+            {
+              id: 'temple-old-trafford-pleines',
+              name: 'Old Trafford - Heures pleines (18h-23h)',
+              price: 50000,
+              capacity: Math.round(baseCapacity * 0.56),
+              description: 'Terrain Old Trafford - heures pleines',
+              timeSlot: '18:00-23:00'
             }
           ];
         }
@@ -205,28 +230,28 @@ const TerrainPricingDisplay: React.FC<TerrainPricingDisplayProps> = ({
             {
               id: 'sacre-5x5',
               name: 'Terrain 5x5',
-              price: Math.round(basePrice * 0.43), // 15k when base is 35k
+              price: 15000,
               capacity: 10,
               description: 'Petit terrain 5 contre 5'
             },
             {
               id: 'sacre-8x8',
               name: 'Terrain 8x8',
-              price: Math.round(basePrice * 0.86), // 30k when base is 35k
+              price: 30000,
               capacity: 16,
               description: 'Terrain moyen 8 contre 8'
             },
             {
               id: 'sacre-10x10',
               name: 'Terrain 10x10',
-              price: Math.round(basePrice * 1.43), // 50k when base is 35k
+              price: 50000,
               capacity: 20,
               description: 'Grand terrain 10 contre 10'
             },
             {
               id: 'sacre-11x11',
               name: 'Terrain 11x11',
-              price: Math.round(basePrice * 1.71), // 60k when base is 35k
+              price: 60000,
               capacity: 22,
               description: 'Terrain officiel 11 contre 11'
             }

@@ -108,63 +108,9 @@ const MapPage: React.FC = () => {
     return Math.round(distanceCorrigee * 100) / 100;
   };
 
-  // Données statiques des terrains de Dakar
-  const terrainsStatiques: Terrain[] = [
-      {
-        id: 1,
-        nom: "Complexe Be Sport",
-        adresse: "Route de l'Aéroport",
-        latitude: 14.6937,
-        longitude: -17.4441,
-        prix_heure: 45000, // Prix correct selon le mémoire
-        est_actif: true
-      },
-      {
-        id: 2,
-        nom: "Fara Foot",
-        adresse: "Fann-Point E-Amitié",
-        latitude: 14.7167,
-        longitude: -17.4833,
-        prix_heure: 35000, // Prix correct selon le mémoire
-        est_actif: true
-      },
-      {
-        id: 3,
-        nom: "Fit Park Academy",
-        adresse: "Magic Land",
-        latitude: 14.6892,
-        longitude: -17.4516,
-        prix_heure: 80000, // Prix correct selon le mémoire
-        est_actif: true
-      },
-      {
-        id: 4,
-        nom: "Skate Parc",
-        adresse: "Corniche Ouest",
-        latitude: 14.6648,
-        longitude: -17.4381,
-        prix_heure: 30000, // Prix correct selon le mémoire
-        est_actif: true
-      },
-      {
-        id: 5,
-        nom: "Sowfoot",
-        adresse: "Central Park Avenue Malick Sy",
-        latitude: 14.7213,
-        longitude: -17.4623,
-        prix_heure: 25000, // Prix de base (options: 15k-40k)
-        est_actif: true
-      },
-      {
-        id: 6,
-        nom: "Stade Deggo",
-        adresse: "Marriste",
-        latitude: 14.7800,
-        longitude: -17.3200,
-        prix_heure: 25000, // Prix correct selon le mémoire
-        est_actif: true
-      }
-    ];
+    // Données statiques des terrains de Dakar (fallback uniquement)
+  // Note: Les vrais IDs sont gérés par l'API depuis la base de données
+  // const terrainsStatiques: Terrain[] = [];
 
   // Injecter les styles CSS pour animations et z-index
   useEffect(() => {
@@ -519,7 +465,7 @@ const MapPage: React.FC = () => {
         addDebugInfo('🌐 Tentative connexion API...');
         const startTime = Date.now();
         
-                 const response = await fetch('https://kalel-sa-match-api.loca.lt/api/terrains/all-for-map', {
+                 const response = await fetch('http://127.0.0.1:8000/api/terrains/all-for-map', {
            method: 'GET',
            headers: {
              'Accept': 'application/json',
@@ -588,45 +534,15 @@ const MapPage: React.FC = () => {
         addDebugInfo(`🔧 Type erreur: ${typeof apiError}, name: ${apiError.name}`);
       }
       
-      // Fallback vers données statiques
-      addDebugInfo('🔄 Utilisation données statiques...');
-      addDebugInfo(`📊 ${terrainsStatiques.length} terrains statiques disponibles`);
-      addDebugInfo(`📊 Premier terrain statique: ${JSON.stringify(terrainsStatiques[0])}`);
-      
-      // Vérifier tous les terrains statiques pour debug
-      terrainsStatiques.forEach((terrain, i) => {
-        if (!terrain.latitude || !terrain.longitude || terrain.latitude === 0 || terrain.longitude === 0) {
-          addDebugInfo(`⚠️ Statique Terrain ${i+1} sans coordonnées: ${terrain.nom} - lat: ${terrain.latitude}, lng: ${terrain.longitude}`);
-        }
-      });
-      
-      // Calculer automatiquement les distances si position disponible
-      let finalTerrains = terrainsStatiques;
-      if (userLocation) {
-        finalTerrains = terrainsStatiques.map(terrain => {
-          const distance = calculateDistance(userLocation[0], userLocation[1], terrain.latitude, terrain.longitude);
-          return { ...terrain, distance };
-        }).sort((a, b) => (a.distance || 999) - (b.distance || 999));
-        addDebugInfo(`📏 Distances calculées automatiquement pour ${finalTerrains.length} terrains statiques`);
-      }
-      
-      setTerrains(finalTerrains);
-      addMarkers(finalTerrains);
-      toast.success(`${finalTerrains.length} terrains chargés${userLocation ? ' avec distances' : ''} (données locales)`);
+      // Pas de données statiques disponibles
+      addDebugInfo('❌ Aucune donnée statique disponible');
+      setError('Impossible de charger les terrains. Veuillez vérifier la connexion au serveur.');
+      setLoading(false);
+      return;
       
     } catch (err: any) {
       addDebugInfo(`❌ Erreur: ${err.message}`);
-      // Calculer automatiquement les distances si position disponible
-      let finalTerrains = terrainsStatiques;
-      if (userLocation) {
-        finalTerrains = terrainsStatiques.map(terrain => {
-          const distance = calculateDistance(userLocation[0], userLocation[1], terrain.latitude, terrain.longitude);
-          return { ...terrain, distance };
-        }).sort((a, b) => (a.distance || 999) - (b.distance || 999));
-      }
-      
-      setTerrains(finalTerrains);
-      addMarkers(finalTerrains);
+      setError(`Erreur lors du chargement des terrains: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -1343,4 +1259,4 @@ const MapPage: React.FC = () => {
   );
 };
 
-export default MapPage; 
+export default MapPage;

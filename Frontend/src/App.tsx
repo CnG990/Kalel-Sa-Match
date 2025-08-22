@@ -30,9 +30,6 @@ import ReservationsPage from './pages/dashboard/ReservationsPage';
 import MapPage from './pages/dashboard/MapPage';
 import DashboardOverview from './pages/dashboard/DashboardOverview';
 import SettingsPage from './pages/dashboard/SettingsPage';
-import MesTicketsPage from './pages/MesTicketsPage';
-import MesLitigesPage from './pages/MesLitigesPage';
-import LitigeDetailsPage from './pages/LitigeDetailsPage';
 
 // Manager Pages (Gestionnaire)
 import ManagerLayout from './pages/manager/ManagerLayout';
@@ -67,9 +64,6 @@ import GeoImportPage from './pages/admin/GeoImportPage';
 
 // Test page
 import AdminTestPage from './pages/AdminTestPage';
-
-// Catalogue page
-import CataloguePage from './pages/catalogue/CataloguePage';
 
 // Composant de redirection intelligente
 const SmartRedirect = () => {
@@ -128,9 +122,6 @@ function App() {
             <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
 
-          {/* Catalogue Route - Public */}
-          <Route path="/catalogue" element={<CataloguePage />} />
-
           {/* Dashboard Routes (Client uniquement) */}
           <Route 
             path="/dashboard" 
@@ -143,9 +134,6 @@ function App() {
             <Route index element={<DashboardOverview />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="reservations" element={<ReservationsPage />} />
-            <Route path="tickets" element={<MesTicketsPage />} />
-            <Route path="litiges" element={<MesLitigesPage />} />
-            <Route path="litiges/:id" element={<LitigeDetailsPage />} />
             <Route path="map" element={<MapPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>

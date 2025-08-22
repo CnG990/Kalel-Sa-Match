@@ -127,7 +127,7 @@ const Layout: React.FC = () => {
             <div className="flex items-center">
               <Link to="/" className="flex items-center group">
                 <img 
-                  src="/logo.png" 
+                  src="/logo sans background.png" 
                   alt="Logo Kalél Sa Match" 
                   className={`transition-transform group-hover:scale-105 ${isMobile ? 'h-8 w-auto' : 'h-12 w-auto'}`} 
                 />
@@ -294,7 +294,7 @@ const Layout: React.FC = () => {
             {/* Logo et Description */}
             <div className="md:col-span-1">
               <div className="flex items-center mb-6">
-                <img src="/logo.png" alt="Logo Kalél Sa Match" className="h-10 w-auto" />
+                <img src="/logo sans background.png" alt="Logo Kalél Sa Match" className="h-10 w-auto" />
                 <div className="ml-3">
                   <span className="text-xl font-bold">
                     <span className="text-green-400">Kalél</span>

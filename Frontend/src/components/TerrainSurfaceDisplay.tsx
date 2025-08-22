@@ -24,8 +24,7 @@ const TerrainSurfaceDisplay: React.FC<TerrainSurfaceDisplayProps> = ({
   compact = false,
   showActions = true,
   isCalculating = false,
-  onCalculate,
-  onEdit
+  onCalculate
 }) => {
   const getPrimarySurface = () => {
     // ✅ PRIORITÉ ABSOLUE À POSTGIS

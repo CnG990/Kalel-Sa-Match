@@ -23,19 +23,45 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        // 2. Terrains synthetiques Dakar table
+        // 2. Terrains synthétiques de Dakar
         Schema::create('terrains_synthetiques_dakar', function (Blueprint $table) {
             $table->id();
             $table->string('nom');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->string('adresse');
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
-            $table->string('image_principale');
+            $table->decimal('prix_heure', 10, 2);
+            $table->integer('capacite')->default(22);
+            $table->decimal('surface', 8, 2)->nullable();
+            $table->unsignedBigInteger('gestionnaire_id')->nullable();
+            $table->string('contact_telephone')->nullable();
+            $table->string('email_contact')->nullable();
+            $table->time('horaires_ouverture')->default('08:00:00');
+            $table->time('horaires_fermeture')->default('23:00:00');
+            $table->string('type_surface')->default('synthétique');
+            $table->json('equipements')->nullable();
+            $table->text('regles_maison')->nullable();
+            $table->decimal('note_moyenne', 3, 2)->default(0);
+            $table->integer('nombre_avis')->default(0);
+            $table->string('image_principale')->nullable();
             $table->json('images_supplementaires')->nullable();
             $table->boolean('est_actif')->default(true);
+            
+            // Nouvelles colonnes pour les conditions d'abonnement
+            $table->json('jours_disponibles')->nullable(); // ['lundi', 'mardi', 'mercredi', ...]
+            $table->json('creneaux_disponibles')->nullable(); // ['08:00-10:00', '10:00-12:00', ...]
+            $table->json('conditions_abonnement')->nullable(); // Conditions spécifiques
+            $table->boolean('accepte_paiement_differe')->default(true);
+            $table->decimal('acompte_minimum', 10, 2)->nullable();
+            $table->integer('duree_engagement_minimum')->default(30); // en jours
+            $table->json('reductions_abonnement')->nullable(); // Réductions selon durée
+            
             $table->timestamps();
             $table->softDeletes();
+            
+            $table->foreign('gestionnaire_id')->references('id')->on('users')->onDelete('set null');
+            $table->index(['latitude', 'longitude']);
         });
 
         // 3. Réservations

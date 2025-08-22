@@ -51,7 +51,7 @@ export default function Home() {
                     <div className="relative z-10 text-center px-4 max-w-5xl mx-auto pt-16">
                         <div className="mb-8">
                             <Image
-                                src="/images/logo.png"
+                                src="/logo sans background.png"
                                 alt="Kalèl sa Match"
                                 width={200}
                                 height={200}

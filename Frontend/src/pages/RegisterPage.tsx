@@ -8,7 +8,7 @@ const RegisterPage: React.FC = () => {
         {/* Logo et lien de retour */}
         <div className="text-center mb-6">
           <Link to="/" className="inline-flex items-center justify-center hover:opacity-80 transition-opacity">
-            <img src="/logo.png" alt="Logo Kalél Sa Match" className="h-12 w-auto" />
+            <img src="/logo sans background.png" alt="Logo Kalél Sa Match" className="h-12 w-auto" />
             <div className="ml-3">
               <span className="text-2xl font-bold">
                 <span className="text-green-600">Kalél</span>
