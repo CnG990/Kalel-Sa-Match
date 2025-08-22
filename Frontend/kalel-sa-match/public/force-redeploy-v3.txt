@@ -1,0 +1,7 @@
+Force Vercel redeploy v3 - API URL updated to localtunnel
+Timestamp: 2025-07-26 18:15:00
+API URL: https://kalel-sa-match-api.loca.lt/api
+Old ngrok URL: https://b0385fbb1e44.ngrok-free.app/api (DEPRECATED)
+Cache busting: Added timestamp parameter
+Expected terrain count: 12 (not 6)
+Distance calculation: Fixed 

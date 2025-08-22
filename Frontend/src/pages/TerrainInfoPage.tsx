@@ -4,6 +4,7 @@ import { ArrowLeft, Star, Users, Zap, CreditCard, Clock, MapPin } from 'lucide-r
 import toast from 'react-hot-toast';
 import ReservationModal from './components/ReservationModal';
 import ReactDOM from 'react-dom';
+import apiService from '../services/api';
 
 interface Terrain {
   id: number;
@@ -69,10 +70,13 @@ const TerrainInfoPage: React.FC = () => {
 
   const loadTerrainInfo = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/terrains/${id}`);
+      // Ajouter cache-busting pour s'assurer d'avoir les données fraîches
+              const response = await fetch(`https://b0385fbb1e44.ngrok-free.app/api/terrains/${id}?_=${Date.now()}`);
       const data = await response.json();
-      if (data.success) setTerrain(data.data);
-      else toast.error('Terrain non trouvé');
+      if (data.success) {
+        console.log('Terrain data loaded:', data.data); // Debug
+        setTerrain(data.data);
+      } else toast.error('Terrain non trouvé');
     } catch {
       toast.error('Erreur lors du chargement du terrain');
     }
@@ -81,12 +85,13 @@ const TerrainInfoPage: React.FC = () => {
   const loadCreneaux = async () => {
     if (!terrain || !id) return;
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/terrains/check-availability?terrain_id=${id}&date=${selectedDate}&duree_heures=1`);
+              const response = await fetch(`https://b0385fbb1e44.ngrok-free.app/api/terrains/check-availability?terrain_id=${id}&date=${selectedDate}&duree_heures=1`);
       const data = await response.json();
       if (data.success) {
-        // Obtenir l'heure actuelle
+        // Obtenir l'heure actuelle complète
         const now = new Date();
         const currentHour = now.getHours();
+        const currentMinutes = now.getMinutes();
         const currentDate = now.toISOString().split('T')[0];
         
         // Toutes les heures possibles
@@ -102,12 +107,17 @@ const TerrainInfoPage: React.FC = () => {
         if (selectedDate === currentDate) {
           heuresDisponibles = toutesHeures.filter(heure => {
             const heureInt = parseInt(heure);
-            // Pour les heures 00, 01, 02, 03 (minuit à 3h du matin)
-            if (heureInt <= 3) {
-              return heureInt > currentHour; // Ne montrer que les heures futures
+            
+            // Logique améliorée pour filtrer les heures passées
+            if (heureInt < currentHour) {
+              return false; // Heure déjà passée
+            } else if (heureInt === currentHour) {
+              // Si on est dans l'heure actuelle, vérifier les minutes
+              // On permet la réservation seulement si on est dans les 15 premières minutes
+              return currentMinutes < 15;
+            } else {
+              return true; // Heure future
             }
-            // Pour les heures normales (8h à 23h)
-            return heureInt > currentHour;
           });
         }
         
@@ -124,11 +134,15 @@ const TerrainInfoPage: React.FC = () => {
 
   const loadAbonnements = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/abonnements');
-      const data = await response.json();
-      if (data.success) setAbonnements(data.data);
-    } catch {}
-    finally { setLoading(false); }
+      const response = await apiService.getAbonnements();
+      if (response.success && response.data) {
+        setAbonnements(response.data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des abonnements:', error);
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const toggleCreneau = (heure: string) => {
@@ -146,9 +160,43 @@ const TerrainInfoPage: React.FC = () => {
       terrain_id: id!,
       date: selectedDate,
       creneaux: selectedCreneaux.join(','),
-      montant: calculerTotal().toString()
+      montant: calculerTotal().toString(),
+      prix_heure: (terrain?.prix_heure ?? 0).toString(),
+      terrain_nom: terrain?.nom ?? ''
     });
     navigate(`/reservation?${params.toString()}`);
+  };
+
+  // Calculer le prix pour un abonnement spécifique selon le terrain actuel
+  const calculerPrixAbonnement = (abonnement: Abonnement): number => {
+    if (!terrain?.prix_heure) return 0;
+
+    const prixBase = terrain.prix_heure;
+    const dureeSeanceDefaut = 1; // 1h par défaut
+    const nbSeancesDefaut = 2; // 2 séances/semaine par défaut
+    
+    // Calcul basé sur l'usage standard
+    const prixUneSeance = prixBase * dureeSeanceDefaut;
+    const nombreSeancesParMois = nbSeancesDefaut * 4; // 4 semaines par mois
+    const nombreMois = abonnement.duree_jours / 30;
+    
+    // Prix total sans réduction
+    const prixTotalSansReduction = prixUneSeance * nombreSeancesParMois * nombreMois;
+    
+    // Appliquer les réductions selon le type d'abonnement
+    let tauxReduction = 0;
+    const nomAbonnement = abonnement.nom.toLowerCase();
+    
+    if (nomAbonnement.includes('mensuel')) {
+      tauxReduction = 0; // Pas de réduction pour mensuel
+    } else if (nomAbonnement.includes('trimestriel')) {
+      tauxReduction = 0.15; // 15% de réduction
+    } else if (nomAbonnement.includes('annuel')) {
+      tauxReduction = 0.25; // 25% de réduction
+    }
+    
+    const prixAvecReduction = prixTotalSansReduction * (1 - tauxReduction);
+    return Math.round(prixAvecReduction);
   };
 
   if (loading) return (
@@ -321,8 +369,13 @@ const TerrainInfoPage: React.FC = () => {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-bold">{abonnement.nom}</h4>
                       <div className="text-right">
-                        <div className="font-bold text-orange-600">{abonnement.prix.toLocaleString()} FCFA</div>
+                        <div className="font-bold text-orange-600">
+                          {calculerPrixAbonnement(abonnement).toLocaleString()} FCFA
+                        </div>
                         <div className="text-sm text-gray-600">{abonnement.duree_jours} jours</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Basé sur {terrain?.prix_heure?.toLocaleString()} FCFA/h × 2 séances/sem
+                        </div>
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{abonnement.description}</p>
@@ -335,7 +388,12 @@ const TerrainInfoPage: React.FC = () => {
                       ))}
                     </div>
                     <button
-                      onClick={() => toast('Souscription à venir')}
+                      onClick={() => navigate(`/users/abonnements/${id}`, {
+                        state: {
+                          selectedTerrain: terrain,
+                          preselectedAbonnement: abonnement
+                        }
+                      })}
                       className="w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600 transition-colors"
                     >
                       Souscrire

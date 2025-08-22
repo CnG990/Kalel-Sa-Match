@@ -409,7 +409,7 @@ const ManagerValidationPage: React.FC = () => {
                           <img
                             src={manager.profile_image_url.startsWith('http') 
                               ? manager.profile_image_url 
-                              : `http://127.0.0.1:8000/storage/${manager.profile_image_url.replace('public/', '').replace('storage/', '')}`
+                              : `https://b0385fbb1e44.ngrok-free.app/storage/${manager.profile_image_url.replace('public/', '').replace('storage/', '')}`
                             }
                             alt="Photo de profil"
                             className="w-12 h-12 rounded-full object-cover"

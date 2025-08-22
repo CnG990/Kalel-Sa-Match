@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        .result { margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Test Authentication API</h1>
+    
+    <div class="test-section">
+        <h3>1. Test API Health</h3>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Test Login</h3>
+        <input type="email" id="email" placeholder="Email" value="client@terrains-dakar.com">
+        <input type="password" id="password" placeholder="Password" value="Client123!">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Profile (with token)</h3>
+        <button onclick="testProfile()">Test Profile</button>
+        <div id="profile-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Test Logout</h3>
+        <button onclick="testLogout()">Test Logout</button>
+        <div id="logout-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+
+        function displayResult(elementId, data, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                displayResult('health-result', data, response.ok);
+            } catch (error) {
+                displayResult('health-result', { error: error.message }, false);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email, 
+                        password, 
+                        device_name: 'test_web_app' 
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Store token
+                    localStorage.setItem('token', data.data.token);
+                    displayResult('login-result', data, true);
+                } else {
+                    displayResult('login-result', data, false);
+                }
+            } catch (error) {
+                displayResult('login-result', { error: error.message }, false);
+            }
+        }
+
+        async function testProfile() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    displayResult('profile-result', { error: 'No token found' }, false);
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/user/profile`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                });
+                
+                const data = await response.json();
+                displayResult('profile-result', data, response.ok);
+            } catch (error) {
+                displayResult('profile-result', { error: error.message }, false);
+            }
+        }
+
+        async function testLogout() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    displayResult('logout-result', { error: 'No token found' }, false);
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                });
+                
+                if (response.ok) {
+                    localStorage.removeItem('token');
+                    displayResult('logout-result', { message: 'Logged out successfully' }, true);
+                } else {
+                    const data = await response.json();
+                    displayResult('logout-result', data, false);
+                }
+            } catch (error) {
+                displayResult('logout-result', { error: error.message }, false);
+            }
+        }
+
+        // Auto-test on load
+        window.onload = function() {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

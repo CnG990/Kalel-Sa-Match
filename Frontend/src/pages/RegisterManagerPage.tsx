@@ -40,7 +40,7 @@ const RegisterManagerPage: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/register', {
+              const response = await fetch('https://b0385fbb1e44.ngrok-free.app/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
