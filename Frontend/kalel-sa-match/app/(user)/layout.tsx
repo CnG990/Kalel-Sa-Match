@@ -27,7 +27,7 @@ export default function UserLayout({
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-center h-16 px-4 bg-kalel-primary">
             <Image
-              src="/images/logo.png"
+              src="/logo sans background.png"
               alt="Kalèl sa Match"
               width={120}
               height={40}

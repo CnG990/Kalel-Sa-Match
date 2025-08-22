@@ -2,7 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { Ticket, Calendar, MapPin, Clock, Download, QrCode, CheckCircle, AlertCircle } from 'lucide-react';
 import apiService from '../services/api';
 import toast from 'react-hot-toast';
-import type { TicketData, Reservation } from '../types';
+
+interface TicketData {
+  id: number;
+  code_ticket: string;
+  validation_code: string;
+  qr_code: string;
+  qr_code_url: string;
+  expire_at: string;
+  reservation_id: number;
+  reservation: {
+    id: number;
+    date_reservation: string;
+    heure_debut: string;
+    heure_fin: string;
+    prix_total: number;
+    terrain: {
+      id: number;
+      nom: string;
+      adresse: string;
+    };
+    user: {
+      id: number;
+      prenom: string;
+      nom: string;
+    };
+  };
+  terrain: {
+    id: number;
+    nom: string;
+    adresse: string;
+  };
+  user: {
+    id: number;
+    prenom: string;
+    nom: string;
+  };
+}
 
 interface TicketWithReservation extends TicketData {
   reservation_status?: string;
@@ -39,11 +75,9 @@ const MesTicketsPage: React.FC = () => {
 
   const downloadTicket = async (ticketId: number) => {
     try {
-      const response = await apiService.get(`/tickets/${ticketId}/download`, {
-        responseType: 'blob'
-      });
+      const response = await apiService.get(`/tickets/${ticketId}/download`);
       
-      const url = window.URL.createObjectURL(new Blob([response]));
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `ticket-${ticketId}.pdf`);

@@ -72,48 +72,11 @@ const TicketScanner: React.FC<TicketScannerProps> = ({ isOpen, onClose }) => {
     setIsScanning(false);
   };
 
-  const captureFrame = () => {
-    if (!videoRef.current || !canvasRef.current) return null;
-
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    const context = canvas.getContext('2d');
-
-    if (!context) return null;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0);
-
-    return canvas.toDataURL('image/png');
-  };
-
   const scanQrCode = async () => {
     // Note: Pour une vraie implémentation, vous pourriez utiliser une bibliothèque comme jsQR
     // Ici, je simule le scan en attendant que l'utilisateur saisisse manuellement les données
-    toast.info('Fonctionnalité de scan QR en développement. Utilisez la saisie manuelle pour l\'instant.');
+    toast('Fonctionnalité de scan QR en développement. Utilisez la saisie manuelle pour l\'instant.');
     setScanMode('manual');
-  };
-
-  const validateTicket = async (qrData: string) => {
-    setIsValidating(true);
-    setValidationResult(null);
-
-    try {
-      const response = await apiService.scanTicket({ qr_data: qrData });
-      
-      if (response.success && response.data) {
-        setValidationResult(response.data);
-        toast.success(response.message || 'Ticket validé avec succès !');
-      } else {
-        toast.error(response.message || 'Ticket invalide');
-      }
-    } catch (error: any) {
-      console.error('Erreur validation ticket:', error);
-      toast.error(error.message || 'Erreur lors de la validation');
-    } finally {
-      setIsValidating(false);
-    }
   };
 
   const validateByCode = async () => {
@@ -126,7 +89,7 @@ const TicketScanner: React.FC<TicketScannerProps> = ({ isOpen, onClose }) => {
     setValidationResult(null);
 
     try {
-      const response = await apiService.validateTicketByCode({ code_ticket: manualCode.trim() });
+      const response = await apiService.validateTicketCode(manualCode.trim());
       
       if (response.success && response.data) {
         setValidationResult(response.data);

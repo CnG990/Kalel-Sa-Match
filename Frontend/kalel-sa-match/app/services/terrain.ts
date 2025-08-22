@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Configuration de base pour l'API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kalel-sa-match-api.loca.lt/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
 // Configuration d'axios avec intercepteurs
 const apiClient = axios.create({
@@ -117,24 +117,12 @@ export class TerrainService {
 
   public async getAllTerrains(params?: TerrainSearchParams): Promise<Terrain[]> {
     try {
-      // Utiliser l'endpoint all-for-map qui fonctionne correctement
-      const response: AxiosResponse<TerrainResponse> = await apiClient.get('/terrains/all-for-map', {
+      const response: AxiosResponse<TerrainResponse> = await apiClient.get('/terrains', {
         params
       });
       
       if (response.data.success) {
-        // L'API all-for-map retourne directement les terrains dans data
-        const terrainsData = response.data.data;
-        
-        // Vérifier si terrainsData est un tableau
-        if (Array.isArray(terrainsData)) {
-          return terrainsData;
-        } else if (terrainsData && terrainsData.terrains && Array.isArray(terrainsData.terrains)) {
-          return terrainsData.terrains;
-        } else {
-          console.warn('⚠️ Format de données inattendu:', terrainsData);
-          return [];
-        }
+        return response.data.data.terrains;
       }
       
       throw new Error(response.data.message || 'Erreur lors de la récupération des terrains');

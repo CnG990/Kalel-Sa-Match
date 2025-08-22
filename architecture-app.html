@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture - Terrains-Synthetiques</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.2;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 5px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 3px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .left-column, .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 3px;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+
+        .tech-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .tech-item h3 {
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .tech-item p {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            margin: 1px 0;
+        }
+
+        .component {
+            background: #f8f9fa;
+            border-left: 2px solid #667eea;
+            padding: 6px;
+            margin: 4px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .component h3 {
+            color: #495057;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .component p {
+            color: #6c757d;
+            font-size: 0.75rem;
+            margin: 1px 0;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 6px;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 8px;
+            flex-shrink: 0;
+            font-size: 0.7rem;
+        }
+
+        .step-content h3 {
+            color: #495057;
+            margin-bottom: 2px;
+            font-size: 0.8rem;
+        }
+
+        .step-content p {
+            color: #6c757d;
+            font-size: 0.7rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 6px;
+            border-radius: 5px;
+            border-left: 2px solid #28a745;
+        }
+
+        .feature-card h3 {
+            color: #495057;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+        }
+
+        .feature-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .feature-card li {
+            padding: 1px 0;
+            color: #6c757d;
+            position: relative;
+            padding-left: 12px;
+            font-size: 0.7rem;
+        }
+
+        .feature-card li:before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏟️ Terrains-Synthetiques</h1>
+            <p>Architecture de l'Application Web</p>
+        </div>
+
+        <div class="main-content">
+            <div class="left-column">
+                <div class="section">
+                    <h2>🛠️ Stack Technologique</h2>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <h3>Frontend</h3>
+                            <p>React + TypeScript</p>
+                            <p>Vite + Tailwind CSS</p>
+                            <p>React Router + Context API</p>
+                        </div>
+                        <div class="tech-item">
+                            <h3>Backend</h3>
+                            <p>Laravel 10</p>
+                            <p>PHP 8.1+</p>
+                            <p>PostgreSQL + PostGIS</p>
+                        </div>
+                        <div class="tech-item">
+                            <h3>Base de Données</h3>
+                            <p>PostgreSQL</p>
+                            <p>PostGIS (Géolocalisation)</p>
+                            <p>Migrations + Seeders</p>
+                        </div>
+                        <div class="tech-item">
+                            <h3>APIs & Services</h3>
+                            <p>RESTful API</p>
+                            <p>JWT Authentication</p>
+                            <p>Leaflet Maps</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>🎨 Frontend (React/TypeScript)</h2>
+                    
+                    <div class="component">
+                        <h3>📱 Pages Principales</h3>
+                        <p>• MapPage - Carte interactive des terrains</p>
+                        <p>• AbonnementsPage - Gestion des abonnements</p>
+                        <p>• PaymentPage - Système de paiement</p>
+                        <p>• Dashboard - Tableau de bord utilisateur</p>
+                    </div>
+
+                    <div class="component">
+                        <h3>🧩 Composants Réutilisables</h3>
+                        <p>• ReservationModal - Modal de réservation</p>
+                        <p>• TerrainCard - Carte d'information terrain</p>
+                        <p>• LitigeModal - Gestion des litiges</p>
+                        <p>• TicketScanner - Scanner de tickets QR</p>
+                    </div>
+
+                    <div class="component">
+                        <h3>🔧 Services & Hooks</h3>
+                        <p>• api.ts - Service API centralisé</p>
+                        <p>• AuthContext - Gestion de l'authentification</p>
+                        <p>• useNotifications - Notifications toast</p>
+                        <p>• useRealtimeSync - Synchronisation temps réel</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>⚙️ Backend (Laravel)</h2>
+                    
+                    <div class="component">
+                        <h3>🎯 Contrôleurs API</h3>
+                        <p>• TerrainController - Gestion des terrains</p>
+                        <p>• ReservationController - Réservations</p>
+                        <p>• AbonnementController - Abonnements</p>
+                        <p>• PaiementController - Paiements</p>
+                    </div>
+
+                    <div class="component">
+                        <h3>🗄️ Modèles Eloquent</h3>
+                        <p>• TerrainSynthetiquesDakar - Terrains</p>
+                        <p>• Reservation - Réservations</p>
+                        <p>• Abonnement - Abonnements</p>
+                        <p>• User - Utilisateurs</p>
+                    </div>
+
+                    <div class="component">
+                        <h3>🛡️ Middleware & Sécurité</h3>
+                        <p>• JWT Authentication</p>
+                        <p>• Role-based Access Control</p>
+                        <p>• CORS Management</p>
+                        <p>• Request Validation</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="section">
+                    <h2>🗄️ Base de Données</h2>
+                    
+                    <div class="component">
+                        <h3>📊 Tables Principales</h3>
+                        <p>• terrains_synthetiques_dakar - Données terrains</p>
+                        <p>• reservations - Réservations utilisateurs</p>
+                        <p>• abonnements - Abonnements actifs</p>
+                        <p>• paiements - Historique paiements</p>
+                    </div>
+
+                    <div class="component">
+                        <h3>🔐 Authentification</h3>
+                        <p>• users - Utilisateurs système</p>
+                        <p>• password_resets - Réinitialisation mots de passe</p>
+                        <p>• personal_access_tokens - Tokens API</p>
+                    </div>
+
+                    <div class="component">
+                        <h3>📈 Géolocalisation</h3>
+                        <p>• PostGIS Extension</p>
+                        <p>• Coordonnées GPS précises</p>
+                        <p>• Calculs de distance</p>
+                        <p>• Indexation spatiale</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>🔗 APIs & Intégrations</h2>
+                    
+                    <div class="component">
+                        <h3>🌐 APIs REST</h3>
+                        <p>• /api/terrains - Gestion terrains</p>
+                        <p>• /api/reservations - Réservations</p>
+                        <p>• /api/abonnements - Abonnements</p>
+                        <p>• /api/paiements - Paiements</p>
+                    </div>
+
+                    <div class="component">
+                        <h3>💳 Paiements</h3>
+                        <p>• Orange Money Integration</p>
+                        <p>• Wave Money Integration</p>
+                        <p>• Gestion des transactions</p>
+                        <p>• Historique des paiements</p>
+                    </div>
+
+                    <div class="component">
+                        <h3>🗺️ Cartographie</h3>
+                        <p>• Leaflet.js Maps</p>
+                        <p>• KML Files Import</p>
+                        <p>• Géolocalisation précise</p>
+                        <p>• Navigation interactive</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>🔄 Flux de Données</h2>
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h3>Authentification Utilisateur</h3>
+                                <p>L'utilisateur se connecte via JWT, le token est stocké et utilisé pour toutes les requêtes API</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h3>Récupération des Terrains</h3>
+                                <p>Le frontend récupère la liste des terrains depuis l'API avec leurs coordonnées GPS et informations</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h3>Affichage sur la Carte</h3>
+                                <p>Les terrains sont affichés sur une carte Leaflet avec des marqueurs interactifs</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h3>Réservation ou Abonnement</h3>
+                                <p>L'utilisateur peut réserver un créneau ou souscrire à un abonnement avec vérification de disponibilité</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <h3>Paiement</h3>
+                                <p>Intégration avec Orange Money/Wave pour le traitement des paiements</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <div class="step-number">6</div>
+                            <div class="step-content">
+                                <h3>Confirmation et Tickets</h3>
+                                <p>Génération de tickets QR et confirmation de réservation/abonnement</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>✨ Fonctionnalités Principales</h2>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <h3>🗺️ Gestion Cartographique</h3>
+                            <ul>
+                                <li>Affichage des terrains sur carte interactive</li>
+                                <li>Géolocalisation précise avec PostGIS</li>
+                                <li>Import de données KML</li>
+                                <li>Navigation et recherche par proximité</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <h3>📅 Système de Réservations</h3>
+                            <ul>
+                                <li>Réservation de créneaux horaires</li>
+                                <li>Vérification de disponibilité en temps réel</li>
+                                <li>Gestion des conflits d'horaires</li>
+                                <li>Annulation et report de réservations</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <h3>🎫 Gestion d'Abonnements</h3>
+                            <ul>
+                                <li>Abonnements mensuels/trimestriels/annuels</li>
+                                <li>Sélection de jours et créneaux préférés</li>
+                                <li>Vérification des chevauchements</li>
+                                <li>Paiement différé ou par séance</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <h3>💳 Système de Paiement</h3>
+                            <ul>
+                                <li>Intégration Orange Money</li>
+                                <li>Intégration Wave Money</li>
+                                <li>Gestion des transactions</li>
+                                <li>Historique des paiements</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <h3>🔐 Sécurité et Authentification</h3>
+                            <ul>
+                                <li>Authentification JWT</li>
+                                <li>Gestion des rôles (Admin, Manager, User)</li>
+                                <li>Validation des données</li>
+                                <li>Protection CSRF</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <h3>📱 Interface Utilisateur</h3>
+                            <ul>
+                                <li>Design responsive</li>
+                                <li>Notifications en temps réel</li>
+                                <li>Scanner de tickets QR</li>
+                                <li>Gestion des litiges</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

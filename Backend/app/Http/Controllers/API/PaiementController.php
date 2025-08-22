@@ -262,4 +262,124 @@ class PaiementController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Traiter un paiement d'abonnement
+     */
+    public function processSubscriptionPayment(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'subscription_id' => 'required|exists:abonnements,id',
+                'montant' => 'required|numeric|min:0',
+                'methode_paiement' => 'required|in:orange_money,wave,mobile_money',
+                'reference_transaction' => 'nullable|string',
+            ]);
+
+            $abonnement = \App\Models\Abonnement::where('user_id', Auth::id())
+                ->findOrFail($request->subscription_id);
+
+            if ($abonnement->statut !== 'en_attente_paiement') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cet abonnement ne peut pas être payé'
+                ], 400);
+            }
+
+            // Créer le paiement
+            $paiement = Paiement::create([
+                'user_id' => Auth::id(),
+                'payable_id' => $abonnement->id,
+                'payable_type' => \App\Models\Abonnement::class,
+                'montant' => $request->montant,
+                'methode' => $request->methode_paiement,
+                'statut' => 'en_attente',
+                'reference_transaction' => $request->reference_transaction ?? Paiement::generateReference(),
+            ]);
+
+            // Mettre à jour le statut de l'abonnement
+            $abonnement->update(['statut' => 'active']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Paiement d\'abonnement traité avec succès',
+                'data' => [
+                    'paiement' => $paiement,
+                    'abonnement' => $abonnement
+                ]
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du traitement du paiement d\'abonnement',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Traiter un paiement de réservation
+     */
+    public function processReservationPayment(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'reservation_id' => 'required|exists:reservations,id',
+                'montant' => 'required|numeric|min:0',
+                'methode_paiement' => 'required|in:orange_money,wave,mobile_money',
+                'reference_transaction' => 'nullable|string',
+            ]);
+
+            $reservation = \App\Models\Reservation::where('user_id', Auth::id())
+                ->findOrFail($request->reservation_id);
+
+            if ($reservation->statut !== 'en_attente') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cette réservation ne peut pas être payée'
+                ], 400);
+            }
+
+            // Créer le paiement
+            $paiement = Paiement::create([
+                'user_id' => Auth::id(),
+                'payable_id' => $reservation->id,
+                'payable_type' => \App\Models\Reservation::class,
+                'montant' => $request->montant,
+                'methode' => $request->methode_paiement,
+                'statut' => 'en_attente',
+                'reference_transaction' => $request->reference_transaction ?? Paiement::generateReference(),
+            ]);
+
+            // Mettre à jour le statut de la réservation
+            $reservation->update(['statut' => 'confirmee']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Paiement de réservation traité avec succès',
+                'data' => [
+                    'paiement' => $paiement,
+                    'reservation' => $reservation
+                ]
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du traitement du paiement de réservation',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 } 

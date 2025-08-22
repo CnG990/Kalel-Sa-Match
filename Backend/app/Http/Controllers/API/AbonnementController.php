@@ -17,47 +17,22 @@ class AbonnementController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $abonnements = [
-                [
-                    'id' => 1,
-                    'nom' => 'Abonnement Mensuel',
-                    'description' => 'Accès illimité pendant 1 mois',
-                    'prix' => 25000,
-                    'duree_jours' => 30,
-                    'avantages' => [
-                        'Réservations illimitées',
-                        'Priorité sur les créneaux',
-                        '10% de réduction sur les équipements'
-                    ]
-                ],
-                [
-                    'id' => 2,
-                    'nom' => 'Abonnement Trimestriel',
-                    'description' => 'Accès illimité pendant 3 mois',
-                    'prix' => 60000,
-                    'duree_jours' => 90,
-                    'avantages' => [
-                        'Réservations illimitées',
-                        'Priorité sur les créneaux',
-                        '15% de réduction sur les équipements',
-                        'Accès aux événements VIP'
-                    ]
-                ],
-                [
-                    'id' => 3,
-                    'nom' => 'Abonnement Annuel',
-                    'description' => 'Accès illimité pendant 1 an',
-                    'prix' => 200000,
-                    'duree_jours' => 365,
-                    'avantages' => [
-                        'Réservations illimitées',
-                        'Priorité sur les créneaux',
-                        '20% de réduction sur les équipements',
-                        'Accès aux événements VIP',
-                        'Coach personnel mensuel inclus'
-                    ]
-                ]
-            ];
+            $typesAbonnements = \App\Models\TypeAbonnement::where('est_visible', true)
+                ->orderBy('ordre_affichage')
+                ->get();
+
+            $abonnements = $typesAbonnements->map(function ($type) {
+                return [
+                    'id' => $type->id,
+                    'nom' => $type->nom,
+                    'description' => $type->description,
+                    'prix' => $type->prix,
+                    'duree_jours' => $type->duree_jours,
+                    'avantages' => $type->avantages ?? [],
+                    'categorie' => $type->categorie,
+                    'est_actif' => $type->est_actif
+                ];
+            });
 
             return response()->json([
                 'success' => true,
@@ -95,17 +70,16 @@ class AbonnementController extends Controller
 
             $request->validate([
                 'terrain_id' => 'required|exists:terrains_synthetiques_dakar,id',
-                'duree_seance' => 'required|numeric|min:1|max:3', // ✅ CORRIGÉ: numeric au lieu d'integer
-                'nb_seances' => 'required|integer|min:1|max:10', // ✅ AUGMENTÉ: max 10 au lieu de 3
+                'duree_seance' => 'required|numeric|min:1|max:3',
+                'nb_seances' => 'required|integer|min:1|max:10',
                 'prix_total' => 'required|numeric|min:0',
-                // Nouvelles préférences (optionnelles)
-                'jour_prefere' => 'nullable|integer|min:0|max:6', // 0=dimanche, 6=samedi
-                'heure_preferee' => 'nullable|date_format:H:i', // Format HH:MM
+                'mode_paiement' => 'required|in:integral,differe,par_seance',
+                // Préférences de jours et créneaux
+                'jours_preferes' => 'nullable|array',
+                'jours_preferes.*' => 'integer|min:0|max:6', // 0=dimanche, 6=samedi
+                'creneaux_preferes' => 'nullable|array',
+                'creneaux_preferes.*' => 'string', // Format "HH:MM"
                 'preferences_flexibles' => 'nullable|boolean',
-                'jours_alternatifs' => 'nullable|array',
-                'jours_alternatifs.*' => 'integer|min:0|max:6',
-                'heures_alternatives' => 'nullable|array',
-                'heures_alternatives.*' => 'date_format:H:i',
             ]);
 
             // ✅ VÉRIFICATION ABONNEMENT ACTIF - Gestion des colonnes optionnelles
@@ -134,46 +108,64 @@ class AbonnementController extends Controller
                 ], 400);
             }
 
-            // ✅ VÉRIFICATION DE DISPONIBILITÉ DES CRÉNEAUX
-            if ($request->jour_prefere !== null && $request->heure_preferee) {
-                $jourPrefere = $request->jour_prefere;
-                $heurePrefere = $request->heure_preferee;
+            // ✅ VÉRIFICATION DE DISPONIBILITÉ DES CRÉNEAUX POUR LES ABONNEMENTS
+            $conflitsDetectes = [];
+            $creneauxDisponibles = [];
+            
+            if ($request->jours_preferes && $request->creneaux_preferes) {
                 $dureeSeance = $request->duree_seance;
+                $nbSeances = $request->nb_seances;
                 
-                // Calculer la prochaine occurrence de ce jour
-                $prochaineCreneau = now()->startOfWeek()->addDays($jourPrefere);
-                if ($prochaineCreneau->isPast()) {
-                    $prochaineCreneau->addWeek();
+                // Vérifier chaque combinaison jour/créneau
+                foreach ($request->jours_preferes as $jourPrefere) {
+                    foreach ($request->creneaux_preferes as $creneauPrefere) {
+                        // Calculer les prochaines occurrences de ce créneau
+                        $prochaineCreneau = now()->startOfWeek()->addDays($jourPrefere);
+                        if ($prochaineCreneau->isPast()) {
+                            $prochaineCreneau->addWeek();
+                        }
+                        
+                        // Créer les dates de début et fin pour vérifier la disponibilité
+                        $dateDebut = $prochaineCreneau->setTimeFromTimeString($creneauPrefere);
+                        $dateFin = $dateDebut->copy()->addHours($dureeSeance);
+                        
+                        // Vérifier les conflits avec les réservations existantes
+                        $conflict = \App\Models\Reservation::where('terrain_id', $request->terrain_id)
+                            ->whereIn('statut', ['en_attente', 'confirmee'])
+                            ->where('date_debut', '<', $dateFin)
+                            ->where('date_fin', '>', $dateDebut)
+                            ->exists();
+                        
+                        if ($conflict) {
+                            $conflitsDetectes[] = [
+                                'jour' => ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'][$jourPrefere],
+                                'creneau' => $creneauPrefere,
+                                'date' => $dateDebut->format('Y-m-d H:i')
+                            ];
+                        } else {
+                            $creneauxDisponibles[] = [
+                                'jour' => $jourPrefere,
+                                'creneau' => $creneauPrefere,
+                                'date' => $dateDebut->format('Y-m-d H:i')
+                            ];
+                        }
+                    }
                 }
                 
-                // Créer les dates de début et fin pour vérifier la disponibilité
-                $dateDebut = $prochaineCreneau->setTimeFromTimeString($heurePrefere);
-                $dateFin = $dateDebut->copy()->addHours($dureeSeance);
-                
-                // Vérifier les conflits avec les réservations existantes
-                $conflict = \App\Models\Reservation::where('terrain_id', $request->terrain_id)
-                    ->whereIn('statut', ['en_attente', 'confirmee'])
-                    ->where('date_debut', '<', $dateFin)
-                    ->where('date_fin', '>', $dateDebut)
-                    ->exists();
-                
-                if ($conflict) {
+                // Si aucun créneau n'est disponible, retourner une erreur
+                if (empty($creneauxDisponibles)) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Le créneau préféré sélectionné n\'est pas disponible',
-                        'details' => [
-                            'jour' => ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'][$jourPrefere],
-                            'heure' => $heurePrefere,
-                            'prochaine_date' => $dateDebut->format('Y-m-d H:i')
-                        ]
+                        'message' => 'Aucun des créneaux préférés n\'est disponible',
+                        'conflits' => $conflitsDetectes,
+                        'suggestion' => 'Veuillez choisir d\'autres créneaux ou des jours alternatifs'
                     ], 409);
                 }
                 
-                \Log::info('Créneau disponible vérifié', [
+                \Log::info('Vérification des créneaux terminée', [
                     'terrain_id' => $request->terrain_id,
-                    'jour' => $jourPrefere,
-                    'heure' => $heurePrefere,
-                    'prochaine_date' => $dateDebut->format('Y-m-d H:i')
+                    'creneaux_disponibles' => count($creneauxDisponibles),
+                    'conflits_detectes' => count($conflitsDetectes)
                 ]);
             }
 
@@ -197,23 +189,25 @@ class AbonnementController extends Controller
                 ], 422);
             }
 
-            // ✅ CRÉATION ABONNEMENT AVEC COLONNES CORRECTES SELON LA STRUCTURE BDD
+            // ✅ CRÉATION ABONNEMENT AVEC PRÉFÉRENCES DE JOURS ET CRÉNEAUX
             $abonnementData = [
                 'user_id' => Auth::id(),
                 'terrain_id' => $request->terrain_id,
-                'type_abonnement' => $typeAbonnement->nom, // ✅ Colonne varchar dans la BDD
+                'type_abonnement' => $typeAbonnement->nom,
                 'prix' => $request->prix_total,
                 'categorie' => $typeAbonnement->categorie ?? 'basic',
                 'est_visible' => true,
                 'ordre_affichage' => $typeAbonnement->ordre_affichage ?? 1,
-                // Préférences de créneaux (nouvelles colonnes)
-                'jour_prefere' => $request->jour_prefere,
-                'heure_preferee' => $request->heure_preferee,
+                // Préférences de créneaux (stockées en JSON)
+                'jours_preferes' => json_encode($request->jours_preferes ?? []),
+                'creneaux_preferes' => json_encode($request->creneaux_preferes ?? []),
                 'nb_seances_semaine' => $request->nb_seances ?? 1,
                 'duree_seance' => $request->duree_seance ?? 1.0,
                 'preferences_flexibles' => $request->preferences_flexibles ?? true,
-                'jours_alternatifs' => $request->jours_alternatifs,
-                'heures_alternatives' => $request->heures_alternatives,
+                'mode_paiement' => $request->mode_paiement,
+                // Informations sur les créneaux disponibles
+                'creneaux_disponibles' => json_encode($creneauxDisponibles),
+                'conflits_detectes' => json_encode($conflitsDetectes),
             ];
             
             // ✅ AJOUT DES COLONNES OBLIGATOIRES

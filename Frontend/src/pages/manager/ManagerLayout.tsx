@@ -188,7 +188,7 @@ const ManagerLayout: React.FC = () => {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl blur opacity-30"></div>
               <img 
-                src="/logo.svg" 
+                src="/logo sans background.png" 
                 alt="Logo" 
                 className={`relative w-auto ${isMobile ? 'h-8' : 'h-10'} drop-shadow-lg`}
               />
@@ -256,7 +256,7 @@ const ManagerLayout: React.FC = () => {
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-green-600 to-blue-600">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <img src="/logo.svg" alt="Logo" className="h-8 w-auto" />
+                  <img src="/logo sans background.png" alt="Logo" className="h-8 w-auto" />
                 </div>
                 <div>
                   <span className="text-lg font-bold text-white">Menu Principal</span>

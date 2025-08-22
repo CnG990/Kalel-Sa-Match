@@ -127,7 +127,7 @@ const AddTerrainModal: React.FC<AddTerrainModalProps> = ({ isOpen, onClose, onSu
                     name="prix_par_heure"
                     value={formData.prix_par_heure}
                     onChange={handleInputChange}
-                    placeholder="30000"
+                    placeholder="25000"
                     className="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     required
                   />

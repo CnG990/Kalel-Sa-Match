@@ -83,7 +83,8 @@ const ReservationDiagnostic: React.FC = () => {
       let terrainsData: any[] = [];
       try {
         const terrainsResponse = await apiService.getTerrains();
-        terrainsData = terrainsResponse.data?.data || terrainsResponse.data || [];
+        terrainsData = Array.isArray(terrainsResponse.data?.data) ? terrainsResponse.data.data : 
+                     Array.isArray(terrainsResponse.data) ? terrainsResponse.data : [];
       } catch (error) {
         terrainsData = [];
       }

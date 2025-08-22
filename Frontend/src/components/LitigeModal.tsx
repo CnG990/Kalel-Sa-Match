@@ -112,7 +112,7 @@ const LitigeModal: React.FC<LitigeModalProps> = ({
         sujet: formData.sujet,
         description: formData.description,
         priorite: formData.priorite,
-        reservation_id: reservationId || null,
+        reservation_id: reservationId || undefined,
         preuves: preuves
       };
 

@@ -242,7 +242,7 @@ const MapPageComplete: React.FC = () => {
     try {
       console.log('🔄 Appel API terrains...');
       
-              const response = await fetch('https://kalel-sa-match-api.loca.lt/api/terrains/all-for-map', {
+      const response = await fetch('http://127.0.0.1:8000/api/terrains/all-for-map', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

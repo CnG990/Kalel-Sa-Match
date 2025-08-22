@@ -30,7 +30,7 @@ export default function ManagerLayout({
           <div className="flex items-center justify-center h-16 px-4 bg-kalel-primary">
             <div className="flex items-center">
               <Image
-                src="/images/logo.png"
+                src="/logo sans background.png"
                 alt="Kalèl sa Match"
                 width={40}
                 height={40}

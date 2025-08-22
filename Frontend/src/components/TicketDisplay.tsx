@@ -48,13 +48,13 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
       if (response.success) {
         setTicket(response.data);
       } else {
-        // Gérer les cas spéciaux selon le code d'erreur
-        if (response.status === 402) {
-          // 402 = Payment Required
+        // Gérer les cas spéciaux selon le message d'erreur
+        if (response.message?.includes('paiement') || response.message?.includes('payment')) {
+          // Paiement requis
           setError({
             type: 'payment_required',
             message: response.message || 'Paiement requis pour accéder au ticket',
-            instructions: response.instructions || [
+            instructions: [
               'Votre réservation doit être payée et confirmée',
               'Le ticket sera automatiquement généré après paiement'
             ]

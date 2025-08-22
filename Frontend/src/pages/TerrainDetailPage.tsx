@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import apiService from '../services/api';
 import ReservationModal from './components/ReservationModal';
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiY2hlaWtobmdvbTk5IiwiYSI6ImNtYjR5c2NieTF2eXYyaXNia3FmdWd5OTYifQ.yi91YsGpTzlsDA9ljYp8DQ';
+// const MAPBOX_TOKEN = 'pk.eyJ1IjoiY2hlaWtobmdvbTk5IiwiYSI6ImNtYjR5c2NieTF2eXYyaXNia3FmdWd5OTYifQ.yi91YsGpTzlsDA9ljYp8DQ';
 
 // Le type Terrain peut être partagé dans un fichier de types plus tard
 interface Terrain {

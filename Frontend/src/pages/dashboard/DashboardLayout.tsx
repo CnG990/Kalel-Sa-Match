@@ -12,8 +12,6 @@ import {
   Home,
   Menu,
   X,
-  Ticket,
-  AlertTriangle,
 } from 'lucide-react';
 
 const SidebarLink: React.FC<{ 
@@ -77,8 +75,6 @@ const DashboardLayout: React.FC = () => {
     { to: "/dashboard", icon: <LayoutDashboard size={20} />, text: "Aperçu" },
     { to: "/dashboard/profile", icon: <User size={20} />, text: "Mon Profil" },
     { to: "/dashboard/reservations", icon: <Calendar size={20} />, text: "Réservations" },
-    { to: "/dashboard/tickets", icon: <Ticket size={20} />, text: "Mes Tickets" },
-    { to: "/dashboard/litiges", icon: <AlertTriangle size={20} />, text: "Mes Litiges" },
     { to: "/dashboard/map", icon: <Map size={20} />, text: "Carte" },
     { to: "/dashboard/settings", icon: <Settings size={20} />, text: "Paramètres" },
   ];
@@ -105,7 +101,7 @@ const DashboardLayout: React.FC = () => {
         {/* Header avec logo et bouton fermer mobile */}
         <div className="flex items-center justify-between mb-10 px-2">
           <Link to="/" className="flex items-center">
-            <img src="/logo-1.webp" alt="Kalèl Sa Match Logo" className="h-10 w-auto" />
+            <img src="/logo sans background.png" alt="Kalèl Sa Match Logo" className="h-10 w-auto" />
             <span className={`ml-3 font-bold text-white ${isMobile ? 'text-lg' : 'text-xl'}`}>
               Kalèl Sa Match
             </span>

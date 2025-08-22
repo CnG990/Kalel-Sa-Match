@@ -1,515 +1,286 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Euro, CreditCard, ArrowLeft } from 'lucide-react';
-import apiService from '../services/api';
-import toast from 'react-hot-toast';
-import TerrainOptionSelector from '../components/TerrainOptionSelector';
-
-interface Terrain {
-  id: number;
-  nom: string;
-  adresse: string;
-  prix_heure: number;
-  description?: string;
-  capacite: number;
-  image_principale?: string;
-}
-
-interface TerrainOption {
-  id: string;
-  name: string;
-  price: number;
-  capacity: number;
-  duration?: number;
-  description: string;
-  allowedDays?: number[];
-  restrictions?: string[];
-  allowedHours?: { start: number; end: number };
-}
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 const ReservationPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  
-  // États pour les données dynamiques
-  const [terrain, setTerrain] = useState<Terrain | null>(null);
-  const [loadingTerrain, setLoadingTerrain] = useState(true);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  
-  // États du formulaire
+  const { } = useParams<{ id: string }>();
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [duration, setDuration] = useState('1');
   const [paymentMethod, setPaymentMethod] = useState('mobile_money');
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // ✅ AJOUT : Support des options terrain avec contraintes
-  const [selectedOption, setSelectedOption] = useState<TerrainOption | null>(null);
 
-  // ✅ VALIDATION CONTRAINTES : Fonction pour valider les contraintes d'option
-  const validateOptionConstraints = (date: string, time: string): string | null => {
-    if (!selectedOption) return null;
-    
-    const selectedDate = new Date(date);
-    const dayOfWeek = selectedDate.getDay();
-    const selectedHour = parseInt(time);
+  // Horaires disponibles (exemple)
+  const timeSlots = [
+    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00',
+    '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'
+  ];
 
-    // Vérifier les contraintes de jour
-    if (selectedOption.allowedDays && !selectedOption.allowedDays.includes(dayOfWeek)) {
-      const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-      const allowedDayNames = selectedOption.allowedDays.map(d => dayNames[d]).join(', ');
-      return `Cette option n'est disponible que : ${allowedDayNames}`;
-    }
+  // Durées disponibles
+  const durations = [
+    { value: '1', label: '1 heure', price: 25000 },
+    { value: '2', label: '2 heures', price: 48000 },
+    { value: '3', label: '3 heures', price: 70000 }
+  ];
 
-    // Vérifier les contraintes d'heure
-    if (selectedOption.allowedHours) {
-      const { start, end } = selectedOption.allowedHours;
-      let isValidHour = false;
-
-      if (start > end) {
-        // Créneau traverse minuit (ex: 16h-6h)
-        isValidHour = selectedHour >= start || selectedHour <= end;
-      } else {
-        // Créneau normal (ex: 8h-15h)
-        isValidHour = selectedHour >= start && selectedHour < end;
-      }
-
-      if (!isValidHour) {
-        if (start > end) {
-          return `Cette option n'est disponible que de ${start}h à 6h`;
-        } else {
-          return `Cette option n'est disponible que de ${start}h à ${end}h`;
-        }
-      }
-    }
-
-    return null; // Pas d'erreur
-  };
-
-  // ✅ FILTRAGE CRÉNEAUX : Filtrer les créneaux selon les contraintes
-  const getFilteredSlots = () => {
-    if (!selectedOption || !selectedDate) return availableSlots;
-    
-    return availableSlots.filter(slot => {
-      const error = validateOptionConstraints(selectedDate, slot);
-      return error === null;
-    });
-  };
-
-  const filteredSlots = getFilteredSlots();
-
-  // ✅ CALCUL PRIX AVEC OPTION TERRAIN
-  const calculatePrice = () => {
-    if (selectedOption) {
-      const finalDuration = selectedOption.duration || parseFloat(duration);
-      return selectedOption.price * (parseFloat(duration) / finalDuration);
-    }
-    return terrain ? terrain.prix_heure * parseFloat(duration) : 0;
-  };
-
-  // Durées disponibles (basées sur l'option terrain ou terrain de base)
-  const getDurations = () => {
-    if (!terrain) return [];
-    
-    if (selectedOption) {
-      // Si une option est sélectionnée, utiliser sa durée spécifique
-      const optionDuration = selectedOption.duration || 1;
-      return [
-        { value: optionDuration.toString(), label: `${optionDuration} heure${optionDuration > 1 ? 's' : ''}`, price: selectedOption.price }
-      ];
-    }
-    
-    // Sinon, durées standards
-    const basePrice = terrain.prix_heure;
-    return [
-      { value: '1', label: '1 heure', price: basePrice },
-      { value: '2', label: '2 heures', price: basePrice * 2 },
-      { value: '3', label: '3 heures', price: basePrice * 3 }
-    ];
-  };
-
-  const durations = getDurations();
   const selectedDuration = durations.find(d => d.value === duration);
-  const totalPrice = calculatePrice();
+  const totalPrice = selectedDuration?.price || 0;
 
-  // Charger les données du terrain
-  useEffect(() => {
-    const fetchTerrain = async () => {
-      if (!id) return;
-      
-      try {
-        setLoadingTerrain(true);
-        const response = await apiService.getTerrain(id);
-        
-        if (response.success && response.data) {
-          setTerrain(response.data);
-          // Pré-remplir depuis les paramètres URL si disponibles
-          const date = searchParams.get('date');
-          const time = searchParams.get('time');
-          if (date) setSelectedDate(date);
-          if (time) setSelectedTime(time);
-        } else {
-          toast.error('Terrain non trouvé');
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Erreur chargement terrain:', error);
-        toast.error('Erreur lors du chargement du terrain');
-        navigate('/');
-      } finally {
-        setLoadingTerrain(false);
-      }
-    };
-
-    fetchTerrain();
-  }, [id, searchParams, navigate]);
-
-  // Charger les créneaux disponibles
-  useEffect(() => {
-    const fetchAvailableSlots = async () => {
-      if (!terrain || !selectedDate) return;
-
-      try {
-        setLoadingSlots(true);
-        const response = await apiService.checkAvailability(
-          terrain.id, 
-          selectedDate, 
-          parseInt(duration)
-        );
-        
-        if (response.success && Array.isArray(response.data)) {
-          setAvailableSlots(response.data);
-        } else {
-          setAvailableSlots([]);
-        }
-      } catch (error) {
-        console.error('Erreur créneaux:', error);
-        setAvailableSlots([]);
-      } finally {
-        setLoadingSlots(false);
-      }
-    };
-
-    fetchAvailableSlots();
-  }, [terrain, selectedDate, duration]);
-
-  // ✅ HANDLER OPTION : Gérer la sélection d'option terrain
-  const handleOptionSelect = (option: TerrainOption) => {
-    setSelectedOption(option);
-    // Mettre à jour la durée si l'option la spécifie
-    if (option.duration) {
-      setDuration(option.duration.toString());
-    }
-    // Réinitialiser l'heure sélectionnée car les contraintes ont changé
-    setSelectedTime('');
-  };
-
-  // Validation lors de la soumission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedDate || !selectedTime) {
-      toast.error('Veuillez sélectionner une date et un créneau');
-      return;
-    }
-
-    // ✅ VALIDATION CONTRAINTES avant soumission
-    const constraintError = validateOptionConstraints(selectedDate, selectedTime);
-    if (constraintError) {
-      toast.error(constraintError);
-      return;
-    }
-
     setIsProcessing(true);
     
-    try {
-      const reservationData = {
-        terrain_id: terrain!.id,
-        date_debut: `${selectedDate} ${selectedTime}:00:00`,
-        duree_heures: parseFloat(duration),
-        prix_total: totalPrice,
-        methode_paiement: paymentMethod,
-        option_terrain: selectedOption?.id || null,
-        option_details: selectedOption ? {
-          name: selectedOption.name,
-          price: selectedOption.price,
-          capacity: selectedOption.capacity,
-          restrictions: selectedOption.restrictions || []
-        } : null
-      };
-
-      const response = await apiService.createReservation(reservationData);
-      
-      if (response.success) {
-        toast.success('Réservation créée avec succès !');
-        navigate('/mes-reservations');
-      } else {
-        toast.error(response.message || 'Erreur lors de la réservation');
-      }
-    } catch (error: any) {
-      console.error('Erreur réservation:', error);
-      toast.error(error.message || 'Une erreur est survenue');
-    } finally {
+    // Simulation d'une requête API
+    setTimeout(() => {
       setIsProcessing(false);
-    }
+      alert('Réservation effectuée avec succès !');
+    }, 2000);
   };
-
-  if (loadingTerrain) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement du terrain...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!terrain) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800">Terrain non trouvé</h2>
-          <button 
-            onClick={() => navigate('/')}
-            className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-          >
-            Retour à l'accueil
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* En-tête avec retour */}
-        <div className="mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-gray-800 mb-4"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Retour
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900">Réserver un créneau</h1>
-          <p className="text-gray-600">Finalisez votre réservation pour {terrain?.nom}</p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Réserver un terrain</h1>
+          <p className="text-gray-600">Choisissez votre créneau et effectuez votre réservation</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Formulaire de réservation */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-6">Détails de la réservation</h2>
-            
-            {/* ✅ SÉLECTEUR OPTIONS TERRAIN */}
-            {terrain && (
-              <div className="mb-6">
-                <TerrainOptionSelector
-                  terrainData={terrain}
-                  onOptionSelect={handleOptionSelect}
-                />
-              </div>
-            )}
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Sélection de la date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-2" />
-                  Date de réservation
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  required
-                />
-              </div>
-
-              {/* Créneaux horaires filtrés */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Clock className="w-4 h-4 inline mr-2" />
-                  Créneau horaire
-                  {selectedOption && (
-                    <span className="text-xs text-blue-600 ml-2">
-                      (Filtré selon l'option sélectionnée)
-                    </span>
-                  )}
-                </label>
-                {loadingSlots ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto"></div>
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Détails de la réservation</h2>
+              
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Informations du terrain */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-medium text-gray-900 mb-2">Terrain sélectionné</h3>
+                  <div className="flex items-center space-x-4">
+                    <img 
+                      src="/terrain-foot.jpg" 
+                      alt="Terrain" 
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+                    <div>
+                      <p className="font-medium text-gray-900">Terrain A - Complexe Almadies</p>
+                      <p className="text-sm text-gray-600">Surface synthétique • Éclairage • Vestiaires</p>
+                    </div>
                   </div>
-                ) : filteredSlots.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {filteredSlots.map((slot) => (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => setSelectedTime(slot)}
-                        className={`p-3 text-sm rounded-md border transition-colors ${
-                          selectedTime === slot
-                            ? 'bg-orange-500 text-white border-orange-500'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-orange-500'
+                </div>
+
+                {/* Date et heure */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+                      Date de réservation
+                    </label>
+                    <input
+                      type="date"
+                      id="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
+                      Heure de début
+                    </label>
+                    <select
+                      id="time"
+                      value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Sélectionnez une heure</option>
+                      {timeSlots.map(time => (
+                        <option key={time} value={time}>{time}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Durée */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Durée de réservation
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {durations.map(durationOption => (
+                      <label
+                        key={durationOption.value}
+                        className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${
+                          duration === durationOption.value
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-300 bg-white'
                         }`}
                       >
-                        {slot}:00
-                      </button>
+                        <input
+                          type="radio"
+                          name="duration"
+                          value={durationOption.value}
+                          checked={duration === durationOption.value}
+                          onChange={(e) => setDuration(e.target.value)}
+                          className="sr-only"
+                        />
+                        <div className="flex w-full items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="text-sm">
+                              <p className={`font-medium ${
+                                duration === durationOption.value ? 'text-green-900' : 'text-gray-900'
+                              }`}>
+                                {durationOption.label}
+                              </p>
+                              <p className={`${
+                                duration === durationOption.value ? 'text-green-700' : 'text-gray-500'
+                              }`}>
+                                {durationOption.price.toLocaleString()} FCFA
+                              </p>
+                            </div>
+                          </div>
+                          {duration === durationOption.value && (
+                            <div className="shrink-0 text-green-600">
+                              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path fillRule="evenodd" d="M20.707 5.293a1 1 0 010 1.414l-11 11a1 1 0 01-1.414 0l-5-5a1 1 0 011.414-1.414L9 15.586 19.293 5.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </label>
                     ))}
                   </div>
-                ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    {selectedDate ? (
-                      selectedOption && filteredSlots.length === 0 && availableSlots.length > 0 ? (
-                        <div>
-                          <p>Aucun créneau compatible avec cette option</p>
-                          <p className="text-xs mt-1">
-                            Contraintes : {selectedOption.restrictions?.join(', ')}
-                          </p>
-                        </div>
-                      ) : (
-                        'Aucun créneau disponible pour cette date'
-                      )
-                    ) : (
-                      'Sélectionnez une date pour voir les créneaux'
-                    )}
+                </div>
+
+                {/* Méthode de paiement */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Méthode de paiement
+                  </label>
+                  <div className="space-y-3">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="mobile_money"
+                        checked={paymentMethod === 'mobile_money'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      />
+                      <div className="flex items-center space-x-2">
+                        <img src="/orange-money.png" alt="Orange Money" className="h-6 w-auto" />
+                        <span className="text-gray-900">Orange Money</span>
+                      </div>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="wave"
+                        checked={paymentMethod === 'wave'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      />
+                      <div className="flex items-center space-x-2">
+                        <img src="/wave.png" alt="Wave" className="h-6 w-auto" />
+                        <span className="text-gray-900">Wave</span>
+                      </div>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="cash"
+                        checked={paymentMethod === 'cash'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      />
+                      <span className="text-gray-900">Paiement sur place</span>
+                    </label>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Durée */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Durée
-                </label>
-                <select
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  disabled={selectedOption && selectedOption.duration} // Désactiver si l'option impose une durée
+                {/* Bouton de réservation */}
+                <button
+                  type="submit"
+                  disabled={isProcessing || !selectedDate || !selectedTime}
+                  className="w-full bg-gradient-to-r from-green-600 to-orange-500 hover:from-green-700 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
                 >
-                  {durations.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label} - {d.price.toLocaleString()} FCFA
-                    </option>
-                  ))}
-                </select>
-                {selectedOption && selectedOption.duration && (
-                  <p className="text-xs text-blue-600 mt-1">
-                    Durée fixée par l'option sélectionnée
-                  </p>
-                )}
-              </div>
-
-              {/* Méthode de paiement */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <CreditCard className="w-4 h-4 inline mr-2" />
-                  Méthode de paiement
-                </label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="mobile_money">Mobile Money</option>
-                  <option value="carte_bancaire">Carte bancaire</option>
-                  <option value="especes">Espèces</option>
-                </select>
-              </div>
-
-              {/* Bouton de soumission */}
-              <button
-                type="submit"
-                disabled={isProcessing || !selectedDate || !selectedTime}
-                className={`w-full py-3 px-4 rounded-md font-semibold transition-colors ${
-                  isProcessing || !selectedDate || !selectedTime
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-orange-500 text-white hover:bg-orange-600'
-                }`}
-              >
-                {isProcessing ? 'Traitement...' : `Réserver - ${totalPrice.toLocaleString()} FCFA`}
-              </button>
-            </form>
+                  {isProcessing ? (
+                    <div className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Traitement en cours...
+                    </div>
+                  ) : (
+                    'Confirmer la réservation'
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
 
-          {/* Récapitulatif */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-6">Récapitulatif</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <MapPin className="w-5 h-5 text-gray-400 mt-1 mr-3" />
-                <div>
-                  <p className="font-semibold">{terrain?.nom}</p>
-                  <p className="text-gray-600 text-sm">{terrain?.adresse}</p>
+          {/* Résumé de la réservation */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-lg p-6 sticky top-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Résumé</h2>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Terrain</span>
+                  <span className="font-medium">Terrain A</span>
+                </div>
+                
+                {selectedDate && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Date</span>
+                    <span className="font-medium">{new Date(selectedDate).toLocaleDateString('fr-FR')}</span>
+                  </div>
+                )}
+                
+                {selectedTime && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Heure</span>
+                    <span className="font-medium">{selectedTime}</span>
+                  </div>
+                )}
+                
+                {selectedDuration && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Durée</span>
+                    <span className="font-medium">{selectedDuration.label}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Prix unitaire</span>
+                  <span className="font-medium">25 000 FCFA/h</span>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Total</span>
+                    <span className="text-green-600">{totalPrice.toLocaleString()} FCFA</span>
+                  </div>
                 </div>
               </div>
 
-              {selectedOption && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-blue-800 mb-2">Option sélectionnée</h3>
-                  <p className="text-blue-700">{selectedOption.name}</p>
-                  <p className="text-blue-600 text-sm">{selectedOption.description}</p>
-                  {selectedOption.restrictions && selectedOption.restrictions.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs text-blue-600 font-semibold">Restrictions :</p>
-                      <ul className="text-xs text-blue-600">
-                        {selectedOption.restrictions.map((restriction, index) => (
-                          <li key={index}>• {restriction}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedDate && (
-                <div className="flex items-center">
-                  <Calendar className="w-5 h-5 text-gray-400 mr-3" />
-                  <div>
-                    <p className="font-semibold">Date</p>
-                    <p className="text-gray-600">
-                      {new Date(selectedDate).toLocaleDateString('fr-FR', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {selectedTime && (
-                <div className="flex items-center">
-                  <Clock className="w-5 h-5 text-gray-400 mr-3" />
-                  <div>
-                    <p className="font-semibold">Heure</p>
-                    <p className="text-gray-600">{selectedTime}:00</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center">
-                <Euro className="w-5 h-5 text-gray-400 mr-3" />
-                <div>
-                  <p className="font-semibold">Prix total</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {totalPrice.toLocaleString()} FCFA
-                  </p>
-                  {selectedOption && selectedOption.price !== terrain?.prix_heure && (
-                    <p className="text-xs text-gray-500">
-                      (Prix spécial pour cette option)
-                    </p>
-                  )}
-                </div>
+              {/* Informations importantes */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h3 className="font-medium text-blue-900 mb-2">Informations importantes</h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Annulation gratuite jusqu'à 24h avant</li>
+                  <li>• Présentez-vous 10 min avant l'heure</li>
+                  <li>• Équipements disponibles sur place</li>
+                  <li>• Vestiaires et douches inclus</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -520,4 +291,3 @@ const ReservationPage: React.FC = () => {
 };
 
 export default ReservationPage; 
-

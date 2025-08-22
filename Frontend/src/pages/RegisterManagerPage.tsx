@@ -40,7 +40,7 @@ const RegisterManagerPage: React.FC = () => {
     setSuccess(null);
 
     try {
-              const response = await fetch('https://b0385fbb1e44.ngrok-free.app/api/auth/register', {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ const RegisterManagerPage: React.FC = () => {
         {/* Logo et lien de retour */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center justify-center mb-6 hover:opacity-80 transition-opacity">
-            <img src="/logo.png" alt="Logo Kalél Sa Match" className="h-12 w-auto" />
+            <img src="/logo sans background.png" alt="Logo Kalél Sa Match" className="h-12 w-auto" />
             <div className="ml-3">
               <span className="text-2xl font-bold">
                 <span className="text-green-600">Kalél</span>

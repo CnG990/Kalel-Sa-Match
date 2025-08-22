@@ -47,7 +47,7 @@ const TerrainLayout: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <img src="/logo-1.webp" alt="Kalèl Sa Match Logo" className="h-10 w-auto" />
+              <img src="/logo sans background.png" alt="Kalèl Sa Match Logo" className="h-10 w-auto" />
               <span className="ml-3 text-xl font-bold text-gray-900">
                 Kalèl Sa Match
               </span>
@@ -198,7 +198,7 @@ const TerrainLayout: React.FC = () => {
             {/* Logo et Description */}
             <div className="md:col-span-1">
               <div className="flex items-center mb-4">
-                <img src="/logo-1.webp" alt="Logo Kalél Sa Match" className="h-8 w-auto" />
+                <img src="/logo sans background.png" alt="Logo Kalél Sa Match" className="h-8 w-auto" />
                 <div className="ml-3">
                   <span className="text-lg font-bold">
                     <span className="text-green-400">Kalél</span>
