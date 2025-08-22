@@ -31,6 +31,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
+        
+        // Middleware CORS global pour toutes les requêtes
+        $middleware->web(prepend: [
+            \App\Http\Middleware\PreflightMiddleware::class,
+            \App\Http\Middleware\CorsMiddleware::class,
+        ]);
+        
+        $middleware->api(prepend: [
+            \App\Http\Middleware\PreflightMiddleware::class,
+            \App\Http\Middleware\CorsMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

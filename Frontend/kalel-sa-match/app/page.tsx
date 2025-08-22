@@ -7,6 +7,31 @@ import { terrainService, Terrain } from './services/terrain'
 import Logo from './components/Logo'
 
 export default function HomePage() {
+  // Force Vercel redeploy - API URL updated to localtunnel
+  console.log('🚀 Kalel Sa Match - API: https://kalel-sa-match-api.loca.lt/api');
+  
+  // Force redeploy - Updated API endpoint
+  const API_URL = 'https://kalel-sa-match-api.loca.lt/api';
+  
+  // Force redeploy - Remove old ngrok URL completely
+  const OLD_NGROK_URL = 'https://ad07ffba09ee.ngrok-free.app/api'; // DEPRECATED
+  
+  // Force redeploy - Add timestamp to force cache busting
+  const TIMESTAMP = Date.now();
+  console.log(`🕐 Timestamp: ${TIMESTAMP} - Force redeploy`);
+  
+  // Force redeploy - Add explicit API URL override
+  const FORCE_API_URL = 'https://kalel-sa-match-api.loca.lt/api';
+  console.log(`🔧 Force API URL: ${FORCE_API_URL}`);
+  
+  // Force redeploy - Add cache busting parameter
+  const CACHE_BUST = `?v=${TIMESTAMP}`;
+  console.log(`🔄 Cache bust: ${CACHE_BUST}`);
+  
+  // Force redeploy - Add explicit terrain count override
+  const EXPECTED_TERRAIN_COUNT = 12;
+  console.log(`🎯 Expected terrain count: ${EXPECTED_TERRAIN_COUNT}`);
+  
   const [terrains, setTerrains] = useState<Terrain[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +78,7 @@ export default function HomePage() {
         setLoading(true)
         setError(null)
         const terreainsData = await terrainService.getAllTerrains({
-          per_page: 6 // Afficher seulement 6 terrains sur la page d'accueil
+          // Afficher tous les terrains disponibles
         })
         setTerrains(terreainsData)
       } catch (err) {
@@ -233,24 +258,13 @@ export default function HomePage() {
               </div>
             </Link>
             <div className="flex space-x-4">
-              <Link 
-                href="/connexion" 
-                className="text-gray-700 hover:text-kalel-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100"
-              >
-                Connexion
-              </Link>
-              <Link 
-                href="/inscription" 
-                className="bg-gradient-kalel-primary hover:bg-kalel-primary-dark text-white px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                Inscription
-              </Link>
+              {/* Navigation simplifiée - boutons supprimés */}
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section avec image de fond et carte */}
+      {/* Hero Section simplifiée */}
       <section className="relative min-h-screen overflow-hidden">
         {/* Image de fond */}
         <div className="absolute inset-0">
@@ -264,43 +278,23 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-kalel-primary/80 via-kalel-primary/60 to-transparent"></div>
         </div>
 
-        {/* Contenu Hero */}
+        {/* Contenu Hero simplifié */}
         <div className="relative z-10 min-h-screen flex items-center">
-          <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
-            {/* Texte à gauche */}
-            <div className="text-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-white text-center">
               <h1 className="text-4xl font-extrabold sm:text-5xl md:text-6xl mb-6">
                 Réservez votre terrain de football
                 <span className="block text-kalel-accent mt-2">en quelques clics</span>
               </h1>
-              <p className="text-xl text-white/90 mb-8 max-w-lg">
+              <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
                 Trouvez et réservez les meilleurs terrains synthétiques de Dakar. 
                 Simple, rapide et sécurisé avec paiement mobile money.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Link
-                  href="/terrains"
-                  className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-base font-medium rounded-lg text-white bg-transparent hover:bg-white hover:text-kalel-primary transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Voir les terrains
-                </Link>
-                <Link
-                  href="/inscription"
-                  className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-kalel-secondary hover:bg-kalel-secondary-dark transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Commencer maintenant
-                </Link>
-              </div>
+              {/* Boutons d'action supprimés pour une interface plus épurée */}
 
-              {/* Statistiques */}
-              <div className="grid grid-cols-3 gap-6 mt-8">
+              {/* Statistiques simplifiées */}
+              <div className="grid grid-cols-3 gap-6 mt-8 max-w-md mx-auto">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-kalel-accent">{terrains.length}</div>
                   <div className="text-sm text-white/80">Terrains</div>
@@ -313,84 +307,6 @@ export default function HomePage() {
                   <div className="text-3xl font-bold text-kalel-accent">100%</div>
                   <div className="text-sm text-white/80">Sécurisé</div>
                 </div>
-              </div>
-            </div>
-
-            {/* Carte à droite */}
-            <div className="lg:block">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
-                <div className="mb-6">
-                  <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    Terrains près de vous
-                  </h3>
-                  {nearbyTerrainsCount !== null ? (
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-kalel-secondary mb-2">
-                        {nearbyTerrainsCount}
-                      </div>
-                      <p className="text-white/90 text-lg">
-                        terrain{nearbyTerrainsCount > 1 ? 's' : ''} disponible{nearbyTerrainsCount > 1 ? 's' : ''} dans vos alentours
-                      </p>
-                      <p className="text-white/70 text-sm mt-2">
-                        Dans un rayon de 10 km
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
-                      <p className="text-white/90">Recherche des terrains à proximité...</p>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="bg-white/10 rounded-lg p-4 mb-6">
-                  <h4 className="text-white font-semibold mb-2">🎯 Fonctionnalités exclusives</h4>
-                  <div className="space-y-2 text-sm text-white/80">
-                    <div className="flex items-center justify-center">
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0V7" />
-                      </svg>
-                      Carte interactive des terrains
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Réservation en temps réel
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                      </svg>
-                      Paiement sécurisé Orange Money & Wave
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Link
-                    href="/connexion"
-                    className="block w-full bg-kalel-secondary hover:bg-kalel-secondary-dark text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    🔗 Se connecter pour réserver
-                  </Link>
-                  <Link
-                    href="/inscription"
-                    className="block w-full bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 border border-white/30"
-                  >
-                    📝 Créer un compte gratuitement
-                  </Link>
-                </div>
-                
-                <p className="text-white/60 text-xs mt-4">
-                  Connectez-vous pour accéder à la carte interactive et réserver votre terrain
-                </p>
               </div>
             </div>
           </div>
@@ -436,17 +352,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-6 leading-relaxed">
                 Inscrivez-vous gratuitement en quelques clics. Renseignez vos informations et votre profil sera créé instantanément.
               </p>
-              <div className="flex justify-center">
-                <Link
-                  href="/inscription"
-                  className="inline-flex items-center px-6 py-3 bg-kalel-primary hover:bg-kalel-primary-dark text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  S'inscrire maintenant
-                </Link>
-              </div>
+              {/* Bouton d'inscription supprimé */}
             </div>
 
             {/* Étape 2 */}
@@ -521,26 +427,7 @@ export default function HomePage() {
               <p className="text-xl mb-8 opacity-90">
                 Rejoignez des milliers de joueurs qui font confiance à Kalèl sa Match
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/inscription"
-                  className="inline-flex items-center px-8 py-4 bg-white text-kalel-primary rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Créer mon compte gratuitement
-                </Link>
-                <Link
-                  href="/connexion"
-                  className="inline-flex items-center px-8 py-4 border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-kalel-primary transition-all duration-200"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  J'ai déjà un compte
-                </Link>
-              </div>
+              {/* Boutons d'action supprimés pour une interface épurée */}
             </div>
           </div>
         </div>

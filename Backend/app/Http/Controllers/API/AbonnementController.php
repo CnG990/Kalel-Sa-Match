@@ -95,18 +95,37 @@ class AbonnementController extends Controller
 
             $request->validate([
                 'terrain_id' => 'required|exists:terrains_synthetiques_dakar,id',
-                'duree_seance' => 'required|integer|min:1|max:3',
-                'nb_seances' => 'required|integer|min:1|max:3',
+                'duree_seance' => 'required|numeric|min:1|max:3', // ✅ CORRIGÉ: numeric au lieu d'integer
+                'nb_seances' => 'required|integer|min:1|max:10', // ✅ AUGMENTÉ: max 10 au lieu de 3
                 'prix_total' => 'required|numeric|min:0',
+                // Nouvelles préférences (optionnelles)
+                'jour_prefere' => 'nullable|integer|min:0|max:6', // 0=dimanche, 6=samedi
+                'heure_preferee' => 'nullable|date_format:H:i', // Format HH:MM
+                'preferences_flexibles' => 'nullable|boolean',
+                'jours_alternatifs' => 'nullable|array',
+                'jours_alternatifs.*' => 'integer|min:0|max:6',
+                'heures_alternatives' => 'nullable|array',
+                'heures_alternatives.*' => 'date_format:H:i',
             ]);
 
+            // ✅ VÉRIFICATION ABONNEMENT ACTIF - Gestion des colonnes optionnelles
             // Vérifier s'il n'y a pas déjà un abonnement actif pour ce terrain et ce type
             $abonnementActif = \App\Models\Abonnement::where('user_id', Auth::id())
                 ->where('terrain_id', $request->terrain_id)
-                ->where('type_abonnement_id', $id)
-                ->where('statut', 'actif')
-                ->where('date_fin', '>', now())
-                ->first();
+                ->where('type_abonnement_id', $id);
+            
+            // ✅ AJOUT CONDITIONNEL : Vérifier date_fin seulement si la colonne existe
+            if (\Schema::hasColumn('abonnements', 'date_fin')) {
+                $abonnementActif = $abonnementActif->where('date_fin', '>', now());
+            }
+            
+            // ✅ AJOUT CONDITIONNEL : Vérifier statut seulement si la colonne existe
+            if (\Schema::hasColumn('abonnements', 'statut')) {
+                $abonnementActif = $abonnementActif->where('statut', 'actif');
+            }
+            
+            $abonnementActif = $abonnementActif->first();
+            
             if ($abonnementActif) {
                 \Log::warning('Abonnement actif déjà existant', ['user_id' => Auth::id()]);
                 return response()->json([
@@ -115,51 +134,140 @@ class AbonnementController extends Controller
                 ], 400);
             }
 
-            // Calcul du prix attendu (pour sécurité)
-            $prixCalcule = $typeAbonnement->prix * $request->duree_seance * $request->nb_seances / 1; // Ajuste la formule si besoin
-            if (abs($prixCalcule - $request->prix_total) > 1) {
+            // ✅ VÉRIFICATION DE DISPONIBILITÉ DES CRÉNEAUX
+            if ($request->jour_prefere !== null && $request->heure_preferee) {
+                $jourPrefere = $request->jour_prefere;
+                $heurePrefere = $request->heure_preferee;
+                $dureeSeance = $request->duree_seance;
+                
+                // Calculer la prochaine occurrence de ce jour
+                $prochaineCreneau = now()->startOfWeek()->addDays($jourPrefere);
+                if ($prochaineCreneau->isPast()) {
+                    $prochaineCreneau->addWeek();
+                }
+                
+                // Créer les dates de début et fin pour vérifier la disponibilité
+                $dateDebut = $prochaineCreneau->setTimeFromTimeString($heurePrefere);
+                $dateFin = $dateDebut->copy()->addHours($dureeSeance);
+                
+                // Vérifier les conflits avec les réservations existantes
+                $conflict = \App\Models\Reservation::where('terrain_id', $request->terrain_id)
+                    ->whereIn('statut', ['en_attente', 'confirmee'])
+                    ->where('date_debut', '<', $dateFin)
+                    ->where('date_fin', '>', $dateDebut)
+                    ->exists();
+                
+                if ($conflict) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Le créneau préféré sélectionné n\'est pas disponible',
+                        'details' => [
+                            'jour' => ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'][$jourPrefere],
+                            'heure' => $heurePrefere,
+                            'prochaine_date' => $dateDebut->format('Y-m-d H:i')
+                        ]
+                    ], 409);
+                }
+                
+                \Log::info('Créneau disponible vérifié', [
+                    'terrain_id' => $request->terrain_id,
+                    'jour' => $jourPrefere,
+                    'heure' => $heurePrefere,
+                    'prochaine_date' => $dateDebut->format('Y-m-d H:i')
+                ]);
+            }
+
+            // ✅ CALCUL PRIX CORRIGÉ : Accepter les prix calculés côté frontend
+            $prixMinimal = $typeAbonnement->prix * config('terrain_pricing.validation.subscription_price_min_factor', 0.5);
+            $prixMaximal = $typeAbonnement->prix * config('terrain_pricing.validation.subscription_price_max_factor', 10);
+            
+            if ($request->prix_total < $prixMinimal || $request->prix_total > $prixMaximal) {
+                \Log::warning('Prix hors limites acceptables', [
+                    'prix_envoye' => $request->prix_total,
+                    'prix_minimal' => $prixMinimal,
+                    'prix_maximal' => $prixMaximal,
+                    'option_terrain' => $request->option_terrain ?? 'non_specifie'
+                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Le prix envoyé ne correspond pas au calcul attendu.',
-                    'prix_attendu' => $prixCalcule,
+                    'message' => 'Prix hors des limites acceptables.',
+                    'prix_minimal' => $prixMinimal,
+                    'prix_maximal' => $prixMaximal,
                     'prix_envoye' => $request->prix_total
                 ], 422);
             }
 
-            // Créer l'abonnement utilisateur
-            $abonnement = \App\Models\Abonnement::create([
+            // ✅ CRÉATION ABONNEMENT AVEC COLONNES CORRECTES SELON LA STRUCTURE BDD
+            $abonnementData = [
                 'user_id' => Auth::id(),
                 'terrain_id' => $request->terrain_id,
-                'type_abonnement_id' => $typeAbonnement->id,
-                'type_abonnement' => $typeAbonnement->nom,
+                'type_abonnement' => $typeAbonnement->nom, // ✅ Colonne varchar dans la BDD
                 'prix' => $request->prix_total,
-                'date_debut' => now(),
-                'date_fin' => now()->addDays($typeAbonnement->duree_jours),
-                'statut' => 'en_attente_paiement',
-                // Champs supplémentaires pour éviter les erreurs
-                'description' => $typeAbonnement->description,
-                'avantages' => $typeAbonnement->avantages,
-                'categorie' => $typeAbonnement->categorie,
-                'est_actif' => true,
+                'categorie' => $typeAbonnement->categorie ?? 'basic',
                 'est_visible' => true,
-                'ordre_affichage' => $typeAbonnement->ordre_affichage,
-            ]);
+                'ordre_affichage' => $typeAbonnement->ordre_affichage ?? 1,
+                // Préférences de créneaux (nouvelles colonnes)
+                'jour_prefere' => $request->jour_prefere,
+                'heure_preferee' => $request->heure_preferee,
+                'nb_seances_semaine' => $request->nb_seances ?? 1,
+                'duree_seance' => $request->duree_seance ?? 1.0,
+                'preferences_flexibles' => $request->preferences_flexibles ?? true,
+                'jours_alternatifs' => $request->jours_alternatifs,
+                'heures_alternatives' => $request->heures_alternatives,
+            ];
+            
+            // ✅ AJOUT DES COLONNES OBLIGATOIRES
+            $abonnementData['date_debut'] = now();
+            $abonnementData['date_fin'] = now()->addDays($typeAbonnement->duree_jours);
+            $abonnementData['statut'] = 'en_attente_paiement';
+
+            $abonnement = \App\Models\Abonnement::create($abonnementData);
 
             \Log::info('Souscription créée avec succès', [
                 'abonnement_id' => $abonnement->id,
-                'prix' => $abonnement->prix
+                'prix' => $abonnement->prix,
+                'user_id' => Auth::id(),
+                'terrain_id' => $request->terrain_id
             ]);
 
+            // ✅ Préparer les données complètes pour la page de paiement
+            $terrain = \App\Models\TerrainSynthetiquesDakar::find($request->terrain_id);
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Souscription initiée avec succès',
+                'message' => 'Souscription créée avec succès',
+                'redirect_to_payment' => true,
                 'data' => [
                     'abonnement_id' => $abonnement->id,
-                    'type' => $typeAbonnement->nom,
-                    'prix' => $abonnement->prix,
+                    'type_abonnement' => $typeAbonnement->nom,
+                    'terrain_nom' => $terrain->nom ?? 'Terrain inconnu',
+                    'terrain_adresse' => $terrain->adresse ?? '',
+                    'prix_total' => $abonnement->prix,
+                    'date_debut' => $abonnement->date_debut,
                     'date_fin' => $abonnement->date_fin,
                     'statut' => 'en_attente_paiement',
-                    'instructions' => 'Procédez au paiement pour activer votre abonnement'
+                    'duree_jours' => $typeAbonnement->duree_jours,
+                    'preferences' => [
+                        'jour_prefere' => $abonnement->jour_prefere,
+                        'heure_preferee' => $abonnement->heure_preferee,
+                        'nb_seances_semaine' => $abonnement->nb_seances_semaine,
+                        'duree_seance' => $abonnement->duree_seance,
+                        'preferences_flexibles' => $abonnement->preferences_flexibles
+                    ],
+                    'payment_options' => [
+                        'immediate' => [
+                            'type' => 'paiement_integral',
+                            'montant' => $abonnement->prix,
+                            'description' => 'Paiement intégral de l\'abonnement'
+                        ],
+                        'per_match' => [
+                            'type' => 'paiement_par_match',
+                            'montant_par_match' => $request->prix_par_match ?? ($abonnement->prix / ($abonnement->nb_seances_semaine * 4)),
+                            'description' => 'Paiement à chaque utilisation du terrain',
+                            'note' => 'Aucun frais d\'abonnement, vous payez uniquement quand vous jouez'
+                        ]
+                    ],
+                    'instructions' => 'Choisissez votre mode de paiement pour finaliser votre abonnement'
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -369,12 +477,16 @@ class AbonnementController extends Controller
         try {
             $request->validate([
                 'terrain_id' => 'required|exists:terrains_synthetiques_dakar,id',
-                'type_recurrence' => 'required|in:hebdomadaire,mensuel',
-                'nb_seances' => 'required|integer|min:1|max:3',
-                'duree_seance' => 'required|integer|min:1|max:3',
+                'type_recurrence' => 'required|in:hebdomadaire,mensuel,trimestriel,annuel',
+                'nb_seances' => 'required|integer|min:1|max:10',
+                'duree_seance' => 'required|numeric|min:1|max:3',
                 'prix_total' => 'required|numeric|min:0',
                 'date_debut' => 'required|date',
                 'date_fin' => 'required|date|after:date_debut',
+                'jours_semaine' => 'required|array|min:1',
+                'jours_semaine.*' => 'integer|min:0|max:6',
+                'heure_debut' => 'required|string',
+                'heure_fin' => 'required|string',
             ]);
 
             // Vérifier s'il n'y a pas déjà un abonnement actif pour ce terrain
@@ -391,20 +503,49 @@ class AbonnementController extends Controller
                 ], 400);
             }
 
-            // Calculer le prix total basé sur les paramètres utilisateur
-            $terrain = \App\Models\Terrain::find($request->terrain_id);
+            // ✅ CALCUL PRIX CORRIGÉ : Utiliser le prix envoyé par le frontend
+            $terrain = \App\Models\TerrainSynthetiquesDakar::find($request->terrain_id);
             $prixHeure = $terrain ? $terrain->prix_heure : 25000;
+            
+            // Le frontend calcule déjà le prix correctement, on l'utilise
+            $prixCalcule = $request->prix_total;
+            
+            // Calcul de référence pour validation (basé sur la logique simple)
             $nbSemaines = 4;
             if ($request->type_recurrence === 'trimestriel') $nbSemaines = 12;
             if ($request->type_recurrence === 'annuel') $nbSemaines = 52;
-            $prixCalcule = $prixHeure * $request->duree_seance * $request->nb_seances * $nbSemaines;
+            $prixReference = $prixHeure * $request->duree_seance * $request->nb_seances * $nbSemaines;
 
-            if (abs($prixCalcule - $request->prix_total) > 1) { // tolérance 1 FCFA
+            // ✅ VALIDATION PRIX CORRIGÉE : Validation basée sur le prix de référence
+            $prixMinimalRecurrent = $prixReference * config('terrain_pricing.validation.recurring_price_min_factor', 0.1);
+            $prixMaximalRecurrent = $prixReference * config('terrain_pricing.validation.recurring_price_max_factor', 5);
+            
+            \Log::info('Validation prix abonnement récurrent', [
+                'prix_envoye' => $request->prix_total,
+                'prix_reference' => $prixReference,
+                'prix_minimal' => $prixMinimalRecurrent,
+                'prix_maximal' => $prixMaximalRecurrent,
+                'facteurs' => [
+                    'min' => config('terrain_pricing.validation.recurring_price_min_factor', 0.1),
+                    'max' => config('terrain_pricing.validation.recurring_price_max_factor', 5)
+                ]
+            ]);
+            
+            if ($request->prix_total < $prixMinimalRecurrent || $request->prix_total > $prixMaximalRecurrent) {
+                \Log::warning('Prix abonnement récurrent hors limites', [
+                    'prix_envoye' => $request->prix_total,
+                    'prix_reference' => $prixReference,
+                    'prix_minimal' => $prixMinimalRecurrent,
+                    'prix_maximal' => $prixMaximalRecurrent
+                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Le prix envoyé ne correspond pas au calcul attendu.',
-                    'prix_attendu' => $prixCalcule,
-                    'prix_envoye' => $request->prix_total
+                    'message' => 'Prix hors des limites acceptables pour abonnement récurrent.',
+                    'prix_reference' => $prixReference,
+                    'prix_minimal' => $prixMinimalRecurrent,
+                    'prix_maximal' => $prixMaximalRecurrent,
+                    'prix_envoye' => $request->prix_total,
+                    'details' => 'Validation basée sur le prix de référence calculé'
                 ], 422);
             }
 
@@ -412,7 +553,7 @@ class AbonnementController extends Controller
                 'user_id' => Auth::id(),
                 'terrain_id' => $request->terrain_id,
                 'type_abonnement' => 'Abonnement ' . ucfirst($request->type_recurrence),
-                'prix' => $prixCalcule,
+                'prix' => $request->prix_total, // ✅ Utiliser le prix calculé par le frontend
                 'date_debut' => $request->date_debut,
                 'date_fin' => $request->date_fin,
                 'statut' => 'en_attente_paiement',
@@ -425,7 +566,7 @@ class AbonnementController extends Controller
                     'id' => $abonnement->id,
                     'terrain_id' => $abonnement->terrain_id,
                     'type_recurrence' => $request->type_recurrence,
-                    'prix_total' => $prixCalcule,
+                    'prix_total' => $request->prix_total, // ✅ Utiliser le prix calculé par le frontend
                     'date_debut' => $abonnement->date_debut,
                     'date_fin' => $abonnement->date_fin,
                     'statut' => 'en_attente_paiement'
@@ -452,7 +593,7 @@ class AbonnementController extends Controller
     private function calculerPrixAbonnementRecurrent(Request $request): float
     {
         // Récupérer le terrain pour obtenir le prix par heure
-        $terrain = \App\Models\Terrain::find($request->terrain_id);
+        $terrain = \App\Models\TerrainSynthetiquesDakar::find($request->terrain_id);
         $prixHeure = $terrain ? $terrain->prix_heure : 5000; // Prix par défaut
 
         $dateDebut = \Carbon\Carbon::parse($request->date_debut);
@@ -479,5 +620,165 @@ class AbonnementController extends Controller
         $debut = \Carbon\Carbon::parse($heureDebut);
         $fin = \Carbon\Carbon::parse($heureFin);
         return $debut->diffInHours($fin);
+    }
+
+    /**
+     * Lister les abonnements pour un gestionnaire (ses terrains uniquement)
+     */
+    public function getManagerSubscriptions(Request $request): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            
+            if ($user->role !== 'gestionnaire') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès non autorisé'
+                ], 403);
+            }
+
+            // Récupérer les terrains gérés par ce gestionnaire
+            $terrainsGeres = \App\Models\TerrainSynthetiquesDakar::where('gestionnaire_id', $user->id)->pluck('id');
+
+            $abonnements = Abonnement::with(['user', 'terrain'])
+                ->whereIn('terrain_id', $terrainsGeres)
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'data' => $abonnements,
+                'manager_info' => [
+                    'terrains_count' => $terrainsGeres->count(),
+                    'active_subscriptions' => $abonnements->where('statut', 'actif')->count()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('MANAGER SUBSCRIPTIONS ERROR', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des abonnements'
+            ], 500);
+        }
+    }
+
+    /**
+     * Lister tous les abonnements pour l'admin
+     */
+    public function getAdminSubscriptions(Request $request): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            
+            if ($user->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès non autorisé'
+                ], 403);
+            }
+
+            $abonnements = Abonnement::with(['user', 'terrain'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(50);
+
+            $stats = [
+                'total_subscriptions' => Abonnement::count(),
+                'active_subscriptions' => Abonnement::where('statut', 'actif')->count(),
+                'pending_subscriptions' => Abonnement::where('statut', 'en_attente_paiement')->count(),
+                'expired_subscriptions' => Abonnement::where('statut', 'expire')->count(),
+                'total_revenue' => Abonnement::where('statut', 'actif')->sum('prix'),
+                'this_month_subscriptions' => Abonnement::whereMonth('created_at', now()->month)->count()
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $abonnements,
+                'stats' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('ADMIN SUBSCRIPTIONS ERROR', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des abonnements'
+            ], 500);
+        }
+    }
+
+    /**
+     * Mettre à jour le statut d'un abonnement (admin/gestionnaire)
+     */
+    public function updateSubscriptionStatus(Request $request, $id): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            $abonnement = Abonnement::with(['user', 'terrain'])->findOrFail($id);
+            
+            // Vérifier les permissions
+            if ($user->role === 'gestionnaire') {
+                $terrain = $abonnement->terrain;
+                if (!$terrain || $terrain->gestionnaire_id !== $user->id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vous ne pouvez gérer que les abonnements de vos terrains'
+                    ], 403);
+                }
+            } elseif ($user->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès non autorisé'
+                ], 403);
+            }
+
+            $request->validate([
+                'statut' => 'required|in:en_attente_paiement,actif,expire,annule,suspendu',
+                'notes' => 'nullable|string|max:500'
+            ]);
+
+            $oldStatus = $abonnement->statut;
+            $abonnement->statut = $request->statut;
+            
+            if ($request->notes) {
+                $abonnement->notes_gestionnaire = $request->notes;
+            }
+
+            $abonnement->save();
+
+            // Log de l'action
+            \Log::info('SUBSCRIPTION STATUS UPDATED', [
+                'abonnement_id' => $abonnement->id,
+                'old_status' => $oldStatus,
+                'new_status' => $request->statut,
+                'updated_by' => $user->id,
+                'updated_by_role' => $user->role
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Statut de l\'abonnement mis à jour avec succès',
+                'data' => $abonnement
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('UPDATE SUBSCRIPTION STATUS ERROR', [
+                'error' => $e->getMessage(),
+                'subscription_id' => $id,
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour du statut'
+            ], 500);
+        }
     }
 } 

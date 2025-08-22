@@ -9,59 +9,69 @@ class TypeAbonnementSeeder extends Seeder
 {
     public function run()
     {
-        // Supprimer les types d'abonnements existants
-        \DB::table('types_abonnements')->truncate();
-
-        // Créer les types d'abonnements de base
         $typesAbonnements = [
             [
-                'id' => 1,
                 'nom' => 'Abonnement Mensuel',
-                'prix' => 25000,
+                'description' => 'Accès privilégié pendant 1 mois',
+                'prix' => 50000,
                 'duree_jours' => 30,
-                'description' => 'Accès illimité pendant 1 mois',
-                'avantages' => '["Réservations illimitées", "Support prioritaire"]',
-                'est_actif' => true,
+                'avantages' => [
+                    'Réservations prioritaires',
+                    'Tarifs préférentiels',
+                    'Support client dédié'
+                ],
                 'categorie' => 'basic',
+                'est_actif' => true,
                 'est_visible' => true,
                 'ordre_affichage' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'couleur_theme' => '#3B82F6',
+                'icone' => 'calendar'
             ],
             [
-                'id' => 2,
                 'nom' => 'Abonnement Trimestriel',
-                'prix' => 60000,
+                'description' => 'Accès privilégié pendant 3 mois',
+                'prix' => 120000,
                 'duree_jours' => 90,
-                'description' => 'Accès illimité pendant 3 mois',
-                'avantages' => '["Réservations illimitées", "Support prioritaire", "Réduction 10%"]',
+                'avantages' => [
+                    'Réservations prioritaires',
+                    '15% de réduction sur les réservations',
+                    'Support client dédié',
+                    'Accès aux événements spéciaux'
+                ],
+                'categorie' => 'premium',
                 'est_actif' => true,
-                'categorie' => 'basic',
                 'est_visible' => true,
                 'ordre_affichage' => 2,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'couleur_theme' => '#F59E0B',
+                'icone' => 'star'
             ],
             [
-                'id' => 3,
                 'nom' => 'Abonnement Annuel',
-                'prix' => 200000,
-                'duree_jours' => 365,
                 'description' => 'Accès illimité pendant 1 an',
-                'avantages' => '["Réservations illimitées", "Support prioritaire", "Réduction 20%", "Accès VIP"]',
-                'est_actif' => true,
+                'prix' => 400000,
+                'duree_jours' => 365,
+                'avantages' => [
+                    'Réservations illimitées',
+                    '25% de réduction sur les réservations',
+                    'Priorité sur les créneaux',
+                    'Support client VIP',
+                    'Coach personnel mensuel inclus',
+                    'Accès aux événements VIP'
+                ],
                 'categorie' => 'premium',
+                'est_actif' => true,
                 'est_visible' => true,
                 'ordre_affichage' => 3,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+                'couleur_theme' => '#8B5CF6',
+                'icone' => 'crown'
+            ]
         ];
 
-        foreach ($typesAbonnements as $typeAbonnement) {
-            TypeAbonnement::create($typeAbonnement);
+        foreach ($typesAbonnements as $type) {
+            TypeAbonnement::updateOrCreate(
+                ['nom' => $type['nom']],
+                $type
+            );
         }
-
-        $this->command->info('Types d\'abonnements de base créés avec succès !');
     }
 } 

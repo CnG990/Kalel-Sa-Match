@@ -8,11 +8,17 @@ import {
   Save, 
   X,
   Power,
-  PowerOff
+  PowerOff,
+  Calendar,
+  ToggleLeft,
+  ToggleRight,
+  Plus,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api';
 import toast from 'react-hot-toast';
+import TerrainPricingDisplay from '../../components/TerrainPricingDisplay';
 
 
 interface Terrain {
@@ -177,12 +183,15 @@ const TerrainsPage: React.FC = () => {
               <Euro className="w-6 h-6" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Prix Moyen</p>
+              <p className="text-sm font-medium text-gray-500">Prix de Base Moyen</p>
               <p className="text-2xl font-bold text-gray-900">
                 {terrains.length > 0 
                   ? Math.round(terrains.reduce((sum, t) => sum + t.prix_heure, 0) / terrains.length).toLocaleString()
                   : 0
                 } CFA
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                Prix de base (options multiples disponibles)
               </p>
             </div>
           </div>
@@ -229,11 +238,37 @@ const TerrainsPage: React.FC = () => {
                     {/* Image et infos principales */}
                     <div className={`${isMobile ? 'flex flex-col space-y-3' : 'flex items-center space-x-4'}`}>
                       <div className={`${isMobile ? 'w-full h-48' : 'w-24 h-24'} bg-gray-200 rounded-lg overflow-hidden flex-shrink-0`}>
-                        <img
-                          src="/terrain-foot.jpg"
-                          alt={terrain.nom}
-                          className="w-full h-full object-cover"
-                        />
+                        {terrain.image_principale ? (
+                          <img
+                            src={terrain.image_principale}
+                            alt={terrain.nom}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback vers une image de placeholder si l'image principale échoue
+                              const target = e.target as HTMLImageElement;
+                              target.src = `https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=300&fit=crop&crop=center`;
+                            }}
+                          />
+                        ) : terrain.images && terrain.images.length > 0 ? (
+                          <img
+                            src={terrain.images[0]}
+                            alt={terrain.nom}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = `https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=300&fit=crop&crop=center`;
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center">
+                            <div className="text-center text-white">
+                              <MapPin className={`${isMobile ? 'w-8 h-8' : 'w-6 h-6'} mx-auto mb-1`} />
+                              <span className={`${isMobile ? 'text-sm' : 'text-xs'} font-medium`}>
+                                {terrain.nom.substring(0, 8)}...
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -281,17 +316,14 @@ const TerrainsPage: React.FC = () => {
                                 </button>
                               </div>
                             ) : (
-                              <div className="flex items-center space-x-1">
-                                <span className={`font-medium text-green-600 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                                  {terrain.prix_heure.toLocaleString()} CFA/h
-                                </span>
-                                <button
-                                  onClick={() => handlePriceEdit(terrain)}
-                                  className="text-gray-400 hover:text-gray-600 touch-target"
-                                >
-                                  <Edit3 className="w-3 h-3" />
-                                </button>
-                              </div>
+                              <TerrainPricingDisplay
+                                terrainName={terrain.nom}
+                                basePrice={terrain.prix_heure}
+                                compact={true}
+                                showEdit={true}
+                                onEdit={() => handlePriceEdit(terrain)}
+                                terrainData={terrain}
+                              />
                             )}
                           </div>
                           

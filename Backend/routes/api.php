@@ -20,6 +20,12 @@ use App\Http\Controllers\API\RefundController;
 use App\Http\Controllers\API\ManagerTerrainController;
 use App\Models\TerrainSynthetiquesDakar;
 use App\Models\Reservation;
+use App\Http\Controllers\API\FideliteController;
+use App\Http\Controllers\API\LitigeController;
+use App\Http\Controllers\API\TicketController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +37,32 @@ use App\Models\Reservation;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+// Route de statut pour tester l'API
+Route::get('/status', function () {
+    return response()->json([
+        'status' => 'OK',
+        'message' => 'API Kalel Sa Match fonctionne correctement',
+        'timestamp' => now(),
+        'version' => '1.0.0',
+        'environment' => config('app.env'),
+        'database' => 'Connected'
+    ]);
+});
+
+// Route de test CORS spécifique
+Route::options('/cors-test', function () {
+    return response('', 200);
+});
+
+Route::post('/cors-test', function () {
+    return response()->json([
+        'status' => 'CORS OK',
+        'message' => 'Test CORS réussi',
+        'timestamp' => now(),
+        'headers' => request()->headers->all()
+    ]);
+});
 
 // Routes d'authentification (publiques)
 Route::prefix('auth')->group(function () {
@@ -60,6 +92,9 @@ Route::prefix('terrains')->group(function () {
     Route::get('/{id}', [TerrainController::class, 'show']);
 });
 
+// Routes publiques pour vérification de disponibilité (avant connexion)
+Route::post('/reservations/check-availability', [ReservationController::class, 'checkAvailability']);
+
 // Routes protégées par authentification
 Route::middleware('auth:sanctum')->group(function () {
     
@@ -83,9 +118,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [ReservationController::class, 'destroy']);
         Route::post('/{id}/confirm', [ReservationController::class, 'confirm']);
         Route::post('/{id}/cancel', [ReservationController::class, 'cancel']);
-        
-        // Vérification de disponibilité
-        Route::post('/check-availability', [ReservationController::class, 'checkAvailability']);
     });
 
     // Paiements
@@ -105,7 +137,41 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/recurring', [AbonnementController::class, 'createRecurringSubscription']);
         Route::get('/my-subscriptions', [AbonnementController::class, 'mySubscriptions']);
         Route::post('/cancel/{id}', [AbonnementController::class, 'cancel']);
+        
+        // ✅ Nouvelles routes pour gestionnaires et admins
+        Route::get('/manager/subscriptions', [AbonnementController::class, 'getManagerSubscriptions']);
+        Route::get('/admin/subscriptions', [AbonnementController::class, 'getAdminSubscriptions']);
+        Route::put('/{id}/status', [AbonnementController::class, 'updateSubscriptionStatus']);
     });
+
+    // Système de fidélité
+    Route::prefix('fidelite')->group(function () {
+        Route::get('/calculer/{terrainId}', [FideliteController::class, 'calculerFidelite']);
+        Route::post('/appliquer-reduction', [FideliteController::class, 'appliquerReductionFidelite']);
+        Route::get('/historique', [FideliteController::class, 'historiqueReductions']);
+    });
+
+    // Système de litiges
+    Route::prefix('litiges')->group(function () {
+        Route::post('/', [LitigeController::class, 'creerLitige']);
+        Route::get('/mes-litiges', [LitigeController::class, 'mesLitiges']);
+        Route::get('/{id}', [LitigeController::class, 'detailsLitige']);
+        Route::post('/{id}/messages', [LitigeController::class, 'ajouterMessage']);
+        Route::post('/{id}/escalader', [LitigeController::class, 'escaladerLitige']);
+        Route::post('/{id}/fermer', [LitigeController::class, 'fermerLitige']);
+    });
+
+    // Système de tickets/QR codes
+    Route::prefix('tickets')->group(function () {
+        Route::get('/reservation/{id}', [TicketController::class, 'getTicket']);
+        Route::post('/scan', [TicketController::class, 'scanTicket']);
+        Route::post('/validate-code', [TicketController::class, 'validateByCode']);
+        Route::get('/validations-history', [TicketController::class, 'getValidationsHistory']);
+    });
+
+    // Routes pour les tickets utilisateur
+    Route::get('/user/tickets', [TicketController::class, 'getUserTickets']);
+    Route::get('/tickets/{id}/download', [TicketController::class, 'downloadTicket']);
 
     // Support
     Route::prefix('support')->group(function () {
@@ -216,6 +282,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::post('/terrains/import-kml-batch', [AdminController::class, 'importKMLBatch']);
     Route::get('/terrains/postgis-stats', [AdminController::class, 'getPostGISStats']);
     Route::post('/terrains/calculate-surfaces', [AdminController::class, 'calculateTerrainSurfaces']);
+    Route::post('/terrains/{id}/calculate-surface', [AdminController::class, 'calculateTerrainSurface']);
     Route::get('/finances', [AdminController::class, 'getAdminFinances']);
     Route::get('/disputes', [AdminController::class, 'getAllDisputes']);
     Route::get('/support/tickets', [AdminController::class, 'getAllSupportTickets']);
@@ -376,6 +443,97 @@ Route::get('/test-cors', function () {
         'cors' => 'working',
         'message' => 'CORS fonctionne correctement'
     ]);
+});
+
+// Routes de diagnostic pour Render
+Route::get('/test-db', function () {
+    try {
+        DB::connection()->getPdo();
+        return response()->json([
+            'status' => 'OK',
+            'message' => 'Base de données accessible',
+            'connection' => config('database.default'),
+            'database' => config('database.connections.pgsql.database')
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'status' => 'ERROR',
+            'message' => 'Erreur de connexion à la base de données',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::get('/test-table/{table}', function ($table) {
+    try {
+        $exists = Schema::hasTable($table);
+        $count = $exists ? DB::table($table)->count() : 0;
+        
+        return response()->json([
+            'table' => $table,
+            'exists' => $exists,
+            'count' => $count,
+            'status' => $exists ? 'OK' : 'MISSING'
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'table' => $table,
+            'exists' => false,
+            'error' => $e->getMessage(),
+            'status' => 'ERROR'
+        ], 500);
+    }
+});
+
+Route::post('/force-migrate', function () {
+    try {
+        // Exécuter les migrations
+        Artisan::call('migrate', ['--force' => true]);
+        
+        // Vérifier les tables créées
+        $tables = ['users', 'terrains_synthetiques_dakar', 'reservations', 'abonnements', 'paiements'];
+        $results = [];
+        
+        foreach ($tables as $table) {
+            $exists = Schema::hasTable($table);
+            $results[$table] = $exists;
+        }
+        
+        return response()->json([
+            'status' => 'OK',
+            'message' => 'Migrations exécutées avec succès',
+            'tables' => $results
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'status' => 'ERROR',
+            'message' => 'Erreur lors des migrations',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::get('/migration-status', function () {
+    try {
+        $migrations = DB::table('migrations')->get();
+        $tables = ['users', 'terrains_synthetiques_dakar', 'reservations', 'abonnements', 'paiements'];
+        $tableStatus = [];
+        
+        foreach ($tables as $table) {
+            $tableStatus[$table] = Schema::hasTable($table);
+        }
+        
+        return response()->json([
+            'migrations_count' => $migrations->count(),
+            'tables_status' => $tableStatus,
+            'database' => config('database.connections.pgsql.database')
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'status' => 'ERROR'
+        ], 500);
+    }
 });
 
 // QR Code routes

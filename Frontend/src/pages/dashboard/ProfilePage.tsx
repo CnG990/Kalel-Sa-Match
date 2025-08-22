@@ -119,7 +119,7 @@ const ProfilePage: React.FC = () => {
     
     // Nettoyer l'URL pour éviter les doublons de 'storage'
     const cleanUrl = url.replace('public/', '').replace('storage/', '');
-    return `http://127.0.0.1:8000/storage/${cleanUrl}`;
+            return `https://b0385fbb1e44.ngrok-free.app/storage/${cleanUrl}`;
   };
 
   const formatDate = (dateString: string) => {

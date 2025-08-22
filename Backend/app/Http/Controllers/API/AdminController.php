@@ -2972,10 +2972,14 @@ class AdminController extends Controller
     public function calculateTerrainSurfaces(): JsonResponse
     {
         try {
-            // Mettre à jour toutes les surfaces où la géométrie existe
+            // ✅ AMÉLIORATION: Calcul automatique avec surface_postgis dédiée
             $updated = DB::statement("
                 UPDATE terrains_synthetiques_dakar 
-                SET surface = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2)
+                SET 
+                    surface_postgis = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
+                    surface_calculee = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
+                    has_geometry = (geom IS NOT NULL),
+                    updated_at = NOW()
                 WHERE geom IS NOT NULL
             ");
 
@@ -2983,41 +2987,139 @@ class AdminController extends Controller
             $count = DB::selectOne("
                 SELECT COUNT(*) as count 
                 FROM terrains_synthetiques_dakar 
-                WHERE geom IS NOT NULL AND surface IS NOT NULL
+                WHERE geom IS NOT NULL AND surface_postgis IS NOT NULL
             ");
 
-            // Obtenir les statistiques des surfaces
+            // Obtenir les statistiques des surfaces PostGIS
             $stats = DB::selectOne("
                 SELECT 
                     COUNT(*) as total_terrains,
-                    COUNT(CASE WHEN surface IS NOT NULL THEN 1 END) as avec_surface,
-                    ROUND(AVG(surface), 2) as surface_moyenne,
-                    ROUND(SUM(surface), 2) as surface_totale,
-                    MIN(surface) as surface_min,
-                    MAX(surface) as surface_max
+                    COUNT(CASE WHEN surface_postgis IS NOT NULL THEN 1 END) as avec_surface_postgis,
+                    COUNT(CASE WHEN geom IS NOT NULL THEN 1 END) as avec_geometrie,
+                    ROUND(AVG(surface_postgis), 2) as surface_moyenne,
+                    ROUND(SUM(surface_postgis), 2) as surface_totale,
+                    ROUND(MIN(surface_postgis), 2) as surface_min,
+                    ROUND(MAX(surface_postgis), 2) as surface_max
                 FROM terrains_synthetiques_dakar
+                WHERE surface_postgis IS NOT NULL
             ");
 
             return response()->json([
                 'success' => true,
-                'message' => 'Surfaces calculées avec succès',
+                'message' => 'Surfaces PostGIS calculées automatiquement',
                 'data' => [
                     'terrains_updated' => (int) $count->count,
                     'total_terrains' => (int) $stats->total_terrains,
-                    'avec_surface' => (int) $stats->avec_surface,
-                    'surface_moyenne' => (float) $stats->surface_moyenne,
-                    'surface_totale' => (float) $stats->surface_totale,
-                    'surface_min' => (float) $stats->surface_min,
-                    'surface_max' => (float) $stats->surface_max,
-                    'pourcentage_complete' => round(($stats->avec_surface / $stats->total_terrains) * 100, 1)
+                    'avec_surface_postgis' => (int) $stats->avec_surface_postgis,
+                    'avec_geometrie' => (int) $stats->avec_geometrie,
+                    'surface_moyenne' => (float) $stats->surface_moyenne ?: 0,
+                    'surface_totale' => (float) $stats->surface_totale ?: 0,
+                    'surface_min' => (float) $stats->surface_min ?: 0,
+                    'surface_max' => (float) $stats->surface_max ?: 0,
+                    'pourcentage_complete' => $stats->total_terrains > 0 ? 
+                        round(($stats->avec_surface_postgis / $stats->total_terrains) * 100, 1) : 0
                 ]
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors du calcul des surfaces: ' . $e->getMessage()
+                'message' => 'Erreur lors du calcul des surfaces PostGIS: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * ✅ NOUVEAU: Calculer la surface d'un terrain spécifique
+     */
+    public function calculateTerrainSurface(Request $request, $id): JsonResponse
+    {
+        try {
+            $terrain = TerrainSynthetiquesDakar::findOrFail($id);
+
+            // Vérifier si le terrain a une géométrie
+            $geometryCheck = DB::selectOne("
+                SELECT 
+                    geom IS NOT NULL as has_geom,
+                    ST_GeometryType(geom) as geom_type,
+                    ST_SRID(geom) as srid
+                FROM terrains_synthetiques_dakar 
+                WHERE id = ?
+            ", [$id]);
+
+            if (!$geometryCheck || !$geometryCheck->has_geom) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ce terrain n\'a pas de géométrie définie pour calculer la surface'
+                ], 400);
+            }
+
+            // Calculer la surface avec PostGIS
+            $result = DB::selectOne("
+                UPDATE terrains_synthetiques_dakar 
+                SET 
+                    surface_postgis = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
+                    surface_calculee = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
+                    has_geometry = true,
+                    updated_at = NOW()
+                WHERE id = ?
+                RETURNING 
+                    surface_postgis,
+                    nom,
+                    ST_GeometryType(geom) as type_geometrie,
+                    ST_Area(ST_Transform(geom, 32628)) as surface_brute
+            ", [$id]);
+
+            if (!$result) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors du calcul de la surface'
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Surface calculée automatiquement avec PostGIS',
+                'data' => [
+                    'terrain_id' => $id,
+                    'terrain_nom' => $result->nom,
+                    'surface_calculee' => (float) $result->surface_postgis,
+                    'type_geometrie' => $result->type_geometrie,
+                    'surface_brute' => (float) $result->surface_brute,
+                    'methode' => 'PostGIS ST_Area + Transform EPSG:32628',
+                    'unite' => 'm²'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du calcul de la surface: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * ✅ NOUVEAU: Hook automatique après importation/mise à jour géométrie
+     */
+    private function autoCalculateSurfaceAfterGeometryUpdate($terrainId): bool
+    {
+        try {
+            DB::statement("
+                UPDATE terrains_synthetiques_dakar 
+                SET 
+                    surface_postgis = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
+                    surface_calculee = ROUND(ST_Area(ST_Transform(geom, 32628))::numeric, 2),
+                    has_geometry = (geom IS NOT NULL),
+                    updated_at = NOW()
+                WHERE id = ? AND geom IS NOT NULL
+            ", [$terrainId]);
+
+            return true;
+        } catch (\Exception $e) {
+            // Log l'erreur mais ne pas faire échouer l'opération principale
+            \Log::warning("Erreur calcul automatique surface terrain {$terrainId}: " . $e->getMessage());
+            return false;
         }
     }
 

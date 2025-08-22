@@ -120,17 +120,23 @@ class ReservationController extends Controller
         $dateDebut = \Carbon\Carbon::parse($request->date_debut);
         $dateFin = $dateDebut->copy()->addHours($request->duree_heures);
 
-        // Vérifier la disponibilité
+        // Validation supplémentaire : vérifier que l'heure n'est pas trop proche du début
+        $now = now();
+        $minutesAvantReservation = $now->diffInMinutes($dateDebut, false);
+        
+        if ($minutesAvantReservation < 15) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de réserver moins de 15 minutes avant le début du créneau'
+            ], 422);
+        }
+
+        // Vérifier la disponibilité avec logique de chevauchement correcte
+        // Deux créneaux [A,B] et [C,D] se chevauchent si : A < D AND B > C
         $conflict = Reservation::where('terrain_id', $request->terrain_id)
             ->whereIn('statut', ['en_attente', 'confirmee'])
-            ->where(function ($query) use ($dateDebut, $dateFin) {
-                $query->whereBetween('date_debut', [$dateDebut, $dateFin])
-                      ->orWhereBetween('date_fin', [$dateDebut, $dateFin])
-                      ->orWhere(function ($q) use ($dateDebut, $dateFin) {
-                          $q->where('date_debut', '<=', $dateDebut)
-                            ->where('date_fin', '>=', $dateFin);
-                      });
-            })
+            ->where('date_debut', '<', $dateFin)
+            ->where('date_fin', '>', $dateDebut)
             ->exists();
 
         if ($conflict) {
@@ -305,6 +311,12 @@ class ReservationController extends Controller
         $terrainId = $request->terrain_id;
         $dureeHeures = $request->duree_heures;
         
+        // Date actuelle pour filtrer les heures passées
+        $now = now();
+        $currentDate = $now->toDateString();
+        $currentHour = $now->hour;
+        $currentMinutes = $now->minute;
+        
         // Créneaux fixes de 8h à 3h du matin
         $heuresOuverture = [
             '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', 
@@ -321,19 +333,29 @@ class ReservationController extends Controller
                 $debut->addDay();
             }
             
+            // Si c'est aujourd'hui, filtrer les heures passées
+            if ($date === $currentDate) {
+                $heureInt = intval($heure);
+                
+                // Filtrer les heures passées
+                if ($heureInt < $currentHour) {
+                    continue; // Heure déjà passée
+                } elseif ($heureInt === $currentHour) {
+                    // Si on est dans l'heure actuelle, permettre seulement si on est dans les 15 premières minutes
+                    if ($currentMinutes >= 15) {
+                        continue;
+                    }
+                }
+            }
+            
             $fin = $debut->copy()->addHours($dureeHeures);
             
-            // Vérifier s'il y a des réservations conflictuelles
+            // Vérifier s'il y a des réservations conflictuelles avec logique correcte
+            // Deux créneaux [A,B] et [C,D] se chevauchent si : A < D AND B > C
             $conflict = Reservation::where('terrain_id', $terrainId)
                 ->whereIn('statut', ['en_attente', 'confirmee'])
-                ->where(function ($query) use ($debut, $fin) {
-                    $query->whereBetween('date_debut', [$debut, $fin])
-                          ->orWhereBetween('date_fin', [$debut, $fin])
-                          ->orWhere(function ($q) use ($debut, $fin) {
-                              $q->where('date_debut', '<=', $debut)
-                                ->where('date_fin', '>=', $fin);
-                          });
-                })
+                ->where('date_debut', '<', $fin)
+                ->where('date_fin', '>', $debut)
                 ->exists();
             
             if (!$conflict) {
