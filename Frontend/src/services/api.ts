@@ -115,6 +115,22 @@ class ApiService {
     }
   }
 
+  // Terrains pour affichage carte (retourne un tableau simple avec latitude/longitude)
+  async getTerrainsForMap(): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/terrains/all-for-map`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      const result = await this.handleResponse(response);
+      return result;
+    } catch (error: any) {
+      console.error('❌ API Error getTerrainsForMap:', error);
+      throw error;
+    }
+  }
+
   // Authentification
   async login(email: string, password: string): Promise<ApiResponse> {
     const response = await fetch(`${this.apiURL}/auth/login`, {

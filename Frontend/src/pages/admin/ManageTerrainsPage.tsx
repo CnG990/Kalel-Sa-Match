@@ -107,7 +107,9 @@ const ManageTerrainsPage: React.FC = () => {
     setLoading(true);
     try {
       const query = searchQuery !== undefined ? searchQuery : searchTerm;
-      const response = await apiService.getAllTerrains(query);
+      const response = await apiService.getAllTerrains(
+        query ? { search: query } : undefined
+      );
       if (response.success) {
         // Gestion flexible de la structure des données
         const terrainsData = response.data?.data || response.data || [];

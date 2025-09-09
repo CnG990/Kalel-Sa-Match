@@ -1,55 +1,143 @@
-# Fichiers temporaires
-*.tmp
-*.temp
-*.log
-
-# Fichiers de développement
-test-*.php
-start-*.php
-use-existing-ngrok.php
-check-frontend-simple.php
-
-# Fichiers ngrok
-ngrok.exe
-ngrok.zip
-*.bat
-
-# Fichiers PowerShell temporaires
-*.ps1
-
-# Fichiers de configuration locale
-.env.local
-.env.backup
-
-# Fichiers de cache
-*.cache
-
-# Fichiers de logs
-logs/
-*.log
-
-# Fichiers de sauvegarde
-*.bak
-*.backup
-
-# Fichiers de développement Laravel
-Backend/storage/logs/*
-Backend/bootstrap/cache/*
-
-# Fichiers de dépendances
+# Dependencies
 node_modules/
 vendor/
 
-# Fichiers système
-.DS_Store
-Thumbs.db
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Fichiers IDE
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Fichiers de test
-tests/
-test/
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Laravel specific
+/storage/*.key
+/vendor/
+/node_modules/
+/public/hot
+/public/storage
+/storage/*.key
+/bootstrap/cache/*.php
+
+# PHP specific
+*.log
+*.tmp
+*.temp
+
+# Database
+*.sqlite
+*.db
+
+# Backup files
+*.bak
+*.backup
+
+# Lock files (keep package-lock.json but ignore others)
+yarn.lock
+composer.lock
+
+# Test files
+/tests/coverage/
+
+# IDE files
+*.sublime-project
+*.sublime-workspace
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store

@@ -386,16 +386,27 @@ const SubscriptionsPage: React.FC = () => {
         apiService.get('/admin/subscriptions'),
         apiService.get('/admin/subscribers')
       ]);
-      
-      setSubscriptions(subscriptionsRes.data.subscriptions || []);
-      setSubscribers(subscribersRes.data.subscribers || []);
+
+      // Normaliser les formes possibles de réponse
+      const subsList: Subscription[] =
+        subscriptionsRes?.data?.subscriptions ??
+        subscriptionsRes?.data ??
+        [];
+
+      const subscrList: Subscriber[] =
+        subscribersRes?.data?.subscribers ??
+        subscribersRes?.data ??
+        [];
+
+      setSubscriptions(Array.isArray(subsList) ? subsList : []);
+      setSubscribers(Array.isArray(subscrList) ? subscrList : []);
       
       // Calculer les statistiques
-      const totalPlans = subscriptionsRes.data.subscriptions?.length || 0;
-      const activePlans = subscriptionsRes.data.subscriptions?.filter((s: Subscription) => s.statut === 'active').length || 0;
-      const totalSubscribers = subscribersRes.data.subscribers?.length || 0;
-      const activeSubscribers = subscribersRes.data.subscribers?.filter((s: Subscriber) => s.statut === 'active').length || 0;
-      const totalRevenue = subscribersRes.data.subscribers?.reduce((sum: number, s: Subscriber) => sum + s.montant_paye, 0) || 0;
+      const totalPlans = Array.isArray(subsList) ? subsList.length : 0;
+      const activePlans = Array.isArray(subsList) ? subsList.filter((s: Subscription) => s.statut === 'active').length : 0;
+      const totalSubscribers = Array.isArray(subscrList) ? subscrList.length : 0;
+      const activeSubscribers = Array.isArray(subscrList) ? subscrList.filter((s: Subscriber) => s.statut === 'active').length : 0;
+      const totalRevenue = Array.isArray(subscrList) ? subscrList.reduce((sum: number, s: Subscriber) => sum + (s.montant_paye || 0), 0) : 0;
       
       setStats({ 
         totalPlans, 

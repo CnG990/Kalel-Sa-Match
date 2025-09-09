@@ -90,6 +90,8 @@ const ReservationsPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Erreur:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
