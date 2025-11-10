@@ -622,8 +622,9 @@ class GestionnaireController extends Controller
             $commissionsGenerees = $revenusMoisActuel * ($tauxCommission / 100);
             
             // Derniers paiements - seulement les vrais de la base (pour les terrains du gestionnaire)
-            $derniersPaiements = \App\Models\Paiement::with(['user', 'reservation.terrainSynthetique'])
-                                                   ->whereHas('reservation', function($query) use ($terrainIds) {
+            $derniersPaiements = \App\Models\Paiement::with(['user', 'payable.terrainSynthetique'])
+                                                   ->where('payable_type', \App\Models\Reservation::class)
+                                                   ->whereHas('payable', function($query) use ($terrainIds) {
                                                        $query->whereIn('terrain_synthetique_id', $terrainIds);
                                                    })
                                                    ->where('statut', 'reussi')
@@ -631,11 +632,16 @@ class GestionnaireController extends Controller
                                                    ->limit(5)
                                                    ->get()
                                                    ->map(function ($paiement) {
+                                                       $reservation = $paiement->payable;
+                                                       $terrain = $reservation && $reservation->terrainSynthetique 
+                                                           ? $reservation->terrainSynthetique 
+                                                           : null;
+                                                       
                                                        return [
                                                            'date' => $paiement->created_at->format('Y-m-d'),
                                                            'montant' => $paiement->montant,
                                                            'client' => ($paiement->user->prenom ?? 'Client') . ' ' . ($paiement->user->nom ?? ''),
-                                                           'terrain' => $paiement->reservation->terrainSynthetique->nom ?? 'N/A'
+                                                           'terrain' => $terrain ? $terrain->nom : 'N/A'
                                                        ];
                                                    });
 
@@ -647,9 +653,12 @@ class GestionnaireController extends Controller
                     'total_mois' => round($commissionsGenerees, 2),
                     'a_recevoir' => round($commissionsGenerees * 0.7, 2) // 70% à recevoir (si applicable)
                 ],
-                'paiements_en_attente' => \App\Models\Paiement::whereHas('reservation', function($query) use ($terrainIds) {
-                    $query->whereIn('terrain_synthetique_id', $terrainIds);
-                })->where('statut', 'en_attente')->count(),
+                'paiements_en_attente' => \App\Models\Paiement::where('payable_type', \App\Models\Reservation::class)
+                    ->whereHas('payable', function($query) use ($terrainIds) {
+                        $query->whereIn('terrain_synthetique_id', $terrainIds);
+                    })
+                    ->where('statut', 'en_attente')
+                    ->count(),
                 'derniers_paiements' => $derniersPaiements->toArray()
             ];
 
