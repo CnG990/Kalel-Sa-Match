@@ -295,6 +295,43 @@ class ApiService {
     );
     return _handleResponse(response);
   }
+
+  Future<Map<String, dynamic>> cancelReservation(int reservationId, {String? reason}) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/reservations/$reservationId/cancel'),
+      headers: headers,
+      body: json.encode({'reason': reason ?? 'Annulation par le client'}),
+    );
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> getReservationQrCode(int reservationId) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/reservations/$reservationId/qr-code'),
+      headers: headers,
+    );
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> getTicket(int reservationId) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/tickets/reservation/$reservationId'),
+      headers: headers,
+    );
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> downloadTicket(int ticketId) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/tickets/$ticketId/download'),
+      headers: headers,
+    );
+    return _handleResponse(response);
+  }
   
   // Reviews/Avis
   Future<Map<String, dynamic>> getTerrainReviews(int terrainId) async {
