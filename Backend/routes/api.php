@@ -314,6 +314,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::get('/pending-managers', [AdminController::class, 'getPendingManagers']);
     Route::put('/managers/{id}/approve', [AdminController::class, 'approveManager']);
     Route::put('/managers/{id}/reject', [AdminController::class, 'rejectManager']);
+    Route::put('/managers/{id}/commission', [AdminController::class, 'updateManagerCommission']);
     // Gestion des finances
     Route::get('/finances', [AdminController::class, 'getAdminFinances']);
     

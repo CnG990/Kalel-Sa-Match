@@ -2513,6 +2513,104 @@ class AdminController extends Controller
     }
 
     /**
+     * Modifier le taux de commission d'un gestionnaire
+     */
+    public function updateManagerCommission(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'taux_commission' => 'required|numeric|min:0|max:100',
+            'commentaire' => 'nullable|string|max:1000'
+        ]);
+
+        $manager = User::where('id', $id)->where('role', 'gestionnaire')->first();
+
+        if (!$manager) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gestionnaire non trouvé.'
+            ], 404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Mettre à jour le taux par défaut du gestionnaire
+            $ancienTaux = $manager->taux_commission_defaut ?? 0;
+            $manager->taux_commission_defaut = $request->taux_commission;
+            $manager->save();
+
+            // Trouver ou créer le contrat de commission global actif
+            $contratGlobal = ContratCommission::where('gestionnaire_id', $manager->id)
+                ->where('type_contrat', 'global')
+                ->where('statut', 'actif')
+                ->where(function($q) {
+                    $q->whereNull('date_fin')
+                      ->orWhere('date_fin', '>', now());
+                })
+                ->first();
+
+            if ($contratGlobal) {
+                // Mettre à jour le contrat existant
+                $contratGlobal->ajouterNegociation(
+                    'modification_taux',
+                    $ancienTaux,
+                    $request->taux_commission,
+                    $request->commentaire ?? 'Modification du taux de commission par l\'administrateur'
+                );
+                $contratGlobal->taux_commission = $request->taux_commission;
+                if ($request->commentaire) {
+                    $contratGlobal->conditions_speciales = $request->commentaire;
+                }
+                $contratGlobal->save();
+            } else {
+                // Créer un nouveau contrat global
+                ContratCommission::create([
+                    'gestionnaire_id' => $manager->id,
+                    'terrain_synthetique_id' => null,
+                    'taux_commission' => $request->taux_commission,
+                    'type_contrat' => 'global',
+                    'date_debut' => now(),
+                    'statut' => 'actif',
+                    'conditions_speciales' => $request->commentaire,
+                    'historique_negociation' => [[
+                        'date' => now()->toISOString(),
+                        'action' => 'modification_taux',
+                        'ancien_taux' => $ancienTaux,
+                        'nouveau_taux' => $request->taux_commission,
+                        'commentaire' => $request->commentaire ?? 'Modification du taux de commission par l\'administrateur'
+                    ]]
+                ]);
+            }
+
+            // Logger l'action
+            $this->logSystemAction('modification_commission', [
+                'gestionnaire_id' => $manager->id,
+                'ancien_taux' => $ancienTaux,
+                'nouveau_taux' => $request->taux_commission
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Taux de commission modifié avec succès.',
+                'data' => [
+                    'gestionnaire_id' => $manager->id,
+                    'ancien_taux' => $ancienTaux,
+                    'nouveau_taux' => $request->taux_commission
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la modification: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Logger une action système
      */
     private function logSystemAction(string $action, array $details = []): void

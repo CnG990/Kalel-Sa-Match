@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../../services/api';
 import toast from 'react-hot-toast';
-import { Search, UserPlus, Edit, Trash2, Eye, Key, X } from 'lucide-react';
+import { Search, UserPlus, Edit, Trash2, Eye, Key, X, Percent } from 'lucide-react';
 
 interface User {
   id: number;
@@ -62,6 +62,11 @@ const ManageUsersPage: React.FC = () => {
   const [showManagerApprovalModal, setShowManagerApprovalModal] = useState(false);
   const [tauxCommission, setTauxCommission] = useState(10);
   const [commentairesManager, setCommentairesManager] = useState('');
+  
+  // États pour la modification de commission
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [tauxCommissionEdit, setTauxCommissionEdit] = useState(10);
+  const [commentaireCommission, setCommentaireCommission] = useState('');
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -138,6 +143,48 @@ const ManageUsersPage: React.FC = () => {
       }
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  const handleEditCommission = (user: User) => {
+    setSelectedUser(user);
+    // Récupérer le taux de commission actuel si disponible
+    const currentRate = (user as any).taux_commission_defaut || 10;
+    setTauxCommissionEdit(currentRate);
+    setCommentaireCommission('');
+    setShowCommissionModal(true);
+  };
+
+  const handleUpdateCommission = async () => {
+    if (!selectedUser) {
+      toast.error('Aucun gestionnaire sélectionné');
+      return;
+    }
+    
+    if (tauxCommissionEdit < 0 || tauxCommissionEdit > 100) {
+      toast.error('Le taux de commission doit être entre 0 et 100%');
+      return;
+    }
+    
+    try {
+      const response = await apiService.updateManagerCommission(
+        selectedUser.id,
+        tauxCommissionEdit,
+        commentaireCommission || undefined
+      );
+      
+      if (response.success) {
+        toast.success('Taux de commission modifié avec succès');
+        setShowCommissionModal(false);
+        setSelectedUser(null);
+        setTauxCommissionEdit(10);
+        setCommentaireCommission('');
+        fetchUsers(); // Recharger la liste
+      } else {
+        toast.error(response.message || 'Erreur lors de la modification');
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la modification de la commission');
     }
   };
 
@@ -337,6 +384,15 @@ const ManageUsersPage: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap"><RoleBadge role={user.role} /></td>
                 <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={user.statut_validation} /></td>
                 <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-sm">
+                  {user.role === 'gestionnaire' && user.statut_validation === 'approuve' ? (
+                    <span className="font-semibold text-purple-600">
+                      {(user as any).taux_commission_defaut || 'N/A'}%
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-sm">
                   {new Date(user.created_at).toLocaleString('fr-FR', { year: 'numeric', month: 'long', day: '2-digit' })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -352,6 +408,16 @@ const ManageUsersPage: React.FC = () => {
                         title="Approuver gestionnaire"
                       >
                         ✓
+                      </button>
+                    )}
+                    {/* Bouton pour modifier la commission pour les gestionnaires approuvés */}
+                    {user.role === 'gestionnaire' && user.statut_validation === 'approuve' && (
+                      <button 
+                        onClick={() => handleEditCommission(user)}
+                        className="text-purple-600 hover:text-purple-900 p-1 bg-purple-50 rounded border border-purple-200"
+                        title="Modifier commission"
+                      >
+                        <Percent className="w-4 h-4" />
                       </button>
                     )}
                     <button 
