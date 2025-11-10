@@ -16,7 +16,7 @@ class TypeAbonnementSeeder extends Seeder
             [
                 'nom' => 'Abonnement Mensuel',
                 'description' => 'Accès privilégié pendant 1 mois',
-                'prix' => 25000,
+                'prix' => 0, // Prix calculé dynamiquement selon la configuration
                 'duree_jours' => 30,
                 'avantages' => [
                     'Réservations prioritaires',
@@ -36,7 +36,7 @@ class TypeAbonnementSeeder extends Seeder
             [
                 'nom' => 'Abonnement Trimestriel',
                 'description' => 'Accès privilégié pendant 3 mois avec plus d\'avantages',
-                'prix' => 60000,
+                'prix' => 0, // Prix calculé dynamiquement selon la configuration
                 'duree_jours' => 90,
                 'avantages' => [
                     'Réservations prioritaires',
@@ -57,7 +57,7 @@ class TypeAbonnementSeeder extends Seeder
             [
                 'nom' => 'Abonnement Annuel',
                 'description' => 'Accès privilégié pendant 1 an avec tous les avantages',
-                'prix' => 200000,
+                'prix' => 0, // Prix calculé dynamiquement selon la configuration
                 'duree_jours' => 365,
                 'avantages' => [
                     'Réservations prioritaires',

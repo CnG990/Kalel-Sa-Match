@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/api';
 import toast from 'react-hot-toast';
-import { Save, RefreshCw, Bell, CreditCard, Globe, Loader2 } from 'lucide-react';
+import { Save, RefreshCw, Bell, CreditCard, Globe, Loader2, FileText } from 'lucide-react';
+import NotificationsPage from './NotificationsPage';
+import LogsPage from './LogsPage';
 
 interface SystemSettings {
   general: {
@@ -63,7 +65,7 @@ const SettingsPage: React.FC = () => {
         const apiData = response.data;
         setSettings({
           general: {
-            site_name: apiData.general?.nom_plateforme || 'Terrains Synthétiques Dakar',
+            site_name: apiData.general?.nom_application || 'Terrains Synthétiques Dakar',
             default_currency: apiData.general?.devise || 'FCFA',
             timezone: apiData.general?.timezone || 'Africa/Dakar',
             maintenance_mode: apiData.maintenance?.mode_maintenance || false
@@ -80,7 +82,6 @@ const SettingsPage: React.FC = () => {
         toast.success('Paramètres chargés avec succès');
       }
     } catch (error) {
-      console.error('Erreur chargement paramètres:', error);
       toast.error('Erreur lors du chargement des paramètres');
     } finally {
       setLoading(false);
@@ -94,7 +95,7 @@ const SettingsPage: React.FC = () => {
         setSystemPerformance(response.data);
       }
     } catch (error) {
-      console.error('Erreur performance système:', error);
+      // Erreur silencieuse pour les métriques de performance
     }
   };
 
@@ -105,7 +106,7 @@ const SettingsPage: React.FC = () => {
       // Convertir les paramètres au format API backend réel
       const configData = {
         general: {
-          nom_plateforme: settings.general.site_name,
+          nom_application: settings.general.site_name,
           devise: settings.general.default_currency,
           timezone: settings.general.timezone
         },
@@ -129,7 +130,6 @@ const SettingsPage: React.FC = () => {
         toast.error('Erreur lors de la sauvegarde');
       }
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
       toast.error('Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
@@ -261,7 +261,7 @@ const SettingsPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nom de la plateforme
+                        Nom de l'application
                       </label>
                       <input
                         type="text"

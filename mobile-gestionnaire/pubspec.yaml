@@ -1,0 +1,64 @@
+name: kalel_sa_match_gestionnaire
+description: Application mobile Kalel Sa Match (KSM) - Gestion de terrains synthétiques
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI & Navigation
+  cupertino_icons: ^1.0.6
+  flutter_svg: ^2.0.9
+  google_fonts: ^6.1.0
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # Networking
+  http: ^1.1.2
+  dio: ^5.4.0
+  
+  # Storage
+  shared_preferences: ^2.2.2
+  
+  # Utils
+  intl: ^0.19.0
+  flutter_launcher_icons: ^0.13.1
+  
+  # QR Code
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.2.3
+  
+  # Location
+  geolocator: ^11.0.0
+  geocoding: ^3.0.0
+  
+  # Image
+  image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
+  
+  # Notifications
+  flutter_local_notifications: ^19.0.0
+  
+  # Charts
+  fl_chart: ^0.66.0
+  
+  # Package Info
+  package_info_plus: ^8.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+

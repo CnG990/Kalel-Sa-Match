@@ -31,7 +31,7 @@ const PrivacyPage: React.FC = () => {
               <p className="text-gray-700 mb-4">
                 Kalél Sa Match s'engage à protéger votre vie privée et vos données personnelles. 
                 Cette politique de confidentialité explique comment nous collectons, utilisons, 
-                stockons et protégeons vos informations lorsque vous utilisez notre plateforme.
+                stockons et protégeons vos informations lorsque vous utilisez notre application.
               </p>
             </section>
 
@@ -69,7 +69,7 @@ const PrivacyPage: React.FC = () => {
                 <li>Traiter vos réservations et paiements</li>
                 <li>Vous contacter concernant vos réservations</li>
                 <li>Améliorer nos services et l'expérience utilisateur</li>
-                <li>Assurer la sécurité de notre plateforme</li>
+                <li>Assurer la sécurité de notre application</li>
                 <li>Respecter nos obligations légales</li>
                 <li>Vous envoyer des communications marketing (avec votre consentement)</li>
               </ul>

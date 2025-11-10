@@ -254,13 +254,14 @@ export default function Inscription() {
                 />
               <label htmlFor="acceptTerms" className="ml-2 block text-sm text-gray-900">
                   J'accepte les{' '}
-                <Link href="/docs/terms" className="text-kalel-secondary hover:text-kalel-secondary-dark">
+                <Link href="/terms" target="_blank" className="text-kalel-secondary hover:text-kalel-secondary-dark font-semibold underline">
                     conditions d'utilisation
                 </Link>
                 {' '}et la{' '}
-                <Link href="/docs/privacy" className="text-kalel-secondary hover:text-kalel-secondary-dark">
+                <Link href="/privacy" target="_blank" className="text-kalel-secondary hover:text-kalel-secondary-dark font-semibold underline">
                   politique de confidentialité
                 </Link>
+                {' '}et je comprends toutes les règles de réservation, d'annulation et de pénalités.
                 </label>
             </div>
 

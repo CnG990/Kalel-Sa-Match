@@ -97,7 +97,10 @@ class ApiService {
         queryParams.set('sort_direction', params.sort_direction || 'asc');
       }
 
-      console.log(`🔄 API Call: ${this.apiURL}/terrains?${queryParams.toString()}`);
+      // Log API call seulement en développement
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔄 API Call: ${this.apiURL}/terrains?${queryParams.toString()}`);
+      }
 
       const response = await fetch(`${this.apiURL}/terrains?${queryParams.toString()}`, {
         method: 'GET',
@@ -111,6 +114,22 @@ class ApiService {
       return result;
     } catch (error: any) {
       console.error('❌ API Error getTerrains:', error);
+      throw error;
+    }
+  }
+
+  // Terrains pour affichage carte (retourne un tableau simple avec latitude/longitude)
+  async getTerrainsForMap(): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${this.apiURL}/terrains/all-for-map`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      const result = await this.handleResponse(response);
+      return result;
+    } catch (error: any) {
+      console.error('❌ API Error getTerrainsForMap:', error);
       throw error;
     }
   }

@@ -69,7 +69,7 @@ const GeoImportPage: React.FC = () => {
         setTerrains(response.data.data || response.data);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des terrains:', error);
+      // Erreur silencieuse, les terrains sont chargés ailleurs
     } finally {
       setLoading(false);
     }
@@ -168,7 +168,7 @@ const GeoImportPage: React.FC = () => {
         window.URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error('Erreur d\'export:', error);
+      // Erreur déjà gérée par toast dans le bloc try
     }
   };
 

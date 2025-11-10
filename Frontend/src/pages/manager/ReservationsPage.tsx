@@ -48,7 +48,7 @@ const ReservationsPage: React.FC = () => {
     try {
       setLoading(true);
       // Utiliser la vraie API backend
-      const response = await apiService.get('/gestionnaire/reservations');
+      const response = await apiService.getManagerReservations();
       
       if (response.success) {
         setReservations(response.data || []);
@@ -56,9 +56,19 @@ const ReservationsPage: React.FC = () => {
         console.error('Erreur API:', response.message);
         toast.error(response.message || "Impossible de charger les réservations.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du chargement:', error);
-      toast.error("Erreur lors du chargement des réservations.");
+      
+      // Gestion d'erreur plus spécifique
+      if (error.message?.includes('404') || error.message?.includes('Endpoint non trouvé')) {
+        toast.error("Service de réservations temporairement indisponible. Veuillez réessayer plus tard.");
+      } else if (error.message?.includes('401') || error.message?.includes('Unauthenticated')) {
+        toast.error("Session expirée. Veuillez vous reconnecter.");
+      } else if (error.message?.includes('500')) {
+        toast.error("Erreur serveur. Veuillez contacter le support technique.");
+      } else {
+        toast.error("Erreur lors du chargement des réservations.");
+      }
     } finally {
       setLoading(false);
     }

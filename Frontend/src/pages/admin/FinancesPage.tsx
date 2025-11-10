@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/api';
-import { TrendingUp, BarChart, Clock, Loader2 } from 'lucide-react';
+import { TrendingUp, BarChart, Clock, Loader2, CreditCard, Percent } from 'lucide-react';
 import toast from 'react-hot-toast';
+import PaymentsPage from './PaymentsPage';
+import CommissionsPage from './CommissionsPage';
 
 interface Stats {
   chiffre_affaires_total: number;
@@ -33,6 +35,7 @@ const formatCurrency = (amount: number) => {
 };
 
 const FinancesPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'payments' | 'commissions'>('overview');
   const [stats, setStats] = useState<Stats | null>(null);
   const [transactions, setTransactions] = useState<PaginatedTransactions | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,9 +71,46 @@ const FinancesPage: React.FC = () => {
     );
   }
 
+  // Onglets
+  const tabs = [
+    { id: 'overview', name: 'Vue d\'ensemble', icon: BarChart },
+    { id: 'payments', name: 'Paiements', icon: CreditCard },
+    { id: 'commissions', name: 'Commissions', icon: Percent },
+  ];
+
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Vue d'ensemble financière</h1>
+      <h1 className="text-3xl font-bold mb-6">Finances</h1>
+
+      {/* Onglets */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="-mb-px flex space-x-8">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`
+                  flex items-center px-4 py-3 border-b-2 font-medium text-sm
+                  ${activeTab === tab.id
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }
+                `}
+              >
+                <Icon className="w-5 h-5 mr-2" />
+                {tab.name}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Contenu des onglets */}
+      {activeTab === 'overview' && (
+        <>
+          <h2 className="text-2xl font-semibold mb-4">Vue d'ensemble financière</h2>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -153,6 +193,10 @@ const FinancesPage: React.FC = () => {
           </div>
         )}
       </div>
+      )}
+
+      {activeTab === 'payments' && <PaymentsPage />}
+      {activeTab === 'commissions' && <CommissionsPage />}
     </div>
   );
 };

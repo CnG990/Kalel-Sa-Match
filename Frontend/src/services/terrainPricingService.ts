@@ -235,7 +235,7 @@ class TerrainPricingService {
         duration: 1,
         description: `${terrainData.prix_heure.toLocaleString()} FCFA/h - Tous les jours`,
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 8, end: 22 }, // 8h à 22h
+        allowedHours: { start: 0, end: 23 }, // 24h/24
         restrictions: ['Crampons autorisés', 'Réservation minimum 1h']
       },
       {
@@ -246,7 +246,7 @@ class TerrainPricingService {
         duration: 1.5,
         description: `${(terrainData.prix_heure * 1.5 + this.DURATION_EXTRAS['90_minutes_extra']).toLocaleString()} FCFA pour 1h30 - Tous les jours`,
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 8, end: 21 }, // 8h à 21h (pour finir à 22h30 max)
+        allowedHours: { start: 0, end: 23 }, // 24h/24
         restrictions: ['Crampons autorisés', 'Réservation 1h30']
       },
       {
@@ -257,7 +257,7 @@ class TerrainPricingService {
         duration: 2,
         description: `${(terrainData.prix_heure * 2).toLocaleString()} FCFA pour 2h - Tous les jours`,
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 8, end: 20 }, // 8h à 20h (pour finir à 22h max)
+        allowedHours: { start: 0, end: 23 }, // 24h/24
         restrictions: ['Crampons autorisés', 'Réservation longue durée']
       }
     ];
@@ -278,10 +278,10 @@ class TerrainPricingService {
         price: 30000, // ✅ Prix fixe matin
         capacity: capacity,
         duration: 1,
-        description: '30,000 FCFA pour 1h - Créneaux matinaux (8h-17h)',
+        description: '30,000 FCFA pour 1h - Disponible 24h/24',
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 8, end: 17 }, // 8h à 17h
-        restrictions: ['Crampons autorisés', 'Créneaux matinaux uniquement', 'Éclairage disponible']
+        allowedHours: { start: 0, end: 23 }, // 24h/24
+        restrictions: ['Crampons autorisés', 'Disponible 24h/24', 'Éclairage disponible']
       },
       {
         id: 'besport-soir-1h',
@@ -289,10 +289,10 @@ class TerrainPricingService {
         price: 50000, // ✅ Prix fixe soir
         capacity: capacity,
         duration: 1,
-        description: '50,000 FCFA pour 1h - Créneaux en soirée (18h-23h)',
+        description: '50,000 FCFA pour 1h - Disponible 24h/24',
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 18, end: 23 }, // 18h à 23h
-        restrictions: ['Crampons autorisés', 'Créneaux en soirée uniquement', 'Éclairage disponible']
+        allowedHours: { start: 0, end: 23 }, // 24h/24
+        restrictions: ['Crampons autorisés', 'Disponible 24h/24', 'Éclairage disponible']
       }
     ];
   }
@@ -310,8 +310,8 @@ class TerrainPricingService {
         duration: 1,
         description: `${this.calculatePrice(terrainData, 'jour').toLocaleString()} FCFA/h - Tarif réduit jour`,
         allowedDays: [1, 2, 3, 4, 5], // Lundi à Vendredi
-        allowedHours: { start: 8, end: 15 }, // 8h à 15h
-        restrictions: ['8h à 15h uniquement', 'Lundi à Vendredi', 'Tarif jour']
+        allowedHours: { start: 0, end: 23 }, // 24h/24
+        restrictions: ['Disponible 24h/24', 'Lundi à Vendredi', 'Tarif jour']
       },
       {
         id: 'fara-jour-90mn',
@@ -321,8 +321,8 @@ class TerrainPricingService {
         duration: 1.5,
         description: `${this.calculatePrice(terrainData, 'jour', 1.5).toLocaleString()} FCFA pour 1h30 - Tarif réduit jour`,
         allowedDays: [1, 2, 3, 4, 5], // Lundi à Vendredi
-        allowedHours: { start: 8, end: 14 }, // 8h à 14h (pour finir à 15h30)
-        restrictions: ['8h à 14h uniquement', 'Lundi à Vendredi', 'Tarif jour']
+        allowedHours: { start: 0, end: 23 }, // 24h/24
+        restrictions: ['Disponible 24h/24', 'Lundi à Vendredi', 'Tarif jour']
       },
       {
         id: 'fara-soir-1h',
@@ -332,8 +332,8 @@ class TerrainPricingService {
         duration: 1,
         description: `${this.calculatePrice(terrainData, 'soir').toLocaleString()} FCFA/h - Tarif soir/weekend`,
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 15, end: 23 }, // 15h à 23h en semaine, toute la journée weekend
-        restrictions: ['Après 15h en semaine', 'Toute la journée weekend', 'Tarif standard']
+        allowedHours: { start: 0, end: 23 }, // 24h/24
+        restrictions: ['Disponible 24h/24', 'Tous les jours', 'Tarif standard']
       },
       {
         id: 'fara-soir-90mn',
@@ -343,8 +343,8 @@ class TerrainPricingService {
         duration: 1.5,
         description: `${this.calculatePrice(terrainData, 'soir', 1.5).toLocaleString()} FCFA pour 1h30 - Tarif soir/weekend`,
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 15, end: 22 }, // 15h à 22h (pour finir à 23h30)
-        restrictions: ['Après 15h en semaine', 'Toute la journée weekend', 'Tarif standard']
+        allowedHours: { start: 0, end: 23 }, // 24h/24
+        restrictions: ['Disponible 24h/24', 'Tous les jours', 'Tarif standard']
       }
     ];
   }
@@ -362,7 +362,7 @@ class TerrainPricingService {
         duration: 1,
         description: `${this.calculatePrice(terrainData, '5x5').toLocaleString()} FCFA/h - Petit terrain`,
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 8, end: 22 }, // 8h à 22h
+        allowedHours: { start: 0, end: 23 }, // 24h/24
         restrictions: ['Terrain 5x5/6x6', 'Crampons autorisés', 'Académie de formation']
       },
       {
@@ -384,7 +384,7 @@ class TerrainPricingService {
         duration: 1,
         description: `${this.calculatePrice(terrainData, '8x8').toLocaleString()} FCFA/h - Terrain intermédiaire`,
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 8, end: 22 }, // 8h à 22h
+        allowedHours: { start: 0, end: 23 }, // 24h/24
         restrictions: ['Terrain 8x8', 'Crampons autorisés', 'Académie de formation']
       },
       {
@@ -406,7 +406,7 @@ class TerrainPricingService {
         duration: 1,
         description: `${this.calculatePrice(terrainData, '11x11').toLocaleString()} FCFA/h - Grand terrain`,
         allowedDays: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
-        allowedHours: { start: 8, end: 22 }, // 8h à 22h
+        allowedHours: { start: 0, end: 23 }, // 24h/24
         restrictions: ['Terrain 11x11', 'Crampons autorisés', 'Académie de formation']
       },
       {

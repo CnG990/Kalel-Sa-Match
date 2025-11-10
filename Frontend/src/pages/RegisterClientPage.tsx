@@ -112,26 +112,14 @@ const RegisterClientPage: React.FC = () => {
                 />
                 <label htmlFor="accept_terms" className="text-sm text-gray-700">
                   J'accepte les{' '}
-                  <Link to="/terms" target="_blank" className="text-green-600 hover:text-green-500 underline">
+                  <Link to="/terms" target="_blank" className="text-green-600 hover:text-green-500 underline font-semibold">
                     conditions d'utilisation
                   </Link>
                   {' '}et la{' '}
-                  <Link to="/privacy" target="_blank" className="text-green-600 hover:text-green-500 underline">
+                  <Link to="/privacy" target="_blank" className="text-green-600 hover:text-green-500 underline font-semibold">
                     politique de confidentialité
                   </Link>
-                  {' '}et je comprends les règles de réservation et d'annulation :
-                  <div className="mt-3 p-4 bg-orange-50 rounded-lg border border-orange-200">
-                    <h4 className="font-medium text-orange-900 mb-2 flex items-center gap-2">
-                      💰 Règles d'annulation et remboursement
-                    </h4>
-                    <ul className="text-xs text-orange-800 space-y-1">
-                      <li>• <strong>Acompte obligatoire :</strong> 5 000 FCFA requis pour toute réservation</li>
-                      <li>• <strong>Annulation 12h+ avant le match :</strong> Remboursement complet de l'acompte (5 000 FCFA)</li>
-                      <li>• <strong>Annulation moins de 12h avant :</strong> Perte définitive de l'acompte</li>
-                      <li>• <strong>Traitement :</strong> Remboursements traités sous 24-48h par Orange Money</li>
-                      <li>• <strong>Important :</strong> Ces règles s'appliquent automatiquement à toutes vos réservations</li>
-                    </ul>
-                  </div>
+                  {' '}et je comprends toutes les règles de réservation, d'annulation et de pénalités.
                 </label>
               </div>
               

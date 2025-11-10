@@ -75,14 +75,38 @@ class ReservationController extends Controller
     {
         $user = $request->user();
         
-        $reservations = Reservation::with(['terrain'])
+        $reservations = Reservation::with(['terrainSynthetique', 'terrain'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Formater les données pour inclure les informations du terrain
+        $formattedReservations = $reservations->map(function ($reservation) {
+            $terrain = $reservation->terrainSynthetique ?? $reservation->terrain;
+            
+            return [
+                'id' => $reservation->id,
+                'terrain_id' => $reservation->terrain_id,
+                'terrain_synthetique_id' => $reservation->terrain_synthetique_id,
+                'date_debut' => $reservation->date_debut,
+                'date_fin' => $reservation->date_fin,
+                'montant_total' => $reservation->montant_total,
+                'prix_total' => $reservation->montant_total, // Alias pour compatibilité
+                'statut' => $reservation->statut,
+                'code_ticket' => $reservation->code_ticket,
+                'terrain' => $terrain ? [
+                    'id' => $terrain->id,
+                    'nom' => $terrain->nom ?? 'Terrain',
+                    'adresse' => $terrain->adresse ?? null,
+                    'latitude' => $terrain->latitude ?? null,
+                    'longitude' => $terrain->longitude ?? null,
+                ] : null,
+            ];
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $reservations
+            'data' => $formattedReservations
         ]);
     }
 
@@ -118,7 +142,7 @@ class ReservationController extends Controller
         }
         
         $dateDebut = \Carbon\Carbon::parse($request->date_debut);
-        $dateFin = $dateDebut->copy()->addHours($request->duree_heures);
+        $dateFin = $dateDebut->copy()->addHours((int)$request->duree_heures);
 
         // Validation supplémentaire : vérifier que l'heure n'est pas trop proche du début
         $now = now();
@@ -317,10 +341,11 @@ class ReservationController extends Controller
         $currentHour = $now->hour;
         $currentMinutes = $now->minute;
         
-        // Créneaux fixes de 8h à 3h du matin
+        // Créneaux disponibles 24h/24 - toutes les heures possibles
         $heuresOuverture = [
-            '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', 
-            '18', '19', '20', '21', '22', '23', '00', '01', '02', '03'
+            '00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 
+            '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 
+            '20', '21', '22', '23'
         ];
         
         $creneauxDisponibles = [];
@@ -328,8 +353,9 @@ class ReservationController extends Controller
         foreach ($heuresOuverture as $heure) {
             $debut = \Carbon\Carbon::parse($date . ' ' . $heure . ':00:00');
             
-            // Pour les heures après minuit (00, 01, 02, 03), on passe au jour suivant
-            if (in_array($heure, ['00', '01', '02', '03'])) {
+            // Pour les heures après minuit (00-05), on passe au jour suivant
+            // pour permettre les réservations nocturnes
+            if (in_array($heure, ['00', '01', '02', '03', '04', '05'])) {
                 $debut->addDay();
             }
             
@@ -348,7 +374,7 @@ class ReservationController extends Controller
                 }
             }
             
-            $fin = $debut->copy()->addHours($dureeHeures);
+            $fin = $debut->copy()->addHours((int)$dureeHeures);
             
             // Vérifier s'il y a des réservations conflictuelles avec logique correcte
             // Deux créneaux [A,B] et [C,D] se chevauchent si : A < D AND B > C
@@ -673,7 +699,7 @@ class ReservationController extends Controller
             $dureeMatch = \Carbon\Carbon::parse($reservation->date_debut)
                 ->diffInHours(\Carbon\Carbon::parse($reservation->date_fin));
             
-            $nouvelleDateFin = $nouvelleDateDebut->copy()->addHours($dureeMatch);
+            $nouvelleDateFin = $nouvelleDateDebut->copy()->addHours((int)$dureeMatch);
 
             // Vérifier la disponibilité du nouveau créneau
             $conflict = Reservation::where('terrain_id', $reservation->terrain_id)
@@ -868,31 +894,70 @@ class ReservationController extends Controller
                 'notes' => 'nullable|string'
             ]);
             
-            $reservation = Reservation::findOrFail($id);
+            $reservation = Reservation::with(['terrainSynthetique', 'terrain'])->findOrFail($id);
             $user = auth()->user();
             
-            // Vérifier que l'utilisateur est gestionnaire du terrain
-            if ($user->role !== 'gestionnaire' || $reservation->terrain->gestionnaire_id !== $user->id) {
+            // Vérifier que l'utilisateur est gestionnaire
+            if ($user->role !== 'gestionnaire') {
                 return response()->json([
-                    'message' => 'Non autorisé à modifier cette réservation'
+                    'success' => false,
+                    'message' => 'Accès non autorisé. Seuls les gestionnaires peuvent modifier les réservations.'
                 ], 403);
             }
             
+            // Vérifier que l'utilisateur est gestionnaire du terrain
+            $terrain = $reservation->terrainSynthetique ?? $reservation->terrain;
+            
+            if (!$terrain) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terrain non trouvé pour cette réservation'
+                ], 404);
+            }
+            
+            if ($terrain->gestionnaire_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé à modifier cette réservation. Ce terrain ne vous appartient pas.'
+                ], 403);
+            }
+            
+            // Mettre à jour le statut
+            $oldStatus = $reservation->statut;
             $reservation->update([
                 'statut' => $request->statut,
-                'notes' => $request->notes ? $reservation->notes . "\n" . $request->notes : $reservation->notes
+                'notes' => $request->notes ? ($reservation->notes ? $reservation->notes . "\n" . $request->notes : $request->notes) : $reservation->notes
             ]);
             
+            // Recharger les relations
+            $reservation->load(['user', 'terrainSynthetique', 'terrain']);
+            
             return response()->json([
+                'success' => true,
                 'message' => 'Statut mis à jour avec succès',
-                'reservation' => $reservation->load(['user', 'terrain'])
+                'data' => [
+                    'id' => $reservation->id,
+                    'statut' => $reservation->statut,
+                    'old_statut' => $oldStatus,
+                ]
             ]);
             
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
-            \Log::error('Erreur mise à jour statut réservation: ' . $e->getMessage());
+            \Log::error('Erreur mise à jour statut réservation: ' . $e->getMessage(), [
+                'reservation_id' => $id,
+                'user_id' => auth()->id(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return response()->json([
-                'message' => 'Erreur lors de la mise à jour',
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour du statut',
                 'error' => $e->getMessage()
             ], 500);
         }

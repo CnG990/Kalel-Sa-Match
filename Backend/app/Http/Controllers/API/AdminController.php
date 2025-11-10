@@ -113,10 +113,18 @@ class AdminController extends Controller
     public function getAllTerrains(Request $request): JsonResponse
     {
         try {
+            // Rendre compatible MySQL/SQLite (sans PostGIS) et PostgreSQL/PostGIS
+            $driver = config('database.default');
+            // Vérifier dynamiquement la présence des colonnes PostGIS
+            $hasGeomPolygon = \Illuminate\Support\Facades\Schema::hasColumn('terrains_synthetiques_dakar', 'geom_polygon');
+            $hasGeomPoint = \Illuminate\Support\Facades\Schema::hasColumn('terrains_synthetiques_dakar', 'geom');
+
             // Utiliser terrains_synthetiques_dakar comme source principale (où sont les vraies données)
             $query = DB::table('terrains_synthetiques_dakar as t')
-                ->leftJoin('users as g', 't.gestionnaire_id', '=', 'g.id')
-                ->select([
+                ->leftJoin('users as g', 't.gestionnaire_id', '=', 'g.id');
+
+            if ($driver === 'pgsql') {
+                $selects = [
                     't.id',
                     't.nom',
                     't.description', 
@@ -136,18 +144,64 @@ class AdminController extends Controller
                     'g.nom as gestionnaire_nom',
                     'g.prenom as gestionnaire_prenom',
                     'g.email as gestionnaire_email',
-                    // Calculs PostGIS - Utiliser geom_polygon pour les surfaces
-                    DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN ST_Area(ST_Transform(t.geom_polygon, 32628)) ELSE NULL END as surface_calculee'),
-                    DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN ST_AsGeoJSON(t.geom_polygon) ELSE NULL END as geometrie_geojson'),
-                    DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN true ELSE false END as has_geometry')
+                ];
+
+                // Ajouter champs PostGIS selon colonnes présentes
+                if ($hasGeomPolygon) {
+                    $selects[] = DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN ST_Area(ST_Transform(t.geom_polygon, 32628)) ELSE NULL END as surface_calculee');
+                    $selects[] = DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN ST_AsGeoJSON(t.geom_polygon) ELSE NULL END as geometrie_geojson');
+                    $selects[] = DB::raw('CASE WHEN t.geom_polygon IS NOT NULL THEN true ELSE false END as has_geometry');
+                } elseif ($hasGeomPoint) {
+                    // Pour un POINT, pas de surface; exposer GeoJSON du point
+                    $selects[] = DB::raw('NULL as surface_calculee');
+                    $selects[] = DB::raw('CASE WHEN t.geom IS NOT NULL THEN ST_AsGeoJSON(t.geom) ELSE NULL END as geometrie_geojson');
+                    $selects[] = DB::raw('CASE WHEN t.geom IS NOT NULL THEN true ELSE false END as has_geometry');
+                } else {
+                    $selects[] = DB::raw('NULL as surface_calculee');
+                    $selects[] = DB::raw('NULL as geometrie_geojson');
+                    $selects[] = DB::raw('false as has_geometry');
+                }
+
+                $query->select($selects);
+            } else {
+                // Fallback sans PostGIS
+                $query->select([
+                    't.id',
+                    't.nom',
+                    't.description', 
+                    't.adresse',
+                    't.latitude',
+                    't.longitude',
+                    't.prix_heure',
+                    't.capacite',
+                    't.surface',
+                    't.image_principale',
+                    't.images_supplementaires',
+                    't.gestionnaire_id',
+                    't.est_actif',
+                    't.created_at',
+                    't.updated_at',
+                    // Données gestionnaire
+                    'g.nom as gestionnaire_nom',
+                    'g.prenom as gestionnaire_prenom',
+                    'g.email as gestionnaire_email',
+                    DB::raw('NULL as surface_calculee'),
+                    DB::raw('NULL as geometrie_geojson'),
+                    DB::raw('false as has_geometry')
                 ]);
+            }
             
             // Recherche par nom, adresse
             if ($request->has('search')) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
-                    $q->where('t.nom', 'ILIKE', "%{$search}%")
-                      ->orWhere('t.adresse', 'ILIKE', "%{$search}%");
+                $query->where(function($q) use ($search, $driver) {
+                    if ($driver === 'pgsql') {
+                        $q->where('t.nom', 'ILIKE', "%{$search}%")
+                          ->orWhere('t.adresse', 'ILIKE', "%{$search}%");
+                    } else {
+                        $q->where('t.nom', 'LIKE', "%{$search}%")
+                          ->orWhere('t.adresse', 'LIKE', "%{$search}%");
+                    }
                 });
             }
             

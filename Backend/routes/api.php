@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ImportTerrainController;
 use App\Http\Controllers\API\FavoriteController;
+use App\Http\Controllers\API\AvisController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\MessageController;
@@ -72,11 +73,20 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     
+    // Routes pour authentification par téléphone (OTP + PIN)
+    Route::post('/send-otp', [AuthController::class, 'sendOTP']);
+    Route::post('/verify-otp', [AuthController::class, 'verifyOTP']);
+    Route::post('/set-pin', [AuthController::class, 'setPIN']);
+    Route::post('/register-phone', [AuthController::class, 'registerWithPhone']);
+    Route::post('/login-phone', [AuthController::class, 'loginWithPhone']);
+    Route::post('/login-pin', [AuthController::class, 'loginWithPIN']);
+    
     // Routes protégées par authentification
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
         Route::put('update-profile', [AuthController::class, 'updateProfile']);
+        Route::post('update-phone', [AuthController::class, 'updatePhoneWithOTP']);
         Route::post('change-password', [AuthController::class, 'changePassword']);
     });
 });
@@ -252,7 +262,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('terrains', [GestionnaireController::class, 'getTerrains']);
         Route::put('terrains/{id}', [TerrainController::class, 'managerUpdate']);
         Route::get('reservations', [GestionnaireController::class, 'getReservations']);
-        Route::put('reservations/{id}/status', [ReservationController::class, 'updateStatus']);
+        Route::put('reservations/{id}/status', [ReservationController::class, 'updateManagerReservationStatus']);
         Route::get('stats/dashboard', [GestionnaireController::class, 'getStatistiques']);
         Route::get('stats/revenue', [GestionnaireController::class, 'getRevenueStats']);
         
@@ -580,11 +590,26 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin/terrains')->gro
 });
 
 // Routes pour les favoris
-Route::prefix('favorites')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('favorites')->group(function () {
     Route::get('/', [FavoriteController::class, 'index']);
     Route::post('/terrain/{terrainId}/toggle', [FavoriteController::class, 'toggle']);
     Route::get('/terrain/{terrainId}/check', [FavoriteController::class, 'check']);
     Route::delete('/{favoriteId}', [FavoriteController::class, 'destroy']);
+});
+
+// Routes pour les avis/notes
+Route::prefix('reviews')->group(function () {
+    // Routes publiques
+    Route::get('/terrain/{terrainId}', [AvisController::class, 'index']);
+    
+    // Routes authentifiées
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/', [AvisController::class, 'store']);
+        Route::put('/{id}', [AvisController::class, 'update']);
+        Route::delete('/{id}', [AvisController::class, 'destroy']);
+        Route::get('/terrain/{terrainId}/can-review', [AvisController::class, 'canReview']);
+        Route::get('/terrain/{terrainId}/my-review', [AvisController::class, 'myReview']);
+    });
 });
 
 // Routes pour les notifications

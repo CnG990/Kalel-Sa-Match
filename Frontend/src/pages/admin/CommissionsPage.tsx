@@ -66,7 +66,7 @@ const CommissionsPage: React.FC = () => {
         setGestionnaires(response.data.data || []);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des gestionnaires:', error);
+      // Erreur silencieuse, les gestionnaires sont optionnels
     }
   };
 
