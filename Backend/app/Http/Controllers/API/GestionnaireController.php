@@ -554,11 +554,53 @@ class GestionnaireController extends Controller
         try {
             $gestionnaire = auth()->user();
             
-            // Générer les revenus des 6 derniers mois avec vraies données
+            // Récupérer les terrains du gestionnaire
+            $terrainIds = \App\Models\TerrainSynthetiquesDakar::where('gestionnaire_id', $gestionnaire->id)
+                ->pluck('id')
+                ->toArray();
+            
+            if (empty($terrainIds)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'revenus_mois_actuel' => 0,
+                        'revenus_mensuels' => [],
+                        'commissions' => [
+                            'taux' => 0,
+                            'total_mois' => 0,
+                            'a_recevoir' => 0
+                        ],
+                        'paiements_en_attente' => 0,
+                        'derniers_paiements' => []
+                    ]
+                ]);
+            }
+            
+            // Récupérer le taux de commission réel du gestionnaire
+            $tauxCommission = $gestionnaire->taux_commission_defaut ?? 0;
+            
+            // Si pas de taux par défaut, chercher dans les contrats actifs
+            if ($tauxCommission == 0) {
+                $contratActif = \App\Models\ContratCommission::where('gestionnaire_id', $gestionnaire->id)
+                    ->where('type_contrat', 'global')
+                    ->where('statut', 'actif')
+                    ->where(function($q) {
+                        $q->whereNull('date_fin')
+                          ->orWhere('date_fin', '>', now());
+                    })
+                    ->first();
+                
+                if ($contratActif) {
+                    $tauxCommission = $contratActif->taux_commission;
+                }
+            }
+            
+            // Générer les revenus des 6 derniers mois avec vraies données (uniquement pour les terrains du gestionnaire)
             $revenusParMois = [];
             for ($i = 5; $i >= 0; $i--) {
                 $mois = now()->subMonths($i);
-                $revenus = \App\Models\Reservation::whereMonth('date_debut', $mois->month)
+                $revenus = \App\Models\Reservation::whereIn('terrain_synthetique_id', $terrainIds)
+                                                 ->whereMonth('date_debut', $mois->month)
                                                  ->whereYear('date_debut', $mois->year)
                                                  ->whereIn('statut', ['confirmee', 'terminee'])
                                                  ->sum('montant_total');
@@ -569,16 +611,21 @@ class GestionnaireController extends Controller
                 ];
             }
             
-            // Calculer les commissions (exemple 15%)
-            $revenusMoisActuel = \App\Models\Reservation::whereMonth('date_debut', now()->month)
+            // Calculer les revenus du mois actuel (uniquement pour les terrains du gestionnaire)
+            $revenusMoisActuel = \App\Models\Reservation::whereIn('terrain_synthetique_id', $terrainIds)
+                                                      ->whereMonth('date_debut', now()->month)
                                                       ->whereYear('date_debut', now()->year)
                                                       ->whereIn('statut', ['confirmee', 'terminee'])
                                                       ->sum('montant_total');
             
-            $commissionsGenerees = $revenusMoisActuel * 0.15; // 15% de commission
+            // Calculer les commissions avec le taux réel
+            $commissionsGenerees = $revenusMoisActuel * ($tauxCommission / 100);
             
-            // Derniers paiements - seulement les vrais de la base
-            $derniersPaiements = \App\Models\Paiement::with(['user', 'reservation.terrain'])
+            // Derniers paiements - seulement les vrais de la base (pour les terrains du gestionnaire)
+            $derniersPaiements = \App\Models\Paiement::with(['user', 'reservation.terrainSynthetique'])
+                                                   ->whereHas('reservation', function($query) use ($terrainIds) {
+                                                       $query->whereIn('terrain_synthetique_id', $terrainIds);
+                                                   })
                                                    ->where('statut', 'reussi')
                                                    ->orderBy('created_at', 'desc')
                                                    ->limit(5)
@@ -588,18 +635,21 @@ class GestionnaireController extends Controller
                                                            'date' => $paiement->created_at->format('Y-m-d'),
                                                            'montant' => $paiement->montant,
                                                            'client' => ($paiement->user->prenom ?? 'Client') . ' ' . ($paiement->user->nom ?? ''),
-                                                           'terrain' => $paiement->reservation->terrain->nom ?? 'N/A'
+                                                           'terrain' => $paiement->reservation->terrainSynthetique->nom ?? 'N/A'
                                                        ];
                                                    });
 
             $stats = [
+                'revenus_mois_actuel' => $revenusMoisActuel,
                 'revenus_mensuels' => $revenusParMois,
                 'commissions' => [
-                    'taux' => 15,
-                    'total_mois' => round($commissionsGenerees),
-                    'a_recevoir' => round($commissionsGenerees * 0.7) // 70% à recevoir
+                    'taux' => $tauxCommission,
+                    'total_mois' => round($commissionsGenerees, 2),
+                    'a_recevoir' => round($commissionsGenerees * 0.7, 2) // 70% à recevoir (si applicable)
                 ],
-                'paiements_en_attente' => \App\Models\Paiement::where('statut', 'en_attente')->count(),
+                'paiements_en_attente' => \App\Models\Paiement::whereHas('reservation', function($query) use ($terrainIds) {
+                    $query->whereIn('terrain_synthetique_id', $terrainIds);
+                })->where('statut', 'en_attente')->count(),
                 'derniers_paiements' => $derniersPaiements->toArray()
             ];
 
