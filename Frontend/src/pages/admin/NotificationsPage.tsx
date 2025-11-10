@@ -338,7 +338,7 @@ const NotificationsPage: React.FC = () => {
         totalTemplates
       });
     } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
+      // Erreur déjà gérée par toast dans le bloc try
       // Fallback avec données vides en cas d'erreur
       setNotifications([]);
       setTemplates([]);
@@ -436,7 +436,7 @@ const NotificationsPage: React.FC = () => {
       await apiService.post(`/admin/notifications/${id}/send`);
       fetchData(); // Recharger les données
     } catch (error) {
-      console.error('Erreur lors de l\'envoi:', error);
+      // Erreur déjà gérée par toast dans le bloc try
     }
   };
 

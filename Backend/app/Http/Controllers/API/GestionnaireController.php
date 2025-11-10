@@ -627,30 +627,55 @@ class GestionnaireController extends Controller
         try {
             $gestionnaire = auth()->user();
             
-            // Récupérer les vraies réservations avec relations
-            $reservations = \App\Models\Reservation::with(['user', 'terrain.terrainSynthetique'])
-                                                  ->orderBy('date_debut', 'desc')
-                                                  ->limit(20)
-                                                  ->get()
-                                                  ->map(function ($reservation) {
-                                                      return [
-                                                          'id' => $reservation->id,
-                                                          'date_debut' => $reservation->date_debut,
-                                                          'date_fin' => $reservation->date_fin,
-                                                          'statut' => $reservation->statut,
-                                                          'prix_total' => $reservation->montant_total,
-                                                          'client' => [
-                                                              'nom' => $reservation->user->nom ?? '',
-                                                              'prenom' => $reservation->user->prenom ?? 'Client',
-                                                              'telephone' => $reservation->user->telephone ?? ''
-                                                          ],
-                                                          'terrain' => [
-                                                              'nom' => $reservation->terrain->nom ?? 'Terrain',
-                                                              'adresse' => $reservation->terrain->adresse ?? 'Adresse non disponible'
-                                                          ],
-                                                          'code_ticket' => $reservation->code_ticket
-                                                      ];
-                                                  });
+            // Récupérer les terrains du gestionnaire
+            $terrainIds = \App\Models\TerrainSynthetiquesDakar::where('gestionnaire_id', $gestionnaire->id)
+                ->pluck('id')
+                ->toArray();
+            
+            if (empty($terrainIds)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => []
+                ]);
+            }
+            
+            // Récupérer les réservations des terrains du gestionnaire
+            $reservations = \App\Models\Reservation::with(['user', 'terrainSynthetique'])
+                ->whereIn('terrain_synthetique_id', $terrainIds)
+                ->orWhereHas('terrain', function($query) use ($gestionnaire) {
+                    $query->where('gestionnaire_id', $gestionnaire->id);
+                })
+                ->orderBy('date_debut', 'desc')
+                ->get()
+                ->map(function ($reservation) {
+                    $terrain = $reservation->terrainSynthetique ?? $reservation->terrain;
+                    $dureeHeures = $reservation->date_debut && $reservation->date_fin 
+                        ? \Carbon\Carbon::parse($reservation->date_debut)
+                            ->diffInHours(\Carbon\Carbon::parse($reservation->date_fin))
+                        : null;
+                    
+                    return [
+                        'id' => $reservation->id,
+                        'date_debut' => $reservation->date_debut,
+                        'date_fin' => $reservation->date_fin,
+                        'duree_heures' => $dureeHeures,
+                        'statut' => $reservation->statut,
+                        'prix_total' => $reservation->montant_total,
+                        'montant_total' => $reservation->montant_total,
+                        'client' => [
+                            'id' => $reservation->user->id ?? null,
+                            'nom' => $reservation->user->nom ?? '',
+                            'prenom' => $reservation->user->prenom ?? 'Client',
+                            'telephone' => $reservation->user->telephone ?? ''
+                        ],
+                        'terrain' => $terrain ? [
+                            'id' => $terrain->id,
+                            'nom' => $terrain->nom ?? 'Terrain',
+                            'adresse' => $terrain->adresse ?? 'Adresse non disponible'
+                        ] : null,
+                        'code_ticket' => $reservation->code_ticket
+                    ];
+                });
 
             return response()->json([
                 'success' => true,

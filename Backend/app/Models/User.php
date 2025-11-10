@@ -36,6 +36,9 @@ class User extends Authenticatable
         'email_verified_at',
         'slogan',
         'profile_image_url',
+        'pin',
+        'otp_code',
+        'otp_expires_at',
     ];
 
     /**
@@ -46,6 +49,8 @@ class User extends Authenticatable
     protected $hidden = [
         'mot_de_passe',
         'remember_token',
+        'pin',
+        'otp_code',
     ];
 
     /**
@@ -61,6 +66,7 @@ class User extends Authenticatable
             'mot_de_passe' => 'hashed',
             'documents_legaux' => 'array',
             'taux_commission_defaut' => 'decimal:2',
+            'otp_expires_at' => 'datetime',
         ];
     }
 

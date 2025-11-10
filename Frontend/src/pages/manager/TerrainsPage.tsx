@@ -180,7 +180,10 @@ const TerrainsPage: React.FC = () => {
               <p className="text-sm font-medium text-gray-500">Prix Moyen</p>
               <p className="text-2xl font-bold text-gray-900">
                 {terrains.length > 0 
-                  ? Math.round(terrains.reduce((sum, t) => sum + t.prix_heure, 0) / terrains.length).toLocaleString()
+                  ? Math.round(terrains.reduce((sum, t) => {
+                      const prix = typeof t.prix_heure === 'number' ? t.prix_heure : parseFloat(t.prix_heure) || 0;
+                      return sum + prix;
+                    }, 0) / terrains.length).toLocaleString()
                   : 0
                 } CFA
               </p>
@@ -197,7 +200,10 @@ const TerrainsPage: React.FC = () => {
               <p className="text-sm font-medium text-gray-500">Note Moyenne</p>
               <p className="text-2xl font-bold text-gray-900">
                 {terrains.length > 0 
-                  ? (terrains.reduce((sum, t) => sum + (t.note_moyenne || 0), 0) / terrains.length).toFixed(1)
+                  ? (terrains.reduce((sum, t) => {
+                      const note = typeof t.note_moyenne === 'number' ? t.note_moyenne : 0;
+                      return sum + note;
+                    }, 0) / terrains.length).toFixed(1)
                   : '0.0'
                 }/5
               </p>
@@ -283,7 +289,7 @@ const TerrainsPage: React.FC = () => {
                             ) : (
                               <div className="flex items-center space-x-1">
                                 <span className={`font-medium text-green-600 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                                  {terrain.prix_heure.toLocaleString()} CFA/h
+                                  {typeof terrain.prix_heure === 'number' ? terrain.prix_heure.toLocaleString() : terrain.prix_heure} CFA/h
                                 </span>
                                 <button
                                   onClick={() => handlePriceEdit(terrain)}
@@ -298,7 +304,9 @@ const TerrainsPage: React.FC = () => {
                           <div className="flex items-center space-x-2">
                             <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                             <span className={`text-gray-600 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                              {terrain.note_moyenne ? terrain.note_moyenne.toFixed(1) : 'N/A'} 
+                              {terrain.note_moyenne && typeof terrain.note_moyenne === 'number' 
+                                ? terrain.note_moyenne.toFixed(1) 
+                                : 'N/A'} 
                               ({terrain.nombre_avis || 0})
                             </span>
                           </div>

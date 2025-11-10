@@ -150,13 +150,14 @@ const RegisterManagerPage: React.FC = () => {
                     />
                     <label htmlFor="accept_terms" className="text-sm text-gray-700">
                       J'accepte les{' '}
-                      <Link to="/terms" target="_blank" className="text-green-600 hover:text-green-500 underline">
+                      <Link to="/terms" target="_blank" className="text-green-600 hover:text-green-500 underline font-semibold">
                         conditions d'utilisation
                       </Link>
                       {' '}et la{' '}
-                      <Link to="/privacy" target="_blank" className="text-green-600 hover:text-green-500 underline">
+                      <Link to="/privacy" target="_blank" className="text-green-600 hover:text-green-500 underline font-semibold">
                         politique de confidentialité
                       </Link>
+                      {' '}et je comprends toutes les règles de réservation, d'annulation et de pénalités.
                     </label>
                   </div>
                   

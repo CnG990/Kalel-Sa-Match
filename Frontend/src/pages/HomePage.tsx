@@ -244,7 +244,7 @@ const HomePage: React.FC = () => {
               <span className="text-lg font-bold">Terrains Synthétiques Dakar</span>
             </div>
             <p className="text-gray-400 mb-4">
-              Plateforme de réservation de terrains de football synthétiques à Dakar
+              Application de réservation de terrains de football synthétiques à Dakar
             </p>
             <div className="text-sm text-gray-500">
               © 2025 Terrains Synthétiques. Projet développé avec Laravel + React + Mapbox + PostGIS

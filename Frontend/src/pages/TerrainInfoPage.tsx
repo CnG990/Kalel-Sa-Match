@@ -89,10 +89,11 @@ const TerrainInfoPage: React.FC = () => {
         const currentHour = now.getHours();
         const currentDate = now.toISOString().split('T')[0];
         
-        // Toutes les heures possibles
+        // Toutes les heures possibles - 24h/24
         const toutesHeures = [
-          '08', '09', '10', '11', '12', '13', '14', '15', '16', '17',
-          '18', '19', '20', '21', '22', '23', '00', '01', '02', '03'
+          '00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 
+          '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 
+          '20', '21', '22', '23'
         ];
         
         // Filtrer les heures selon la date et l'heure actuelle
@@ -102,11 +103,11 @@ const TerrainInfoPage: React.FC = () => {
         if (selectedDate === currentDate) {
           heuresDisponibles = toutesHeures.filter(heure => {
             const heureInt = parseInt(heure);
-            // Pour les heures 00, 01, 02, 03 (minuit à 3h du matin)
-            if (heureInt <= 3) {
-              return heureInt > currentHour; // Ne montrer que les heures futures
+            // Pour les heures 00-05 (minuit à 5h du matin), considérer comme le lendemain
+            if (heureInt <= 5) {
+              return true; // Toujours disponible (c'est pour le lendemain)
             }
-            // Pour les heures normales (8h à 23h)
+            // Pour les heures normales (6h à 23h)
             return heureInt > currentHour;
           });
         }

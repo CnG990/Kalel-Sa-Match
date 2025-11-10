@@ -303,7 +303,7 @@ const Layout: React.FC = () => {
                 </div>
               </div>
               <p className="text-gray-400 dark:text-gray-500 text-sm leading-relaxed mb-6">
-                La plateforme n°1 pour la réservation de terrains synthétiques à Dakar. 
+                L'application n°1 pour la réservation de terrains synthétiques à Dakar. 
                 Réservez facilement vos créneaux et profitez du meilleur du football.
               </p>
               <div className="flex space-x-4">

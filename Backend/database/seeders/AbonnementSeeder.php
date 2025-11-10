@@ -17,7 +17,7 @@ class AbonnementSeeder extends Seeder
             [
                 'id' => 1,
                 'nom' => 'Abonnement Mensuel',
-                'prix' => 25000,
+                'prix' => 0, // Prix calculé dynamiquement selon la configuration
                 'duree_jours' => 30,
                 'description' => 'Accès illimité pendant 1 mois',
                 'avantages' => '["Réservations illimitées", "Support prioritaire"]',
@@ -31,7 +31,7 @@ class AbonnementSeeder extends Seeder
             [
                 'id' => 2,
                 'nom' => 'Abonnement Trimestriel',
-                'prix' => 60000,
+                'prix' => 0, // Prix calculé dynamiquement selon la configuration
                 'duree_jours' => 90,
                 'description' => 'Accès illimité pendant 3 mois',
                 'avantages' => '["Réservations illimitées", "Support prioritaire", "Réduction 10%"]',
@@ -45,7 +45,7 @@ class AbonnementSeeder extends Seeder
             [
                 'id' => 3,
                 'nom' => 'Abonnement Annuel',
-                'prix' => 200000,
+                'prix' => 0, // Prix calculé dynamiquement selon la configuration
                 'duree_jours' => 365,
                 'description' => 'Accès illimité pendant 1 an',
                 'avantages' => '["Réservations illimitées", "Support prioritaire", "Réduction 20%", "Accès VIP"]',

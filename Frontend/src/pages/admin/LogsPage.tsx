@@ -56,7 +56,7 @@ const LogsPage: React.FC = () => {
       
       setStats({ total, info, warning, error, critical, today });
     } catch (error) {
-      console.error('Erreur lors du chargement des logs:', error);
+      // Erreur silencieuse, les logs sont optionnels
     } finally {
       setLoading(false);
     }
@@ -147,7 +147,7 @@ const LogsPage: React.FC = () => {
         await apiService.delete('/admin/logs');
         fetchLogs();
       } catch (error) {
-        console.error('Erreur lors de la suppression des logs:', error);
+        // Erreur déjà gérée par toast dans le bloc try
       }
     }
   };

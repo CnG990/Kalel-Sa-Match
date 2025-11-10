@@ -360,7 +360,7 @@ Merci !`;
                   <CheckCircle className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
                     <span className="font-semibold text-gray-800">Présentation complète</span>
-                    <p className="text-gray-600">Découvrez toutes les fonctionnalités de notre plateforme</p>
+                    <p className="text-gray-600">Découvrez toutes les fonctionnalités de notre application</p>
                   </div>
                 </li>
                 <li className="flex items-start space-x-3">

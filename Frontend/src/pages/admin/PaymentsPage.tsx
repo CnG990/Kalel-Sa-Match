@@ -63,7 +63,7 @@ const PaymentsPage: React.FC = () => {
       
       setStats({ total, completed, pending, failed, totalAmount, commissionTotal });
     } catch (error) {
-      console.error('Erreur lors du chargement des paiements:', error);
+      // Erreur déjà gérée par toast dans le bloc try
       // Fallback avec données vides en cas d'erreur
       setPayments([]);
       setStats({

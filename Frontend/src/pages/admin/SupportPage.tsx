@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import apiService from '../../services/api';
+import DisputesPage from './DisputesPage';
+import { LifeBuoy, ShieldAlert } from 'lucide-react';
 
 const SupportPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'tickets' | 'disputes'>('tickets');
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -32,7 +35,6 @@ const SupportPage: React.FC = () => {
       }
     } catch (err) {
       setError('Erreur lors du chargement des tickets');
-      console.error('Erreur tickets:', err);
     } finally {
       setLoading(false);
     }
@@ -80,10 +82,16 @@ const SupportPage: React.FC = () => {
     );
   }
 
+  // Onglets
+  const tabs = [
+    { id: 'tickets', name: 'Tickets de Support', icon: LifeBuoy },
+    { id: 'disputes', name: 'Litiges', icon: ShieldAlert },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Tickets de Support</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Support</h1>
         <div className="text-sm text-gray-500">
           {tickets.length} ticket(s) trouvé(s)
         </div>

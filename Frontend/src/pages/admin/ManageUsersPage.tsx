@@ -225,11 +225,9 @@ const ManageUsersPage: React.FC = () => {
         setNewPassword('');
         setSelectedUser(null);
       } else {
-        console.error('Erreur API:', response.message);
         toast.error(response.message || 'Erreur lors de la réinitialisation');
       }
     } catch (error) {
-      console.error('Erreur lors de la réinitialisation:', error);
       toast.error('Erreur lors de la réinitialisation du mot de passe');
     }
   };

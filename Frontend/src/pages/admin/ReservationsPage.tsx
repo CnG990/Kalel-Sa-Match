@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/api';
 import toast from 'react-hot-toast';
-import { Search, Filter, Calendar, Clock, Eye, Trash2, CheckCircle, XCircle, Loader2, AlertTriangle, MessageSquare, Ticket, QrCode, Check, Plus } from 'lucide-react';
+import { Search, Filter, Calendar, Clock, Eye, Trash2, CheckCircle, XCircle, Loader2, AlertTriangle, MessageSquare, Ticket, QrCode, Check, Plus, TrendingUp } from 'lucide-react';
+import SubscriptionsPage from './SubscriptionsPage';
 
 interface Reservation {
   id: number;
@@ -52,6 +53,7 @@ interface ReservationStats {
 }
 
 const ReservationsPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'reservations' | 'subscriptions'>('reservations');
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [stats, setStats] = useState<ReservationStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,7 +91,9 @@ const ReservationsPage: React.FC = () => {
         toast.error("Impossible de charger les réservations.");
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      // Erreur déjà gérée par toast.error dans le bloc try
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,7 +109,7 @@ const ReservationsPage: React.FC = () => {
         toast.error(response.message || 'Erreur lors de la suppression');
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      // Erreur déjà gérée par toast.error dans le bloc try
     }
   };
 
@@ -137,7 +141,7 @@ const ReservationsPage: React.FC = () => {
         toast.error(response.message || 'Erreur lors de la génération du ticket');
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      // Erreur déjà gérée par toast.error dans le bloc try
     }
   };
 

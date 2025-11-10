@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,7 @@ class TerrainController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $perPage = min($request->get('per_page', 12), 50);
+            $perPage = min($request->get('per_page', 12), 200); // Augmenter la limite pour charger tous les terrains
             $query = TerrainSynthetiquesDakar::query();
 
             // Recherche par nom ou adresse
@@ -58,6 +59,34 @@ class TerrainController extends Controller
 
             // Format data with fresh prices
             $formattedData = $terrains->getCollection()->map(function($terrain) {
+                // Vérifier si geom_polygon existe et le convertir en GeoJSON
+                $geometrie = null;
+                $surface = $terrain->surface ? (float) $terrain->surface : 0.0;
+                
+                if (Schema::hasColumn('terrains_synthetiques_dakar', 'geom_polygon')) {
+                    try {
+                        $geomData = DB::selectOne("
+                            SELECT 
+                                ST_AsGeoJSON(geom_polygon) as geojson,
+                                ROUND(ST_Area(ST_Transform(geom_polygon, 32628))::numeric, 2) as surface_m2
+                            FROM terrains_synthetiques_dakar
+                            WHERE id = ? AND geom_polygon IS NOT NULL
+                        ", [$terrain->id]);
+                        
+                        if ($geomData) {
+                            if ($geomData->geojson) {
+                                $geometrie = json_decode($geomData->geojson, true);
+                            }
+                            // Utiliser la surface calculée depuis geom_polygon si disponible
+                            if ($geomData->surface_m2 && $geomData->surface_m2 > 0) {
+                                $surface = (float) $geomData->surface_m2;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Ignorer les erreurs de géométrie
+                    }
+                }
+                
                 return [
                     'id' => $terrain->id,
                     'nom' => $terrain->nom,
@@ -68,11 +97,14 @@ class TerrainController extends Controller
                     'longitude' => (float) $terrain->longitude,
                     'prix_heure' => (float) $terrain->prix_heure, // FRESH PRICE FROM DB
                     'capacite' => (int) $terrain->capacite,
-                    'surface' => (float) $terrain->surface,
+                    'surface' => $surface, // Surface calculée depuis geom_polygon si disponible
                     'est_actif' => (bool) $terrain->est_actif,
                     'image_principale' => $terrain->image_principale ?: '/terrain-foot.jpg',
                     'horaires_ouverture' => $terrain->horaires_ouverture,
                     'horaires_fermeture' => $terrain->horaires_fermeture,
+                    'geometrie' => $geometrie, // Polygone en GeoJSON
+                    'geometrie_geojson' => $geometrie, // Alias pour compatibilité
+                    'has_geometry' => $geometrie !== null,
                     'created_at' => $terrain->created_at,
                     'updated_at' => $terrain->updated_at,
                     // Add timestamp to ensure fresh data
@@ -465,11 +497,11 @@ class TerrainController extends Controller
             $date = $request->date;
             $dureeHeures = $request->get('duree_heures', 1);
 
-            // Obtenir les créneaux disponibles de 8h à 3h du matin
+            // Obtenir les créneaux disponibles 24h/24
             $creneauxDisponibles = $this->getCreneauxDisponibles($terrain, $date, $dureeHeures);
             
             // Statistiques pour info
-            $totalCreneaux = 19; // 8h à 3h = 19 créneaux de 1h
+            $totalCreneaux = 24; // 24h/24 = 24 créneaux de 1h
             $creneauxOccupes = $totalCreneaux - count($creneauxDisponibles);
 
             \Log::info("API checkAvailability - Terrain {$terrain->nom} le {$date}:", [
@@ -494,7 +526,7 @@ class TerrainController extends Controller
                     ],
                     'date' => $date,
                     'creneaux_disponibles' => $creneauxDisponibles,
-                    'horaires_ouverture' => '08:00-03:00 (le lendemain)',
+                    'horaires_ouverture' => '24h/24 - Toutes heures disponibles',
                     'statistiques' => [
                         'creneaux_libres' => count($creneauxDisponibles),
                         'creneaux_occupes' => $creneauxOccupes,
@@ -571,23 +603,24 @@ class TerrainController extends Controller
     {
         $creneauxDisponibles = [];
         
-        // Créneaux fixes de 8h à 3h du matin (20 créneaux de 1h chacun)
+        // Créneaux disponibles 24h/24 (24 créneaux de 1h chacun)
         $heuresOuverture = [
-            '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', 
-            '18', '19', '20', '21', '22', '23', '00', '01', '02'
+            '00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 
+            '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 
+            '20', '21', '22', '23'
         ];
         
         foreach ($heuresOuverture as $heure) {
             // Déterminer la date correcte pour ce créneau
             $creneauDate = \Carbon\Carbon::parse($date);
             
-            // Pour les heures après minuit (00, 01, 02), on passe au jour suivant
-            if (in_array($heure, ['00', '01', '02'])) {
+            // Pour les heures après minuit (00-05), on passe au jour suivant
+            if (in_array($heure, ['00', '01', '02', '03', '04', '05'])) {
                 $creneauDate->addDay();
             }
             
             $debut = $creneauDate->copy()->setHour(intval($heure))->setMinute(0)->setSecond(0);
-            $fin = $debut->copy()->addHours($dureeHeures);
+            $fin = $debut->copy()->addHours((int)$dureeHeures);
             
             // Vérifier s'il y a des réservations conflictuelles directement sur terrains_synthetiques_dakar
             $hasConflict = DB::table('reservations')

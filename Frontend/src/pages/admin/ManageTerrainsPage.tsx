@@ -107,7 +107,9 @@ const ManageTerrainsPage: React.FC = () => {
     setLoading(true);
     try {
       const query = searchQuery !== undefined ? searchQuery : searchTerm;
-      const response = await apiService.getAllTerrains(query);
+      const response = await apiService.getAllTerrains(
+        query ? { search: query } : undefined
+      );
       if (response.success) {
         // Gestion flexible de la structure des données
         const terrainsData = response.data?.data || response.data || [];
@@ -284,7 +286,6 @@ const ManageTerrainsPage: React.FC = () => {
         toast.error(response.message || 'Erreur lors du calcul des surfaces PostGIS', { id: 'calc-surfaces' });
       }
     } catch (error) {
-      console.error('Erreur calcul surfaces PostGIS:', error);
       toast.error('Erreur réseau lors du calcul des surfaces', { id: 'calc-surfaces' });
     } finally {
       setCalculatingSurfaces(false);

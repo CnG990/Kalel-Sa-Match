@@ -207,7 +207,7 @@ const TerrainLayout: React.FC = () => {
                 </div>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                La plateforme n°1 pour la réservation de terrains synthétiques à Dakar. 
+                L'application n°1 pour la réservation de terrains synthétiques à Dakar. 
                 Réservez facilement vos créneaux préférés.
               </p>
               <div className="flex space-x-3">

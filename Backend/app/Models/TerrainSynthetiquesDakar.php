@@ -98,6 +98,11 @@ class TerrainSynthetiquesDakar extends Model
         return $this->hasMany(PrixTerrain::class, 'terrain_id');
     }
 
+    public function avis(): HasMany
+    {
+        return $this->hasMany(AvisTerrain::class, 'terrain_id');
+    }
+
     // Méthode pour obtenir le prix selon les critères
     public function getPrixVariable($taille = null, $periode = null, $jour = null, $heure = null)
     {
@@ -150,8 +155,21 @@ class TerrainSynthetiquesDakar extends Model
 
     public function getAverageRating()
     {
-        // Retourner une note par défaut pour l'instant
-        return 4.5;
+        $avisApprouves = $this->avis()->approuves()->get();
+        
+        if ($avisApprouves->isEmpty()) {
+            return 0.0;
+        }
+
+        $moyenne = $avisApprouves->avg('note');
+        
+        // Mettre à jour les champs note_moyenne et nombre_avis
+        $this->update([
+            'note_moyenne' => round($moyenne, 2),
+            'nombre_avis' => $avisApprouves->count()
+        ]);
+
+        return round($moyenne, 2);
     }
 
     public function isAvailableAt($dateTime)

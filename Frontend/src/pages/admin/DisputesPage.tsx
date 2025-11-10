@@ -32,7 +32,6 @@ const DisputesPage: React.FC = () => {
       }
     } catch (err) {
       setError('Erreur lors du chargement des litiges');
-      console.error('Erreur litiges:', err);
     } finally {
       setLoading(false);
     }
