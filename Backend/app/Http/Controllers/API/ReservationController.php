@@ -84,6 +84,20 @@ class ReservationController extends Controller
         $formattedReservations = $reservations->map(function ($reservation) {
             $terrain = $reservation->terrainSynthetique ?? $reservation->terrain;
             
+            // Récupérer l'adresse du terrain, en vérifiant plusieurs sources
+            $adresse = null;
+            if ($terrain) {
+                $adresse = $terrain->adresse ?? 
+                          $terrain->adresse_complete ?? 
+                          $terrain->localisation ?? 
+                          null;
+                
+                // Si l'adresse est vide ou null, essayer de construire une adresse à partir d'autres champs
+                if (empty($adresse) || $adresse === 'null' || $adresse === 'Adresse non disponible') {
+                    $adresse = null;
+                }
+            }
+            
             return [
                 'id' => $reservation->id,
                 'terrain_id' => $reservation->terrain_id,
@@ -97,7 +111,7 @@ class ReservationController extends Controller
                 'terrain' => $terrain ? [
                     'id' => $terrain->id,
                     'nom' => $terrain->nom ?? 'Terrain',
-                    'adresse' => $terrain->adresse ?? null,
+                    'adresse' => $adresse,
                     'latitude' => $terrain->latitude ?? null,
                     'longitude' => $terrain->longitude ?? null,
                 ] : null,
