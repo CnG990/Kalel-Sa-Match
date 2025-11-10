@@ -59,9 +59,16 @@ class _RevenueScreenState extends State<RevenueScreen> {
     if (value == null) return 0;
     if (value is num) return value;
     if (value is String) {
-      return double.tryParse(value) ?? 0;
+      // Nettoyer la chaîne (enlever les espaces, caractères spéciaux)
+      final cleaned = value.trim().replaceAll(RegExp(r'[^\d.]'), '');
+      return double.tryParse(cleaned) ?? 0;
     }
-    return 0;
+    // Si c'est un autre type, essayer de le convertir en String puis en num
+    try {
+      return double.tryParse(value.toString()) ?? 0;
+    } catch (e) {
+      return 0;
+    }
   }
 
   String _formatCurrency(dynamic amount) {
@@ -251,9 +258,23 @@ class _RevenueScreenState extends State<RevenueScreen> {
       return const SizedBox.shrink();
     }
 
-    final maxRevenue = revenusMensuels
-        .map((e) => _toNum(e['revenus']).toDouble())
-        .reduce((a, b) => a > b ? a : b);
+    // Convertir tous les revenus en nombres et filtrer les valeurs invalides
+    final revenusList = revenusMensuels
+        .map((e) {
+          try {
+            return _toNum(e['revenus'] ?? e['revenu'] ?? 0).toDouble();
+          } catch (e) {
+            return 0.0;
+          }
+        })
+        .where((value) => value > 0)
+        .toList();
+
+    if (revenusList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final maxRevenue = revenusList.reduce((a, b) => a > b ? a : b);
 
     return Card(
       elevation: 4,
@@ -275,7 +296,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: revenusMensuels.map((item) {
                 final mois = item['mois'] as String? ?? '';
-                final revenus = _toNum(item['revenus']).toDouble();
+                final revenus = _toNum(item['revenus'] ?? item['revenu'] ?? 0).toDouble();
                 final height = maxRevenue > 0 ? (revenus / maxRevenue * 100) : 0.0;
 
                 return Expanded(
