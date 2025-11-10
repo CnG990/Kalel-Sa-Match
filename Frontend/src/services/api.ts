@@ -406,6 +406,18 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  async updateManagerCommission(managerId: number, tauxCommission: number, commentaire?: string) {
+    const response = await fetch(`${this.apiURL}/admin/managers/${managerId}/commission`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ 
+        taux_commission: tauxCommission,
+        commentaire: commentaire 
+      }),
+    });
+    return this.handleResponse(response);
+  }
+
   // Méthodes génériques pour les pages admin
   async get(endpoint: string): Promise<ApiResponse> {
     const response = await fetch(`${this.apiURL}${endpoint}`, {
