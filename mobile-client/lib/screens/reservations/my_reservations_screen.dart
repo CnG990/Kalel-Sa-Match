@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../providers/reservation_provider.dart';
 import '../../services/api_service.dart';
@@ -247,34 +245,33 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     try {
       final response = await _apiService.cancelReservation(reservation['id']);
       
-      if (mounted) {
-        if (response['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Réservation annulée avec succès'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.of(context).pop(); // Fermer le modal
-          Provider.of<ReservationProvider>(context, listen: false).fetchMyReservations();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response['message'] ?? 'Erreur lors de l\'annulation'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+      if (!mounted) return;
+      
+      if (response['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Réservation annulée avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop(); // Fermer le modal
+        Provider.of<ReservationProvider>(context, listen: false).fetchMyReservations();
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: ${e.toString()}'),
+            content: Text(response['message'] ?? 'Erreur lors de l\'annulation'),
             backgroundColor: Colors.red,
           ),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -287,9 +284,8 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         final ticketData = ticketResponse['data'];
         final qrCodeToken = ticketData['qr_code_token'] ?? reservation['code_ticket'];
         
-        if (mounted) {
-          _showQrCodeDialog(context, reservation, qrCodeToken, ticketData);
-        }
+        if (!mounted) return;
+        _showQrCodeDialog(context, reservation, qrCodeToken, ticketData);
       } else {
         // Si pas de ticket, essayer d'obtenir le QR code directement
         final qrResponse = await _apiService.getReservationQrCode(reservation['id']);
@@ -298,23 +294,20 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           final qrData = qrResponse['data'];
           final qrCodeToken = qrData['qr_code_token'] ?? reservation['code_ticket'];
           
-          if (mounted) {
-            _showQrCodeDialog(context, reservation, qrCodeToken, qrData);
-          }
+          if (!mounted) return;
+          _showQrCodeDialog(context, reservation, qrCodeToken, qrData);
         } else {
           // Générer un QR code localement avec le code ticket
           final codeTicket = reservation['code_ticket'] ?? 'RES-${reservation['id']}';
-          if (mounted) {
-            _showQrCodeDialog(context, reservation, codeTicket, null);
-          }
+          if (!mounted) return;
+          _showQrCodeDialog(context, reservation, codeTicket, null);
         }
       }
     } catch (e) {
       // En cas d'erreur, générer un QR code localement avec le code ticket
       final codeTicket = reservation['code_ticket'] ?? 'RES-${reservation['id']}';
-      if (mounted) {
-        _showQrCodeDialog(context, reservation, codeTicket, null);
-      }
+      if (!mounted) return;
+      _showQrCodeDialog(context, reservation, codeTicket, null);
     }
   }
 
@@ -405,14 +398,13 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       
       await Share.share(message);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors du partage: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors du partage: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -428,14 +420,13 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         final encodedAddress = Uri.encodeComponent(address);
         url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encodedAddress');
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Adresse non disponible pour cet itinéraire'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Adresse non disponible pour cet itinéraire'),
+            backgroundColor: Colors.orange,
+          ),
+        );
         return;
       }
 
@@ -449,28 +440,26 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         try {
           await launchUrl(url, mode: LaunchMode.externalApplication);
         } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Impossible d\'ouvrir Google Maps. Veuillez installer Google Maps ou utiliser un navigateur.'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Impossible d\'ouvrir Google Maps. Veuillez installer Google Maps ou utiliser un navigateur.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
         }
       }
     } catch (e) {
       // Gérer les erreurs silencieusement ou afficher un message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de l\'ouverture de Google Maps: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de l\'ouverture de Google Maps: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -565,7 +554,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: _getStatusColor(statut).withOpacity(0.1),
+                                color: _getStatusColor(statut).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -645,7 +634,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
+                              color: Colors.blue.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
