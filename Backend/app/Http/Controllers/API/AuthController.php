@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -160,6 +161,21 @@ class AuthController extends Controller
         }
 
         $user = User::create($userData);
+
+        // Envoyer un SMS de bienvenue
+        try {
+            $smsService = app(SmsService::class);
+            $smsService->sendWelcomeMessage(
+                $user->telephone,
+                $user->prenom . ' ' . $user->nom
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Erreur envoi SMS de bienvenue', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            // Ne pas bloquer l'inscription si l'SMS échoue
+        }
 
         $token = $user->createToken('mobile_app')->plainTextToken;
 
@@ -647,22 +663,45 @@ class AuthController extends Controller
             }
         }
 
-        // En production, envoyer le SMS ici
-        // Pour le développement, on retourne le code dans la réponse
-        \Log::info('Code OTP généré', [
+        // Envoyer le SMS via SmsService
+        $smsService = app(SmsService::class);
+        $smsResult = $smsService->sendOTP($telephone, $otpCode);
+
+        // Log pour développement
+        \Log::info('Code OTP généré et envoyé', [
             'telephone' => $telephone,
             'for_update' => $forUpdate,
-            'otp_code' => $otpCode, // À retirer en production
+            'sms_success' => $smsResult['success'] ?? false,
+            'sms_message' => $smsResult['message'] ?? 'N/A',
         ]);
 
-        return response()->json([
+        // Si l'envoi SMS a échoué mais qu'on est en mode développement (log), on continue
+        $isDevMode = config('services.sms.provider') === 'log';
+        
+        if (!$smsResult['success'] && !$isDevMode) {
+            \Log::error('Échec envoi SMS OTP', [
+                'telephone' => $telephone,
+                'error' => $smsResult['message'] ?? 'Erreur inconnue'
+            ]);
+            
+            // En production, on peut choisir de retourner une erreur ou continuer
+            // Ici, on continue mais on log l'erreur
+        }
+
+        $response = [
             'success' => true,
             'message' => 'Code OTP envoyé avec succès',
             'data' => [
-                'otp_code' => $otpCode, // À retirer en production
                 'expires_in' => 10, // minutes
             ]
-        ]);
+        ];
+
+        // En mode développement, retourner le code OTP pour faciliter les tests
+        if ($isDevMode || config('app.debug')) {
+            $response['data']['otp_code'] = $otpCode; // À retirer en production
+        }
+
+        return response()->json($response);
     }
 
     /**
@@ -892,6 +931,20 @@ class AuthController extends Controller
             'otp_expires_at' => null,
             'email_verified_at' => now(),
         ]);
+
+        // Envoyer un SMS de bienvenue
+        try {
+            $smsService = app(SmsService::class);
+            $smsService->sendWelcomeMessage(
+                $user->telephone,
+                $user->prenom . ' ' . $user->nom
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Erreur envoi SMS de bienvenue', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         // Créer un token d'authentification
         $token = $user->createToken('mobile_app')->plainTextToken;

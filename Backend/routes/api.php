@@ -66,20 +66,22 @@ Route::post('/cors-test', function () {
     ]);
 });
 
-// Routes d'authentification (publiques)
-Route::prefix('auth')->group(function () {
+// Routes d'authentification (publiques) avec rate limiting
+Route::prefix('auth')->middleware(['throttle:60,1'])->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     
-    // Routes pour authentification par téléphone (OTP + PIN)
+    // Routes pour authentification par téléphone (OTP + PIN) - Rate limiting plus strict
+    Route::middleware(['throttle:10,1'])->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendOTP']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOTP']);
     Route::post('/set-pin', [AuthController::class, 'setPIN']);
     Route::post('/register-phone', [AuthController::class, 'registerWithPhone']);
     Route::post('/login-phone', [AuthController::class, 'loginWithPhone']);
     Route::post('/login-pin', [AuthController::class, 'loginWithPIN']);
+    });
     
     // Routes protégées par authentification
     Route::middleware('auth:sanctum')->group(function () {
@@ -91,8 +93,8 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// Routes publiques des terrains
-Route::prefix('terrains')->group(function () {
+// Routes publiques des terrains avec rate limiting
+Route::prefix('terrains')->middleware(['throttle:120,1'])->group(function () {
     Route::get('/', [TerrainController::class, 'index']); // Seulement terrains actifs
     Route::get('/all-for-map', [TerrainController::class, 'allForMap']); // TOUS les terrains pour la carte
     Route::get('/nearby', [TerrainController::class, 'nearby']);

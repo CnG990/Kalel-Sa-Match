@@ -19,7 +19,12 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'], // Ouvre à toutes les origines pour les tests
+    'allowed_origins' => [
+        env('FRONTEND_URL', 'http://localhost:5173'),
+        'http://127.0.0.1:5173', // Pour le développement local
+        'http://localhost:5173', // Pour le développement local
+        env('FRONTEND_URL_PROD', 'https://votre-domaine.com'),
+    ],
 
     'allowed_origins_patterns' => [],
 

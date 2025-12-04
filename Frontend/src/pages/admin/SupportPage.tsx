@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import apiService from '../../services/api';
-import DisputesPage from './DisputesPage';
-import { LifeBuoy, ShieldAlert } from 'lucide-react';
 
 const SupportPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'tickets' | 'disputes'>('tickets');
+  // const [activeTab, setActiveTab] = useState<'tickets' | 'disputes'>('tickets');
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -83,10 +81,11 @@ const SupportPage: React.FC = () => {
   }
 
   // Onglets
-  const tabs = [
-    { id: 'tickets', name: 'Tickets de Support', icon: LifeBuoy },
-    { id: 'disputes', name: 'Litiges', icon: ShieldAlert },
-  ];
+  // Onglets (non utilisés pour l'instant)
+  // const tabs = [
+  //   { id: 'tickets', name: 'Tickets de Support', icon: LifeBuoy },
+  //   { id: 'disputes', name: 'Litiges', icon: ShieldAlert },
+  // ];
 
   return (
     <div className="space-y-6">
