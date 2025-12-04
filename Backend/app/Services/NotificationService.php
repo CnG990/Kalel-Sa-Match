@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Notification;
+use App\Services\SmsService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Http;
@@ -95,16 +96,34 @@ class NotificationService
     {
         $user = $notification->notifiable;
         
-        // Intégration avec service SMS (Orange SMS API, Twilio, etc.)
-        Http::post('https://api.orange.com/smsmessaging/v1/outbound', [
-            'outboundSMSMessageRequest' => [
-                'address' => ['tel:' . $user->telephone],
-                'senderAddress' => 'tel:+221123456789',
-                'outboundSMSTextMessage' => [
-                    'message' => $this->getSMSText($notification)
-                ]
-            ]
-        ]);
+        if (!$user->telephone) {
+            Log::warning('Impossible d\'envoyer SMS: téléphone manquant', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id
+            ]);
+            return;
+        }
+
+        try {
+            $smsService = app(SmsService::class);
+            $message = $this->getSMSText($notification);
+            
+            $result = $smsService->send($user->telephone, $message);
+            
+            if (!$result['success']) {
+                Log::error('Échec envoi SMS notification', [
+                    'user_id' => $user->id,
+                    'notification_id' => $notification->id,
+                    'error' => $result['message'] ?? 'Erreur inconnue'
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception lors de l\'envoi SMS notification', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**

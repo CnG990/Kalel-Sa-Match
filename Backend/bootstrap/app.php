@@ -23,25 +23,18 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
         
-        // Activer CORS pour toutes les requêtes
+        // Activer CORS pour toutes les requêtes (utiliser le middleware Laravel natif uniquement)
         $middleware->web(append: [
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
         
         $middleware->api(append: [
             \Illuminate\Http\Middleware\HandleCors::class,
+            \App\Http\Middleware\SecurityHeadersMiddleware::class,
         ]);
         
-        // Middleware CORS global pour toutes les requêtes
-        $middleware->web(prepend: [
-            \App\Http\Middleware\PreflightMiddleware::class,
-            \App\Http\Middleware\CorsMiddleware::class,
-        ]);
-        
-        $middleware->api(prepend: [
-            \App\Http\Middleware\PreflightMiddleware::class,
-            \App\Http\Middleware\CorsMiddleware::class,
-        ]);
+        // Note: Les middlewares CorsMiddleware et PreflightMiddleware ont été retirés
+        // car ils entraient en conflit avec le middleware Laravel natif HandleCors
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -177,7 +177,7 @@ const AbonnementsPage: React.FC = () => {
       
       // Mettre à jour les préférences basées sur l'historique
       if (historique.statistiques.jours_preferes.length > 0) {
-        setJoursPreferes(historique.statistiques.jours_preferes);
+        setJoursPreferes(historique.statistiques.jours_preferes.map(j => typeof j === 'string' ? parseInt(j) : j));
       }
       if (historique.statistiques.creneaux_preferes.length > 0) {
         setCreneauxPreferes(historique.statistiques.creneaux_preferes);

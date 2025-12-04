@@ -7,18 +7,11 @@ import {
   ShieldCheck, 
   LandPlot, 
   Banknote, 
-  ShieldAlert, 
   LifeBuoy, 
   LogOut, 
-  Percent,
   Settings,
   BarChart3,
-  FileText,
-  Bell,
-  Calendar,
-  CreditCard,
-  TrendingUp,
-  Database
+  Calendar
 } from 'lucide-react';
 
 const AdminLayout: React.FC = () => {

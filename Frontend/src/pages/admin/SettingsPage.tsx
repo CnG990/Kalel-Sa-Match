@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/api';
 import toast from 'react-hot-toast';
-import { Save, RefreshCw, Bell, CreditCard, Globe, Loader2, FileText } from 'lucide-react';
-import NotificationsPage from './NotificationsPage';
-import LogsPage from './LogsPage';
+import { Save, RefreshCw, Bell, CreditCard, Globe, Loader2 } from 'lucide-react';
 
 interface SystemSettings {
   general: {

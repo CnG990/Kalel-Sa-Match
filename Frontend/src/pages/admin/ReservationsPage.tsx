@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/api';
 import toast from 'react-hot-toast';
-import { Search, Filter, Calendar, Clock, Eye, Trash2, CheckCircle, XCircle, Loader2, AlertTriangle, MessageSquare, Ticket, QrCode, Check, Plus, TrendingUp } from 'lucide-react';
-import SubscriptionsPage from './SubscriptionsPage';
+import { Search, Filter, Calendar, Clock, Eye, Trash2, CheckCircle, XCircle, Loader2, AlertTriangle, MessageSquare, Ticket, QrCode, Check, Plus } from 'lucide-react';
 
 interface Reservation {
   id: number;
@@ -53,7 +52,7 @@ interface ReservationStats {
 }
 
 const ReservationsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'subscriptions'>('reservations');
+  // const [activeTab, setActiveTab] = useState<'reservations' | 'subscriptions'>('reservations');
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [stats, setStats] = useState<ReservationStats | null>(null);
   const [loading, setLoading] = useState(true);

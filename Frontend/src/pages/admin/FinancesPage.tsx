@@ -193,6 +193,7 @@ const FinancesPage: React.FC = () => {
           </div>
         )}
       </div>
+        </>
       )}
 
       {activeTab === 'payments' && <PaymentsPage />}

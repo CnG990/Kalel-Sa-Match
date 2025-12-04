@@ -2,7 +2,7 @@
 // import { ApiResponse, PaginatedData, Terrain } from '../types';
 
 // Définir les types localement
-interface ApiResponse<T = any> {
+export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   message?: string;

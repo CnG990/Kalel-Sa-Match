@@ -63,10 +63,10 @@ const ManageUsersPage: React.FC = () => {
   const [tauxCommission, setTauxCommission] = useState(10);
   const [commentairesManager, setCommentairesManager] = useState('');
   
-  // États pour la modification de commission
-  const [showCommissionModal, setShowCommissionModal] = useState(false);
-  const [tauxCommissionEdit, setTauxCommissionEdit] = useState(10);
-  const [commentaireCommission, setCommentaireCommission] = useState('');
+  // États pour la modification de commission (non utilisés pour l'instant)
+  const [_showCommissionModal, setShowCommissionModal] = useState(false);
+  const [_tauxCommissionEdit, setTauxCommissionEdit] = useState(10);
+  const [_commentaireCommission, setCommentaireCommission] = useState('');
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -155,38 +155,39 @@ const ManageUsersPage: React.FC = () => {
     setShowCommissionModal(true);
   };
 
-  const handleUpdateCommission = async () => {
-    if (!selectedUser) {
-      toast.error('Aucun gestionnaire sélectionné');
-      return;
-    }
-    
-    if (tauxCommissionEdit < 0 || tauxCommissionEdit > 100) {
-      toast.error('Le taux de commission doit être entre 0 et 100%');
-      return;
-    }
-    
-    try {
-      const response = await apiService.updateManagerCommission(
-        selectedUser.id,
-        tauxCommissionEdit,
-        commentaireCommission || undefined
-      );
-      
-      if (response.success) {
-        toast.success('Taux de commission modifié avec succès');
-        setShowCommissionModal(false);
-        setSelectedUser(null);
-        setTauxCommissionEdit(10);
-        setCommentaireCommission('');
-        fetchUsers(); // Recharger la liste
-      } else {
-        toast.error(response.message || 'Erreur lors de la modification');
-      }
-    } catch (error) {
-      toast.error('Erreur lors de la modification de la commission');
-    }
-  };
+  // Fonction pour mettre à jour la commission (non utilisée pour l'instant)
+  // const handleUpdateCommission = async () => {
+  //   if (!selectedUser) {
+  //     toast.error('Aucun gestionnaire sélectionné');
+  //     return;
+  //   }
+  //   
+  //   if (tauxCommissionEdit < 0 || tauxCommissionEdit > 100) {
+  //     toast.error('Le taux de commission doit être entre 0 et 100%');
+  //     return;
+  //   }
+  //   
+  //   try {
+  //     const response = await apiService.updateManagerCommission(
+  //       selectedUser.id,
+  //       tauxCommissionEdit,
+  //       commentaireCommission || undefined
+  //     );
+  //     
+  //     if (response.success) {
+  //       toast.success('Taux de commission modifié avec succès');
+  //       setShowCommissionModal(false);
+  //       setSelectedUser(null);
+  //       setTauxCommissionEdit(10);
+  //       setCommentaireCommission('');
+  //       fetchUsers(); // Recharger la liste
+  //     } else {
+  //       toast.error(response.message || 'Erreur lors de la modification');
+  //     }
+  //   } catch (error) {
+  //     toast.error('Erreur lors de la modification de la commission');
+  //   }
+  // };
 
   const handleApproveManager = async () => {
     if (!selectedUser) return;
