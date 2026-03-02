@@ -11,10 +11,19 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'nom', 'prenom', 'email', 'telephone', 'role', 'statut_validation',
             'nom_entreprise', 'numero_ninea', 'numero_registre_commerce', 'adresse_entreprise',
-            'documents_legaux', 'taux_commission_defaut', 'date_validation', 'email_verified_at',
+            'documents_legaux', 'taux_commission_defaut', 'wave_payment_link', 'wave_contact_label',
+            'date_validation', 'email_verified_at',
             'slogan', 'profile_image_url', 'nom_complet', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'role', 'statut_validation', 'nom_complet', 'created_at', 'updated_at']
+
+    def get_fields(self):
+        fields = super().get_fields()
+        request = self.context.get('request') if hasattr(self, 'context') else None
+        if not request or not getattr(request.user, 'is_authenticated', False) or request.user.role != User.Role.ADMIN:
+            fields.pop('wave_payment_link', None)
+            fields.pop('wave_contact_label', None)
+        return fields
 
 
 class RegisterSerializer(serializers.ModelSerializer):

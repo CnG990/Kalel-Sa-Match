@@ -58,6 +58,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     adresse_entreprise = models.CharField(max_length=255, null=True, blank=True)
     documents_legaux = models.JSONField(null=True, blank=True)
     taux_commission_defaut = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    wave_payment_link = models.URLField(null=True, blank=True, help_text='Lien Wave Business pour recevoir des paiements')
+    wave_contact_label = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text='Nom/description du compte Wave (ex: Ch Tech Business)'
+    )
     date_validation = models.DateTimeField(null=True, blank=True)
     email_verified_at = models.DateTimeField(null=True, blank=True)
     slogan = models.CharField(max_length=255, null=True, blank=True)
