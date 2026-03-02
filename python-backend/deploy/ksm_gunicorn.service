@@ -5,6 +5,7 @@ After=network.target
 [Service]
 User=ssm-user
 Group=nginx
+UMask=007
 WorkingDirectory=/home/ssm-user/projects/ksm/python-backend
 EnvironmentFile=/home/ssm-user/projects/ksm/python-backend/.env
 ExecStart=/home/ssm-user/projects/ksm/python-backend/.venv/bin/gunicorn \
