@@ -1,0 +1,20 @@
+[Unit]
+Description=Gunicorn daemon for Kalel Sa Match Django backend
+After=network.target
+
+[Service]
+User=ssm-user
+Group=nginx
+WorkingDirectory=/home/ssm-user/projects/ksm/python-backend
+EnvironmentFile=/home/ssm-user/projects/ksm/python-backend/.env
+ExecStart=/home/ssm-user/projects/ksm/python-backend/.venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/home/ssm-user/projects/ksm/python-backend/ksm.sock \
+    --access-logfile - \
+    --error-logfile - \
+    ksm_backend.wsgi:application
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
