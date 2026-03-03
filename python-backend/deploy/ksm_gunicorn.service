@@ -8,7 +8,7 @@ Group=nginx
 UMask=007
 WorkingDirectory=/home/ssm-user/projects/ksm/python-backend
 EnvironmentFile=/home/ssm-user/projects/ksm/python-backend/.env
-ExecStart=/home/ssm-user/projects/ksm/python-backend/.venv/bin/gunicorn \
+ExecStart=/home/ssm-user/projects/ksm/python-backend/.venv/bin/python3.11 /home/ssm-user/projects/ksm/python-backend/.venv/bin/gunicorn \
     --workers 3 \
     --bind unix:/home/ssm-user/projects/ksm/python-backend/ksm.sock \
     --access-logfile - \
