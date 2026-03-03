@@ -168,6 +168,12 @@ class ApiService {
     );
   }
 
+  getAllTerrains() {
+    return this.request<TerrainDTO[]>(ENDPOINTS.terrains, {
+      headers: this.headers(),
+    });
+  }
+
   getTerrain(id: number | string) {
     return this.request<TerrainDTO>(`${ENDPOINTS.terrains}${id}/`, {
       headers: this.headers(),
