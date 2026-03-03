@@ -59,7 +59,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         try:
             data = super().validate(attrs)
             serializer_context = getattr(self, 'context', {}) or {}
-            data['user'] = UserSerializer(self.user, context=serializer_context).data
+            user_data = UserSerializer(self.user, context=serializer_context).data
+            data['user'] = user_data
+            logger.info(f'Login successful for user: {self.user.email}, role: {self.user.role}')
+            logger.info(f'Returning data keys: {list(data.keys())}')
+            logger.info(f'Token present: {"access" in data and "refresh" in data}')
             return data
         except Exception:
             logger.exception('Unexpected error during login serialization')
