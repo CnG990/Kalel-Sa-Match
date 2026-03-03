@@ -13,11 +13,13 @@ from .models import (
 
 
 class TerrainSerializer(serializers.ModelSerializer):
-    gestionnaire_nom = serializers.CharField(source='gestionnaire.nom', read_only=True)
-
     class Meta:
         model = TerrainSynthetiquesDakar
-        fields = '__all__'
+        fields = [
+            'id', 'nom', 'description', 'adresse', 'latitude', 'longitude',
+            'image_principale', 'images_supplementaires', 'est_actif',
+            'gestionnaire_id', 'created_at', 'updated_at'
+        ]
 
 
 class ReservationSerializer(serializers.ModelSerializer):

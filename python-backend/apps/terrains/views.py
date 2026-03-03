@@ -29,7 +29,7 @@ class BaseViewSet(viewsets.ModelViewSet):
 
 
 class TerrainViewSet(BaseViewSet):
-    queryset = TerrainSynthetiquesDakar.objects.all()
+    queryset = TerrainSynthetiquesDakar.objects.filter(est_actif=True)
     serializer_class = TerrainSerializer
 
 
