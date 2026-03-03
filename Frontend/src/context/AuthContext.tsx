@@ -95,13 +95,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await apiService.login(email, password);
-      if (response.success && response.data) {
-        const { token: userToken, user: userData } = response.data;
+      // Handle direct JWT response (no success wrapper)
+      const jwtResponse = response as any;
+      if (jwtResponse.access && jwtResponse.refresh && jwtResponse.user) {
+        const { access: userToken, user: userData } = jwtResponse;
         localStorage.setItem('token', userToken);
         setUser(userData);
         setToken(userToken);
+        console.log('Login successful - Token stored, user set:', userData);
         return true;
       }
+      console.error('Login failed - Invalid response structure:', response);
       return false;
     } catch (error) {
       console.error('Login error:', error);
