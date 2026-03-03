@@ -20,9 +20,15 @@ export interface TerrainDTO {
   nom: string;
   adresse: string;
   description?: string;
-  latitude?: string;
-  longitude?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   image_principale?: string;
+  images?: string[];
+  equipements?: string[];
+  prix_heure?: number | null;
+  capacite?: number | null;
+  est_disponible?: boolean;
+  est_actif?: boolean;
 }
 
 export interface ReservationPayload {

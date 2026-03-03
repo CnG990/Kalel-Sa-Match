@@ -7,23 +7,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiService, { type TerrainDTO } from '../services/api';
 import ReservationModal from './components/ReservationModal';
-
-
-type TerrainDetails = TerrainDTO & {
-  latitude?: number | string;
-  longitude?: number | string;
-  images?: string[];
-  prix_heure?: number;
-  equipements?: string[];
-  regles_terrain?: string;
-  est_actif?: boolean;
-  est_disponible?: boolean;
-};
+import type { TerrainUI } from '../types/terrain.ts';
 
 const TerrainDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
-  const [terrain, setTerrain] = useState<TerrainDetails | null>(null);
+  const [terrain, setTerrain] = useState<TerrainUI | null>(null);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +37,15 @@ const TerrainDetailPage: React.FC = () => {
           throw new Error('Terrain non trouvé');
         }
 
-        setTerrain(result as TerrainDetails);
-        if ((result as TerrainDetails).images && (result as TerrainDetails).images!.length > 0) {
-          // setSelectedImage(`http://127.0.0.1:8000/storage/${result.images[0].replace('public/', '')}`);
-        }
+        const normalizedTerrain: TerrainUI = {
+          ...result,
+          latitude: result.latitude !== undefined && result.latitude !== null ? Number(result.latitude) : null,
+          longitude: result.longitude !== undefined && result.longitude !== null ? Number(result.longitude) : null,
+          equipements: (result as TerrainDTO).equipements ?? [],
+          images: result.images ?? [],
+        };
+
+        setTerrain(normalizedTerrain);
       } catch (e: any) {
         console.error("Erreur lors de la récupération du terrain:", e);
         setError(e.message || 'Erreur lors du chargement du terrain');

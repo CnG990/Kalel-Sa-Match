@@ -156,11 +156,18 @@ const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-bold">KSM</span>
+              <img
+                src="/logo sans background.png"
+                alt="Logo KSM"
+                className="h-10 w-auto"
+              />
+              <span className="text-lg font-extrabold tracking-wider">
+                <span className="text-[#2ecc71]">K</span>
+                <span className="text-[#f97316]">S</span>
+                <span className="text-[#2ecc71]">M</span>
+              </span>
             </div>
+
             <p className="text-gray-400 mb-4">
               Application de réservation de terrains de football synthétiques partout au Sénégal
             </p>

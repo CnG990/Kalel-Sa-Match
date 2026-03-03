@@ -4,24 +4,8 @@ import { ArrowLeft, Star, Users, Zap, CreditCard, Clock, MapPin } from 'lucide-r
 import toast from 'react-hot-toast';
 import ReservationModal from './components/ReservationModal';
 import ReactDOM from 'react-dom';
-import type { TerrainUI } from '../types/terrain';
-
-type Terrain = TerrainUI & {
-  id: number;
-  nom: string;
-  adresse: string;
-  description: string;
-  prix_heure: number;
-  capacite: number;
-  surface: number;
-  est_actif: boolean;
-  horaires_ouverture: string;
-  horaires_fermeture: string;
-  equipements: string[];
-  images: string[];
-  note_moyenne?: number;
-  nombre_avis?: number;
-};
+import type { TerrainUI } from '../types/terrain.ts';
+import apiService from '../services/api';
 
 interface Creneau {
   heure: string;
@@ -41,7 +25,7 @@ interface Abonnement {
 const TerrainInfoPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [terrain, setTerrain] = useState<Terrain | null>(null);
+  const [terrain, setTerrain] = useState<TerrainUI | null>(null);
   const [creneaux, setCreneaux] = useState<Creneau[]>([]);
   const [abonnements, setAbonnements] = useState<Abonnement[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -67,11 +51,30 @@ const TerrainInfoPage: React.FC = () => {
   }, [selectedDate, terrain]);
 
   const loadTerrainInfo = async () => {
+    if (!id) {
+      toast.error('Identifiant du terrain manquant');
+      setLoading(false);
+      return;
+    }
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/terrains/${id}`);
-      const data = await response.json();
-      if (data.success) setTerrain(data.data);
-      else toast.error('Terrain non trouvé');
+      const result = await apiService.getTerrain(id);
+
+      if (!result) {
+        throw new Error('Terrain non trouvé');
+      }
+
+      const normalizedTerrain: TerrainUI = {
+        ...result,
+        latitude: result.latitude !== undefined && result.latitude !== null ? Number(result.latitude) : null,
+        longitude: result.longitude !== undefined && result.longitude !== null ? Number(result.longitude) : null,
+        equipements: result.equipements ?? [],
+        images: result.images ?? [],
+      };
+
+      setTerrain(normalizedTerrain);
+      if (normalizedTerrain.images && normalizedTerrain.images.length > 0) {
+        // setSelectedImage(`http://127.0.0.1:8000/storage/${result.images[0].replace('public/', '')}`);
+      }
     } catch {
       toast.error('Erreur lors du chargement du terrain');
     }
@@ -111,11 +114,13 @@ const TerrainInfoPage: React.FC = () => {
           });
         }
         
-        setCreneaux(heuresDisponibles.map(h => ({
-          heure: `${h}:00`,
-          disponible: (data.data?.creneaux_disponibles || []).includes(h),
-          prix: terrain.prix_heure
-        })));
+        setCreneaux(
+          heuresDisponibles.map((h) => ({
+            heure: `${h}:00`,
+            disponible: Boolean(data.data?.creneaux_disponibles?.includes(h)),
+            prix: terrain.prix_heure ?? 0,
+          })),
+        );
       } else toast.error(data.message || 'Erreur chargement créneaux');
     } catch {
       toast.error('Impossible de charger les créneaux');
@@ -208,7 +213,7 @@ const TerrainInfoPage: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="text-center p-3 bg-gray-50 rounded-lg">
                     <CreditCard className="w-6 h-6 text-orange-500 mx-auto mb-2" />
-                    <div className="font-bold text-lg">{terrain.prix_heure.toLocaleString()}</div>
+                    <div className="font-bold text-lg">{terrain.prix_heure?.toLocaleString() ?? '—'}</div>
                     <div className="text-sm text-gray-600">FCFA/heure</div>
                   </div>
                   <div className="text-center p-3 bg-gray-50 rounded-lg">
@@ -231,8 +236,10 @@ const TerrainInfoPage: React.FC = () => {
                 <div>
                   <h3 className="font-bold text-lg mb-3">Équipements disponibles</h3>
                   <div className="flex flex-wrap gap-2">
-                    {terrain.equipements?.map((equipement, i) => (
-                      <span key={i} className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">{equipement}</span>
+                    {terrain.equipements?.map((equipement: string, index: number) => (
+                      <span
+                        key={`${equipement}-${index}`}
+                        className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">{equipement}</span>
                     ))}
                   </div>
                 </div>

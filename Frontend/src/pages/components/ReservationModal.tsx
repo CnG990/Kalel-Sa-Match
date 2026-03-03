@@ -6,7 +6,7 @@ import { fr } from 'date-fns/locale'; // Locale française
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api';
-import type { TerrainUI } from '../../types/terrain';
+import type { TerrainUI } from '../../types/terrain.ts';
 
 interface ReservationModalProps {
   terrain: TerrainUI;
@@ -109,7 +109,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
           state: { 
             reservationDetails: {
               reservationId: response.data.id,
-              terrainName: terrain.nom || terrain.name,
+              terrainName: terrain.nom,
               date: format(selectedDate, 'dd/MM/yyyy', { locale: fr }),
               time: selectedSlot,
               price: response.data.montant_total,
@@ -175,7 +175,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
       <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto z-[1000]">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 className="text-3xl font-bold">Réserver : {terrain.nom || terrain.name}</h2>
+            <h2 className="text-3xl font-bold">Réserver : {terrain.nom}</h2>
             <p className="text-lg text-gray-500">{terrain.prix_heure?.toLocaleString()} FCFA / heure</p>
             <p className="text-sm text-blue-600">Connecté en tant que : {user?.prenom} {user?.nom}</p>
             <p className="text-gray-600 text-sm">{terrain?.adresse || 'Adresse inconnue'}</p>
