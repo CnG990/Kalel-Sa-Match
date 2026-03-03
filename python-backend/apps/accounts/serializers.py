@@ -1,8 +1,13 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
+
+
+logger = logging.getLogger(__name__)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -51,6 +56,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        data = super().validate(attrs)
-        data['user'] = UserSerializer(self.user).data
-        return data
+        try:
+            data = super().validate(attrs)
+            serializer_context = getattr(self, 'context', {}) or {}
+            data['user'] = UserSerializer(self.user, context=serializer_context).data
+            return data
+        except Exception:
+            logger.exception('Unexpected error during login serialization')
+            raise
