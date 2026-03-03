@@ -5,31 +5,26 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 // import 'leaflet/dist/leaflet.css';
 // import L from 'leaflet';
 import { useAuth } from '../context/AuthContext';
-import apiService from '../services/api';
+import apiService, { type TerrainDTO } from '../services/api';
 import ReservationModal from './components/ReservationModal';
 
-// const MAPBOX_TOKEN = 'pk.eyJ1IjoiY2hlaWtobmdvbTk5IiwiYSI6ImNtYjR5c2NieTF2eXYyaXNia3FmdWd5OTYifQ.yi91YsGpTzlsDA9ljYp8DQ';
 
-// Le type Terrain peut être partagé dans un fichier de types plus tard
-interface Terrain {
-  id: number;
-  nom: string;
-  description: string;
-  adresse: string;
-  latitude: number;
-  longitude: number;
+type TerrainDetails = TerrainDTO & {
+  latitude?: number | string;
+  longitude?: number | string;
   images?: string[];
   prix_heure?: number;
   equipements?: string[];
   regles_terrain?: string;
   est_actif?: boolean;
   est_disponible?: boolean;
-}
+};
 
 const TerrainDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
-  const [terrain, setTerrain] = useState<Terrain | null>(null);
+  const [terrain, setTerrain] = useState<TerrainDetails | null>(null);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,13 +44,13 @@ const TerrainDetailPage: React.FC = () => {
         
         const result = await apiService.getTerrain(id);
         
-        if (result.success && result.data) {
-          setTerrain(result.data);
-          if (result.data.images && result.data.images.length > 0) {
-            // setSelectedImage(`http://127.0.0.1:8000/storage/${result.data.images[0].replace('public/', '')}`);
-          }
-        } else {
-          throw new Error(result.message || 'Terrain non trouvé');
+        if (!result) {
+          throw new Error('Terrain non trouvé');
+        }
+
+        setTerrain(result as TerrainDetails);
+        if ((result as TerrainDetails).images && (result as TerrainDetails).images!.length > 0) {
+          // setSelectedImage(`http://127.0.0.1:8000/storage/${result.images[0].replace('public/', '')}`);
         }
       } catch (e: any) {
         console.error("Erreur lors de la récupération du terrain:", e);

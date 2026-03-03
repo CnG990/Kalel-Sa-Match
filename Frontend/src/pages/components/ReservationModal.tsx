@@ -6,20 +6,10 @@ import { fr } from 'date-fns/locale'; // Locale française
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api';
-
-interface Terrain {
-  id: number;
-  nom: string; // Correction: utiliser nom au lieu de name
-  name?: string; // Compatibilité
-  adresse?: string;
-  prix_heure?: number;
-  latitude?: number;
-  longitude?: number;
-  // Ajoutez d'autres champs si nécessaire
-}
+import type { TerrainUI } from '../../types/terrain';
 
 interface ReservationModalProps {
-  terrain: Terrain;
+  terrain: TerrainUI;
   onClose: () => void;
 }
 
@@ -101,10 +91,15 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
     setError(null);
 
     try {
+      const startDate = new Date(selectedDate);
+      startDate.setHours(Number(selectedSlot), 0, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setHours(endDate.getHours() + 1);
+
       const reservationData = {
-        terrain_id: terrain.id,
-        date_debut: `${format(selectedDate, 'yyyy-MM-dd')} ${selectedSlot?.padStart(2, '0')}:00:00`,
-        duree_heures: 1,
+        terrain: terrain.id,
+        date_debut: startDate.toISOString(),
+        date_fin: endDate.toISOString(),
       };
 
       const response = await apiService.createReservation(reservationData);

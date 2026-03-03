@@ -111,10 +111,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData): Promise<{ success: boolean; message?: string; }> => {
     try {
-      const response = await apiService.register(userData);
+      const response = await apiService.register({ ...userData } as Record<string, unknown>);
       return {
-        success: response.success,
-        message: response.message
+        success: Boolean(response?.success),
+        message: response?.message
       };
     } catch (error) {
       console.error('Register error:', error);

@@ -40,6 +40,10 @@ Backend/bootstrap/cache/*
 node_modules/
 vendor/
 
+# Caches Python
+**/__pycache__/
+*.pyc
+
 # Fichiers système
 .DS_Store
 Thumbs.db

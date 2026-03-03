@@ -4,8 +4,9 @@ import { ArrowLeft, Star, Users, Zap, CreditCard, Clock, MapPin } from 'lucide-r
 import toast from 'react-hot-toast';
 import ReservationModal from './components/ReservationModal';
 import ReactDOM from 'react-dom';
+import type { TerrainUI } from '../types/terrain';
 
-interface Terrain {
+type Terrain = TerrainUI & {
   id: number;
   nom: string;
   adresse: string;
@@ -13,8 +14,6 @@ interface Terrain {
   prix_heure: number;
   capacite: number;
   surface: number;
-  latitude: number;
-  longitude: number;
   est_actif: boolean;
   horaires_ouverture: string;
   horaires_fermeture: string;
@@ -22,7 +21,7 @@ interface Terrain {
   images: string[];
   note_moyenne?: number;
   nombre_avis?: number;
-}
+};
 
 interface Creneau {
   heure: string;

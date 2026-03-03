@@ -35,7 +35,7 @@ const ContactPage: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Adresse</h3>
                   <p className="text-gray-600 mt-1">
-                    Dakar, Sénégal<br />
+                    Sénégal<br />
                     Zone des Almadies
                   </p>
                 </div>

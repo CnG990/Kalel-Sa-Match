@@ -37,7 +37,7 @@ const TermsPage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Description du Service</h2>
               <p className="text-gray-700 mb-4">
-                Kalél Sa Match est une application de réservation en ligne de terrains synthétiques à Dakar. 
+                Kalél Sa Match est une application de réservation en ligne de terrains synthétiques partout au Sénégal. 
                 Notre service permet aux utilisateurs de :
               </p>
               <ul className="list-disc pl-6 text-gray-700 mb-4">
@@ -226,7 +226,7 @@ const TermsPage: React.FC = () => {
                 <p className="text-gray-700">
                   <strong>Email :</strong> contact@kalelsamatch.com<br />
                   <strong>Téléphone :</strong> +221 77 123 45 67<br />
-                  <strong>Adresse :</strong> Dakar, Sénégal
+                  <strong>Adresse :</strong> Sénégal
                 </p>
               </div>
             </section>
@@ -234,6 +234,7 @@ const TermsPage: React.FC = () => {
             <div className="mt-12 pt-8 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row justify-between items-center">
                 <p className="text-sm text-gray-600 mb-4 sm:mb-0">
+                  &copy; 2025 Kalél Sa Match. Tous droits réservés.
                   © 2025 Kalél Sa Match. Tous droits réservés.
                 </p>
                 <Link

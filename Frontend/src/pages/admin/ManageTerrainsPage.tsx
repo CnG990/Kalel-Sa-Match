@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import KMLGoogleEarthImport from '../../components/KMLGoogleEarthImport';
 import CSVTerrainImport from '../../components/CSVTerrainImport';
 import TerrainManagerAssignment from '../../components/TerrainManagerAssignment';
+import AddTerrainOnSiteModal from './AddTerrainOnSiteModal';
 
 import { 
   Search, 
@@ -64,6 +65,7 @@ const ManageTerrainsPage: React.FC = () => {
   const [showGeoModal, setShowGeoModal] = useState(false);
   const [showKMLModal, setShowKMLModal] = useState(false);
   const [showManagerModal, setShowManagerModal] = useState(false);
+  const [showOnSiteModal, setShowOnSiteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [editingTerrain, setEditingTerrain] = useState<Terrain | null>(null);
@@ -383,6 +385,13 @@ const ManageTerrainsPage: React.FC = () => {
           Ajouter Manuel
         </button>
         <button
+          onClick={() => setShowOnSiteModal(true)}
+          className="flex items-center bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700"
+        >
+          <MapPin className="w-5 h-5 mr-2" />
+          Ajouter sur place
+        </button>
+        <button
           onClick={() => setShowKMLModal(true)}
           className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
         >
@@ -506,6 +515,13 @@ const ManageTerrainsPage: React.FC = () => {
           </div>
         </div>
       </div>
+    )}
+
+    {showOnSiteModal && (
+      <AddTerrainOnSiteModal
+        onClose={() => setShowOnSiteModal(false)}
+        onSuccess={fetchTerrains}
+      />
     )}
 
     {/* Statistiques géomatiques */}
