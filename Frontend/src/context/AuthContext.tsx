@@ -95,6 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await apiService.login(email, password);
+      console.log('Raw login response:', response);
       // Handle direct JWT response (no success wrapper)
       const jwtResponse = response as any;
       if (jwtResponse.access && jwtResponse.refresh && jwtResponse.user) {
