@@ -44,11 +44,12 @@ const MesLitigesPage: React.FC = () => {
   const chargerMesLitiges = async () => {
     try {
       setLoading(true);
-      const response = await apiService.get('/litiges/mes-litiges');
-      if (response.success) {
-        setLitiges(response.data || []);
+      const { data, meta } = await apiService.get('/litiges/mes-litiges');
+      if (Array.isArray(data)) {
+        setLitiges(data);
       } else {
-        toast.error('Erreur lors du chargement des litiges');
+        setLitiges([]);
+        toast.error(meta?.message || 'Erreur lors du chargement des litiges');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -226,9 +227,9 @@ const MesLitigesPage: React.FC = () => {
                   </p>
                   
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>📍 {litige.terrain_nom}</span>
-                    <span>🏷️ {getTypeLibelle(litige.type_litige)}</span>
-                    <span>📅 {new Date(litige.created_at).toLocaleDateString('fr-FR')}</span>
+                    <span> {litige.terrain_nom}</span>
+                    <span> {getTypeLibelle(litige.type_litige)}</span>
+                    <span> {new Date(litige.created_at).toLocaleDateString('fr-FR')}</span>
                     {litige.messages_count && (
                       <span className="flex items-center">
                         <MessageSquare size={14} className="mr-1" />
@@ -295,12 +296,8 @@ const CreateLitigeModal: React.FC<CreateLitigeModalProps> = ({ onClose, onSucces
 
   const chargerTerrains = async () => {
     try {
-      const response = await apiService.get('/terrains');
-      if (response.success && Array.isArray(response.data)) {
-        setTerrains(response.data);
-      } else {
-        setTerrains([]);
-      }
+      const { data } = await apiService.get('/terrains');
+      setTerrains(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erreur chargement terrains:', error);
       setTerrains([]);
@@ -309,12 +306,8 @@ const CreateLitigeModal: React.FC<CreateLitigeModalProps> = ({ onClose, onSucces
 
   const chargerReservations = async () => {
     try {
-      const response = await apiService.get('/reservations/my-reservations');
-      if (response.success && Array.isArray(response.data)) {
-        setReservations(response.data);
-      } else {
-        setReservations([]);
-      }
+      const { data } = await apiService.get('/reservations/my-reservations');
+      setReservations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erreur chargement réservations:', error);
       setReservations([]);
@@ -331,13 +324,13 @@ const CreateLitigeModal: React.FC<CreateLitigeModalProps> = ({ onClose, onSucces
 
     try {
       setLoading(true);
-      const response = await apiService.post('/litiges', formData);
+      const { data, meta } = await apiService.post('/litiges', formData);
       
-      if (response.success) {
-        toast.success('Litige créé avec succès');
+      if (data) {
+        toast.success(meta?.message || 'Litige créé avec succès');
         onSuccess();
       } else {
-        toast.error(response.message || 'Erreur lors de la création du litige');
+        toast.error(meta?.message || 'Erreur lors de la création du litige');
       }
     } catch (error) {
       console.error('Erreur:', error);

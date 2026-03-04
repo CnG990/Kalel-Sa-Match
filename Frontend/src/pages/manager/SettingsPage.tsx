@@ -18,6 +18,18 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const toStringOrEmpty = (value: unknown): string => (typeof value === 'string' ? value : '');
+
+interface ProfileFormData {
+  nom: string;
+  prenom: string;
+  telephone: string;
+  email: string;
+  adresse: string;
+  description: string;
+  nom_entreprise: string;
+}
+
 const SettingsPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'security' | 'notifications' | 'profile'>('security');
@@ -35,14 +47,14 @@ const SettingsPage: React.FC = () => {
   });
   
   // Données de profil
-  const [profileData, setProfileData] = useState({
-    nom: user?.nom || '',
-    prenom: user?.prenom || '',
-    telephone: user?.telephone || '',
-    email: user?.email || '',
-    adresse: user?.adresse || '',
-    description: user?.description || '',
-    nom_entreprise: user?.nom_entreprise || ''
+  const [profileData, setProfileData] = useState<ProfileFormData>({
+    nom: toStringOrEmpty(user?.nom),
+    prenom: toStringOrEmpty(user?.prenom),
+    telephone: toStringOrEmpty(user?.telephone),
+    email: toStringOrEmpty(user?.email),
+    adresse: toStringOrEmpty((user as Record<string, unknown>)?.adresse),
+    description: toStringOrEmpty((user as Record<string, unknown>)?.description),
+    nom_entreprise: toStringOrEmpty((user as Record<string, unknown>)?.nom_entreprise),
   });
   
   // Sécurité
@@ -68,13 +80,13 @@ const SettingsPage: React.FC = () => {
     // Initialiser avec les données utilisateur
     if (user) {
       setProfileData({
-        nom: user.nom || '',
-        prenom: user.prenom || '',
-        telephone: user.telephone || '',
-        email: user.email || '',
-        adresse: user.adresse || '',
-        description: user.description || '',
-        nom_entreprise: user.nom_entreprise || ''
+        nom: toStringOrEmpty(user.nom),
+        prenom: toStringOrEmpty(user.prenom),
+        telephone: toStringOrEmpty(user.telephone),
+        email: toStringOrEmpty(user.email),
+        adresse: toStringOrEmpty((user as Record<string, unknown>)?.adresse),
+        description: toStringOrEmpty((user as Record<string, unknown>)?.description),
+        nom_entreprise: toStringOrEmpty((user as Record<string, unknown>)?.nom_entreprise),
       });
     }
 
@@ -141,63 +153,46 @@ const SettingsPage: React.FC = () => {
     
     setLoading(true);
     try {
-      const response = await apiService.post('/auth/change-password', passwordData);
-      if (response.success) {
-        // Notification principale de succès avec icône et durée longue
-        toast.success(
-          '🔐 Mot de passe modifié avec succès !',
-          {
-            duration: 5000,
-            style: {
-              background: '#10B981',
-              color: 'white',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              padding: '16px 20px',
-              borderRadius: '12px',
-            },
-            icon: '✅',
-          }
-        );
-        
-        // Notification secondaire informative
-        setTimeout(() => {
-          toast.success(
-            '📧 Un email de confirmation vous a été envoyé',
-            {
-              duration: 4000,
-              style: {
-                background: '#3B82F6',
-                color: 'white',
-                fontSize: '14px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-              },
-              icon: '📬',
-            }
-          );
-        }, 1000);
-        
-        // Mettre à jour la date de dernier changement
-        setSecurityInfo({
-          ...securityInfo,
-          last_password_change: new Date().toISOString()
-        });
-        
-        // Réinitialiser le formulaire
-        setPasswordData({ current_password: '', new_password: '', new_password_confirmation: '' });
-      } else {
-        toast.error('❌ Erreur lors du changement de mot de passe', {
-          duration: 4000,
+      await apiService.changePassword(passwordData);
+
+      toast.success(
+        '🔐 Mot de passe modifié avec succès !',
+        {
+          duration: 5000,
           style: {
-            background: '#EF4444',
+            background: '#10B981',
             color: 'white',
             fontSize: '16px',
+            fontWeight: 'bold',
             padding: '16px 20px',
             borderRadius: '12px',
+          },
+          icon: '✅',
+        }
+      );
+      
+      setTimeout(() => {
+        toast.success(
+          '📧 Un email de confirmation vous a été envoyé',
+          {
+            duration: 4000,
+            style: {
+              background: '#3B82F6',
+              color: 'white',
+              fontSize: '14px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+            },
+            icon: '📬',
           }
-        });
-      }
+        );
+      }, 1000);
+      
+      setSecurityInfo((prev) => ({
+        ...prev,
+        last_password_change: new Date().toISOString(),
+      }));
+      setPasswordData({ current_password: '', new_password: '', new_password_confirmation: '' });
     } catch (error) {
       toast.error('❌ Erreur lors du changement de mot de passe', {
         duration: 4000,
@@ -217,35 +212,34 @@ const SettingsPage: React.FC = () => {
   const updateProfile = async () => {
     setLoading(true);
     try {
-      const response = await apiService.put('/auth/update-profile', profileData);
-      if (response.success) {
-        toast.success(
-          '👤 Profil mis à jour avec succès !',
-          {
-            duration: 3000,
-            style: {
-              background: '#10B981',
-              color: 'white',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              padding: '16px 20px',
-              borderRadius: '12px',
-            },
-            icon: '✅',
-          }
-        );
-      } else {
-        toast.error('❌ Erreur lors de la mise à jour du profil', {
-          duration: 4000,
-          style: {
-            background: '#EF4444',
-            color: 'white',
-            fontSize: '16px',
-            padding: '16px 20px',
-            borderRadius: '12px',
-          }
+      const { data } = await apiService.updateProfile({ ...profileData } as Record<string, unknown>);
+      if (data) {
+        setProfileData({
+          nom: toStringOrEmpty(data.nom) || profileData.nom,
+          prenom: toStringOrEmpty(data.prenom) || profileData.prenom,
+          telephone: toStringOrEmpty(data.telephone) || profileData.telephone,
+          email: toStringOrEmpty(data.email) || profileData.email,
+          adresse: toStringOrEmpty((data as Record<string, unknown>).adresse) || profileData.adresse,
+          description: toStringOrEmpty((data as Record<string, unknown>).description) || profileData.description,
+          nom_entreprise: toStringOrEmpty((data as Record<string, unknown>).nom_entreprise) || profileData.nom_entreprise,
         });
       }
+
+      toast.success(
+        '👤 Profil mis à jour avec succès !',
+        {
+          duration: 3000,
+          style: {
+            background: '#10B981',
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            padding: '16px 20px',
+            borderRadius: '12px',
+          },
+          icon: '✅',
+        }
+      );
     } catch (error) {
       toast.error('❌ Erreur lors de la mise à jour du profil', {
         duration: 4000,

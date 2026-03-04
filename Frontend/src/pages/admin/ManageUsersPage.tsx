@@ -78,12 +78,12 @@ const ManageUsersPage: React.FC = () => {
         statut_validation: filters.statut_validation,
       };
       const response = await apiService.getAllUsers(params);
-      if (response.success && response.data) {
-        const paginatedData = response.data as PaginatedResponse;
+      if (response.data) {
+        const paginatedData = response.data as unknown as PaginatedResponse;
         setUsers(paginatedData.data);
         setLastPage(paginatedData.last_page);
       } else {
-        toast.error("Impossible de charger les utilisateurs.");
+        toast.error(response.meta?.message || "Impossible de charger les utilisateurs.");
       }
     } catch (error) {
       toast.error("Erreur réseau lors du chargement.");
@@ -133,13 +133,13 @@ const ManageUsersPage: React.FC = () => {
     }
     
     try {
-      const response = await apiService.updateUser(selectedUser.id, editForm);
-      if (response.success) {
+      const { data, meta } = await apiService.updateUser(selectedUser.id, editForm);
+      if (data) {
         toast.success('Utilisateur mis à jour avec succès');
         setShowEditModal(false);
         fetchUsers();
       } else {
-        toast.error(response.message || 'Erreur lors de la mise à jour');
+        toast.error(meta.message || 'Erreur lors de la mise à jour');
       }
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
@@ -193,15 +193,15 @@ const ManageUsersPage: React.FC = () => {
     if (!selectedUser) return;
     
     try {
-      const response = await apiService.approveManager(selectedUser.id, tauxCommission, commentairesManager);
-      if (response.success) {
+      const { data, meta } = await apiService.approveManager(selectedUser.id, tauxCommission, commentairesManager);
+      if (data) {
         toast.success('Gestionnaire approuvé avec succès');
         setShowManagerApprovalModal(false);
         setTauxCommission(10);
         setCommentairesManager('');
         fetchUsers();
       } else {
-        toast.error(response.message || 'Erreur lors de l\'approbation');
+        toast.error(meta.message || 'Erreur lors de l\'approbation');
       }
     } catch (error) {
       toast.error('Erreur lors de l\'approbation');
@@ -210,8 +210,8 @@ const ManageUsersPage: React.FC = () => {
 
   const handleAddUser = async () => {
     try {
-      const response = await apiService.createUser(addForm);
-      if (response.success) {
+      const { data, meta } = await apiService.createUser(addForm);
+      if (data) {
         toast.success('Utilisateur créé avec succès');
         setShowAddModal(false);
         setAddForm({
@@ -225,7 +225,7 @@ const ManageUsersPage: React.FC = () => {
         });
         fetchUsers();
       } else {
-        toast.error(response.message || 'Erreur lors de la création');
+        toast.error(meta.message || 'Erreur lors de la création');
       }
     } catch (error) {
       toast.error('Erreur lors de la création');
@@ -236,13 +236,13 @@ const ManageUsersPage: React.FC = () => {
     if (!selectedUser) return;
     
     try {
-      const response = await apiService.deleteUser(selectedUser.id);
-      if (response.success) {
+      const { data, meta } = await apiService.deleteUser(selectedUser.id);
+      if (data) {
         toast.success('Utilisateur supprimé avec succès');
         setShowDeleteModal(false);
         fetchUsers();
       } else {
-        toast.error(response.message || 'Erreur lors de la suppression');
+        toast.error(meta.message || 'Erreur lors de la suppression');
       }
     } catch (error) {
       toast.error('Erreur lors de la suppression');
@@ -263,17 +263,17 @@ const ManageUsersPage: React.FC = () => {
     try {
       console.log('Tentative de réinitialisation pour utilisateur:', selectedUser.id, 'avec mot de passe de longueur:', newPassword.length);
       
-      const response = await apiService.resetUserPassword(selectedUser.id, newPassword);
+      const { data, meta } = await apiService.resetUserPassword(selectedUser.id, newPassword);
       
-      console.log('Réponse API:', response);
+      console.log('Réponse API:', { data, meta });
       
-      if (response.success) {
+      if (data) {
         toast.success('Mot de passe réinitialisé avec succès');
         setShowPasswordModal(false);
         setNewPassword('');
         setSelectedUser(null);
       } else {
-        toast.error(response.message || 'Erreur lors de la réinitialisation');
+        toast.error(meta.message || 'Erreur lors de la réinitialisation');
       }
     } catch (error) {
       toast.error('Erreur lors de la réinitialisation du mot de passe');
@@ -288,11 +288,11 @@ const ManageUsersPage: React.FC = () => {
         apiService.getUserPaiements(user.id)
       ]);
 
-      if (userResponse.success) {
+      if (userResponse.data) {
         setUserDetails({
           user: userResponse.data,
-          reservations: reservationsResponse.success ? reservationsResponse.data : [],
-          paiements: paiementsResponse.success ? paiementsResponse.data : []
+          reservations: reservationsResponse.data ?? [],
+          paiements: paiementsResponse.data ?? []
         });
         setShowUserDetails(true);
       }

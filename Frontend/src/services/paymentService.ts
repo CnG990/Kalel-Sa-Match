@@ -1,5 +1,5 @@
 // Service de paiement pour les abonnements et réservations
-import apiService from './api';
+import apiService, { type PaymentRequestDTO, type PaymentResponseDTO } from './api';
 
 // Interfaces
 export interface PaymentDetails {
@@ -17,14 +17,6 @@ export interface PaymentDetails {
   price?: number;
 }
 
-export interface PaymentRequest {
-  subscription_id?: number;
-  reservation_id?: number;
-  montant: number;
-  methode_paiement: 'orange_money' | 'wave' | 'mobile_money';
-  reference_transaction?: string;
-}
-
 // Service de paiement
 export const paymentService = {
   // Traiter un paiement d'abonnement
@@ -32,25 +24,25 @@ export const paymentService = {
     subscriptionId: number,
     amount: number,
     method: 'orange_money' | 'wave'
-  ) {
+  ): Promise<{ success: boolean; data?: PaymentResponseDTO | null; message?: string }> {
     try {
-      const payload: PaymentRequest = {
+      const payload: PaymentRequestDTO = {
         subscription_id: subscriptionId,
         montant: amount,
         methode_paiement: method === 'orange_money' ? 'orange_money' : 'wave'
       };
 
-      const response = await apiService.post('/paiements/subscription', payload);
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response.data,
-          message: 'Paiement traité avec succès'
-        };
-      } else {
-        throw new Error(response.message || 'Erreur lors du traitement du paiement');
+      const { data, meta } = await apiService.createSubscriptionPayment(payload);
+
+      if (!data) {
+        throw new Error((meta?.message as string | undefined) ?? 'Erreur lors du traitement du paiement');
       }
+
+      return {
+        success: true,
+        data,
+        message: (meta?.message as string | undefined) ?? 'Paiement traité avec succès'
+      };
     } catch (error) {
       console.error('Erreur paiement abonnement:', error);
       return {
@@ -65,25 +57,25 @@ export const paymentService = {
     reservationId: number,
     amount: number,
     method: 'orange_money' | 'wave'
-  ) {
+  ): Promise<{ success: boolean; data?: PaymentResponseDTO | null; message?: string }> {
     try {
-      const payload: PaymentRequest = {
+      const payload: PaymentRequestDTO = {
         reservation_id: reservationId,
         montant: amount,
         methode_paiement: method === 'orange_money' ? 'orange_money' : 'wave'
       };
 
-      const response = await apiService.post('/paiements/reservation', payload);
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response.data,
-          message: 'Paiement traité avec succès'
-        };
-      } else {
-        throw new Error(response.message || 'Erreur lors du traitement du paiement');
+      const { data, meta } = await apiService.createReservationPayment(payload);
+
+      if (!data) {
+        throw new Error((meta?.message as string | undefined) ?? 'Erreur lors du traitement du paiement');
       }
+
+      return {
+        success: true,
+        data,
+        message: (meta?.message as string | undefined) ?? 'Paiement traité avec succès'
+      };
     } catch (error) {
       console.error('Erreur paiement réservation:', error);
       return {

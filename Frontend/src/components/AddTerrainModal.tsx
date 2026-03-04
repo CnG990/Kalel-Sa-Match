@@ -43,15 +43,15 @@ const AddTerrainModal: React.FC<AddTerrainModalProps> = ({ isOpen, onClose, onSu
     setLoading(true);
 
     try {
-      const response = await apiService.post('/terrains', {
+      const { data, meta } = await apiService.post('/terrains', {
         ...formData,
         prix_par_heure: parseFloat(formData.prix_par_heure),
         capacite_max: formData.capacite_max ? parseInt(formData.capacite_max) : null,
         surface: formData.surface ? parseFloat(formData.surface) : null
       });
 
-      if (response.success) {
-        toast.success('Terrain ajouté avec succès !');
+      if (data) {
+        toast.success(meta.message || 'Terrain ajouté avec succès !');
         onSuccess();
         onClose();
         
@@ -69,7 +69,7 @@ const AddTerrainModal: React.FC<AddTerrainModalProps> = ({ isOpen, onClose, onSu
           surface: ''
         });
       } else {
-        toast.error(response.message || 'Erreur lors de l\'ajout du terrain');
+        toast.error(meta.message || 'Erreur lors de l\'ajout du terrain');
       }
     } catch (error) {
       console.error('Erreur:', error);

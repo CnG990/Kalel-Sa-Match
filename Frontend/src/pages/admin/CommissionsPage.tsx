@@ -46,11 +46,11 @@ const CommissionsPage: React.FC = () => {
   const fetchContrats = async () => {
     setLoading(true);
     try {
-      const response = await apiService.getContratsCommission({ page: 1 });
-      if (response.success) {
-        setContrats(response.data.data || []);
+      const { data, meta } = await apiService.getContratsCommission({ page: 1 });
+      if (data) {
+        setContrats(data.data || []);
       } else {
-        toast.error("Impossible de charger les contrats de commission.");
+        toast.error(meta.message || "Impossible de charger les contrats de commission.");
       }
     } catch (error) {
       toast.error("Erreur réseau lors du chargement.");
@@ -61,9 +61,9 @@ const CommissionsPage: React.FC = () => {
 
   const fetchGestionnaires = async () => {
     try {
-      const response = await apiService.getAllUsers({ role: 'gestionnaire', per_page: 100 });
-      if (response.success) {
-        setGestionnaires(response.data.data || []);
+      const { data } = await apiService.getAllUsers({ role: 'gestionnaire', per_page: 100 });
+      if (data && Array.isArray(data)) {
+        setGestionnaires(data);
       }
     } catch (error) {
       // Erreur silencieuse, les gestionnaires sont optionnels
@@ -87,7 +87,7 @@ const CommissionsPage: React.FC = () => {
         response = await apiService.createContratCommission(data);
       }
 
-      if (response.success) {
+      if (data) {
         toast.success(editingContrat ? 'Contrat mis à jour avec succès' : 'Contrat créé avec succès');
         setShowModal(false);
         resetForm();
@@ -104,12 +104,12 @@ const CommissionsPage: React.FC = () => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce contrat ?')) return;
     
     try {
-      const response = await apiService.deleteContratCommission(id);
-      if (response.success) {
+      const { data, meta } = await apiService.deleteContratCommission(id);
+      if (data) {
         toast.success('Contrat supprimé avec succès');
         fetchContrats();
       } else {
-        toast.error(response.message || 'Erreur lors de la suppression');
+        toast.error(meta.message || 'Erreur lors de la suppression');
       }
     } catch (error) {
       toast.error('Erreur lors de la suppression');

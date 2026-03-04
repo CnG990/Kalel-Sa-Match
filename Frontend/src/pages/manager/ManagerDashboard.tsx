@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import apiService from '../../services/api';
+import apiService, { type ManagerDashboardStatsDTO } from '../../services/api';
 import { 
   Calendar, 
   DollarSign, 
@@ -16,24 +16,9 @@ import {
 import toast from 'react-hot-toast';
 import AddTerrainModal from '../../components/AddTerrainModal';
 
-interface Stats {
-  total_terrains: number;
-  terrains_actifs: number;
-  reservations_mois: number;
-  revenus_mois: number;
-  taux_occupation: number;
-  note_moyenne: number;
-  prochaines_reservations: Array<{
-    terrain_nom: string;
-    date_debut: string;
-    client_nom: string;
-  }>;
-  message?: string;
-}
-
 const ManagerDashboard: React.FC = () => {
   const { } = useAuth();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<ManagerDashboardStatsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -44,12 +29,12 @@ const ManagerDashboard: React.FC = () => {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await apiService.get('/manager/stats/dashboard');
-      if (response.success) {
-        setStats(response.data);
-      } else {
-        toast.error('Erreur lors du chargement des statistiques');
+      const { data } = await apiService.getManagerStats();
+      if (!data) {
+        toast.error('Aucune statistique disponible');
+        return;
       }
+      setStats(data);
     } catch (error) {
       console.error('Erreur:', error);
       toast.error('Erreur de connexion');
@@ -253,17 +238,26 @@ const ManagerDashboard: React.FC = () => {
                 <div className="flex items-center">
                   <Calendar className="w-5 h-5 text-gray-400 mr-3" />
                   <div>
-                    <p className="font-medium text-gray-900">{reservation.terrain_nom}</p>
-                    <p className="text-sm text-gray-600">{reservation.client_nom}</p>
+                    <p className="font-medium text-gray-900">{reservation.terrain_nom ?? 'Terrain'}</p>
+                    <p className="text-sm text-gray-600">{reservation.client_nom ?? 'Client'}</p>
                   </div>
                 </div>
                 <div className="text-sm text-gray-600">
-                  {new Date(reservation.date_debut).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  } as Intl.DateTimeFormatOptions)}
+                  {reservation.date_debut
+                    ? new Date(reservation.date_debut).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                    : 'Date à confirmer'}
+                  <span className="block text-xs text-gray-500">
+                    {reservation.date_debut
+                      ? new Date(reservation.date_debut).toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : ''}
+                  </span>
                 </div>
               </div>
             ))}

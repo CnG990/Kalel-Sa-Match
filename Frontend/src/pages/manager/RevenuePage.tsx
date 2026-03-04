@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import apiService from '../../services/api';
+import apiService, { type ManagerRevenueStatsDTO } from '../../services/api';
+
 import { 
   DollarSign, 
   TrendingUp, 
@@ -12,29 +13,11 @@ import {
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
-interface RevenueData {
-  revenus_total: number;
-  revenus_mois_actuel: number;
-  revenus_mois_precedent: number;
-  commissions_payees: number;
-  commissions_en_attente: number;
-  revenus_par_terrain: Array<{
-    terrain_nom: string;
-    revenus: number;
-    reservations_count: number;
-  }>;
-  revenus_par_mois: Array<{
-    mois: string;
-    revenus: number;
-    commissions: number;
-  }>;
-}
-
 const RevenuePage: React.FC = () => {
-  const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
+  const [revenueData, setRevenueData] = useState<ManagerRevenueStatsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('mois');
-  const [error, ] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRevenueData();
@@ -43,18 +26,21 @@ const RevenuePage: React.FC = () => {
   const fetchRevenueData = async () => {
     try {
       setLoading(true);
-      // Utiliser la nouvelle API des statistiques de revenus
-      const response = await apiService.getRevenueStats();
-      
-      if (response.success) {
-        setRevenueData(response.data);
-      } else {
-        console.error('Erreur API:', response.message);
-        toast.error(response.message || "Impossible de charger les données de revenus.");
+      setError(null);
+      const { data, meta } = await apiService.getManagerRevenueStats({ period: selectedPeriod });
+      if (!data) {
+        const message = meta.message || 'Impossible de charger les données de revenus.';
+        toast.error(message);
+        setError(message);
+        setRevenueData(null);
+        return;
       }
+
+      setRevenueData(data);
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       toast.error("Erreur lors du chargement des revenus.");
+      setError('Erreur lors du chargement des revenus.');
     } finally {
       setLoading(false);
     }

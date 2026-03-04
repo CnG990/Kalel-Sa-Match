@@ -44,27 +44,28 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
     setLoading(true);
     setError(null);
     try {
-      const response = await apiService.getTicket(reservationId);
-      if (response.success) {
-        setTicket(response.data);
+      const { data, meta } = await apiService.getTicket(reservationId);
+
+      if (data) {
+        setTicket(data as TicketData);
+        return;
+      }
+
+      const message = meta.message || 'Erreur lors du chargement du ticket';
+      if (message.includes('paiement') || message.includes('payment')) {
+        setError({
+          type: 'payment_required',
+          message,
+          instructions: [
+            'Votre réservation doit être payée et confirmée',
+            'Le ticket sera automatiquement généré après paiement'
+          ]
+        });
       } else {
-        // Gérer les cas spéciaux selon le message d'erreur
-        if (response.message?.includes('paiement') || response.message?.includes('payment')) {
-          // Paiement requis
-          setError({
-            type: 'payment_required',
-            message: response.message || 'Paiement requis pour accéder au ticket',
-            instructions: [
-              'Votre réservation doit être payée et confirmée',
-              'Le ticket sera automatiquement généré après paiement'
-            ]
-          });
-        } else {
-          setError({
-            type: 'error',
-            message: response.message || 'Erreur lors du chargement du ticket'
-          });
-        }
+        setError({
+          type: 'error',
+          message
+        });
       }
     } catch (error: any) {
       setError({

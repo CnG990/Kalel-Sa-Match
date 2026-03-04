@@ -47,11 +47,11 @@ const AdminDashboard: React.FC = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await apiService.getDashboardStats();
-        if (response.success && typeof response.data === 'object' && response.data !== null) {
-          setStats(response.data as StatsData);
+        const { data, meta } = await apiService.getDashboardStats();
+        if (data && typeof data === 'object') {
+          setStats(data as StatsData);
         } else {
-          toast.error("Impossible de charger les statistiques : format de données incorrect.");
+          toast.error(meta.message || "Impossible de charger les statistiques : format de données incorrect.");
         }
       } catch (error) {
         toast.error("Erreur réseau lors du chargement des statistiques.");

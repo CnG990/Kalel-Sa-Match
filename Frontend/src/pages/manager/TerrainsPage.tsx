@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   MapPin, 
   Users, 
@@ -10,33 +10,12 @@ import {
   Power,
   PowerOff
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import apiService from '../../services/api';
+import apiService, { type ManagerTerrainDTO } from '../../services/api';
 import toast from 'react-hot-toast';
 
 
-interface Terrain {
-  id: number;
-  nom: string;
-  description?: string;
-  adresse: string;
-  prix_heure: number;
-  capacite: number;
-  surface: number;
-  note_moyenne?: number;
-  nombre_avis?: number;
-  images?: string[];
-  contact_telephone?: string;
-  image_principale?: string;
-  images_supplementaires?: string[];
-  est_actif?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
 const TerrainsPage: React.FC = () => {
-  const { } = useAuth();
-  const [terrains, setTerrains] = useState<Terrain[]>([]);
+  const [terrains, setTerrains] = useState<ManagerTerrainDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [editingTerrain, setEditingTerrain] = useState<{ id: number; currentPrice: number } | null>(null);
@@ -48,50 +27,39 @@ const TerrainsPage: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    fetchTerrains();
-  }, []);
-
-  const fetchTerrains = async () => {
+  const fetchTerrains = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiService.getManagerTerrains();
-      
-      if (response.success && response.data) {
-        setTerrains(response.data);
-      } else {
-        console.error('Erreur API:', response.message);
-        toast.error(response.message || "Impossible de charger les terrains.");
-      }
+      const { data } = await apiService.getManagerTerrains();
+      setTerrains(data ?? []);
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       toast.error("Erreur lors du chargement des terrains.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTerrains();
+  }, [fetchTerrains]);
 
   const updatePrix = async (terrainId: number, nouveauPrix: number) => {
     try {
-      const response = await apiService.updateTerrainPrix(terrainId, nouveauPrix);
-      
-      if (response.success) {
-        setTerrains(terrains.map(t => 
-          t.id === terrainId ? { ...t, prix_heure: nouveauPrix } : t
-        ));
-        toast.success('Prix mis à jour avec succès');
-        setEditingTerrain(null);
-        setNewPrice('');
-      } else {
-        toast.error(response.message || 'Erreur lors de la mise à jour du prix');
-      }
+      const { data } = await apiService.updateManagerTerrainPricing(terrainId, { prix_heure: nouveauPrix });
+      setTerrains(prev =>
+        prev.map(t => (t.id === terrainId ? { ...t, ...(data ?? {}), prix_heure: nouveauPrix } : t)),
+      );
+      toast.success('Prix mis à jour avec succès');
+      setEditingTerrain(null);
+      setNewPrice('');
     } catch (error) {
       console.error('Erreur update prix:', error);
       toast.error("Erreur lors de la mise à jour du prix.");
     }
   };
 
-  const handlePriceEdit = (terrain: Terrain) => {
+  const handlePriceEdit = (terrain: ManagerTerrainDTO) => {
     setEditingTerrain({ id: terrain.id, currentPrice: terrain.prix_heure });
     setNewPrice(terrain.prix_heure.toString());
   };
@@ -114,16 +82,15 @@ const TerrainsPage: React.FC = () => {
 
   const toggleDisponibilite = async (terrainId: number) => {
     try {
-      const response = await apiService.toggleTerrainDisponibilite(terrainId);
-      
-      if (response.success) {
-        setTerrains(terrains.map(t => 
-          t.id === terrainId ? { ...t, est_actif: response.data.est_actif } : t
-        ));
-        toast.success(response.message || 'État du terrain mis à jour');
-      } else {
-        toast.error(response.message || 'Erreur lors de la mise à jour');
-      }
+      const { data, meta } = await apiService.toggleManagerTerrainDisponibilite(terrainId);
+      setTerrains(prev =>
+        prev.map(t =>
+          t.id === terrainId
+            ? { ...t, est_actif: data?.est_actif ?? !t.est_actif }
+            : t,
+        ),
+      );
+      toast.success(meta.message || (data?.est_actif ? 'Terrain activé avec succès' : 'Terrain désactivé avec succès'));
     } catch (error) {
       console.error('Erreur toggle disponibilité:', error);
       toast.error("Erreur lors de la modification de la disponibilité.");
@@ -252,14 +219,14 @@ const TerrainsPage: React.FC = () => {
                           <div className="flex items-center space-x-2">
                             <Users className="w-4 h-4 text-gray-500 flex-shrink-0" />
                             <span className={`text-gray-600 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                              {terrain.capacite} pers.
+                              {terrain.capacite ?? 0} pers.
                             </span>
                           </div>
                           
                           <div className="flex items-center space-x-2">
                             <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
                             <span className={`text-gray-600 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                              {terrain.surface} m²
+                              {terrain.surface ?? 0} m²
                             </span>
                           </div>
                           
@@ -289,7 +256,11 @@ const TerrainsPage: React.FC = () => {
                             ) : (
                               <div className="flex items-center space-x-1">
                                 <span className={`font-medium text-green-600 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                                  {typeof terrain.prix_heure === 'number' ? terrain.prix_heure.toLocaleString() : terrain.prix_heure} CFA/h
+                                  {(
+                                    typeof terrain.prix_heure === 'number'
+                                      ? terrain.prix_heure
+                                      : Number(terrain.prix_heure ?? 0)
+                                  ).toLocaleString()} CFA/h
                                 </span>
                                 <button
                                   onClick={() => handlePriceEdit(terrain)}

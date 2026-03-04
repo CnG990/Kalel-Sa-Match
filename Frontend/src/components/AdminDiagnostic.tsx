@@ -27,8 +27,8 @@ const AdminDiagnostic: React.FC = () => {
 
     try {
       // 1. Diagnostic des Terrains
-      const terrainsResponse = await apiService.getAllTerrains();
-      const terrains = terrainsResponse.data?.data || terrainsResponse.data || [];
+      const { data: terrainsData } = await apiService.getAllTerrains();
+      const terrains = Array.isArray(terrainsData) ? terrainsData : [];
       
       const terrainsWithSurface = terrains.filter((t: any) => t.surface_postgis || t.surface);
       const terrainsWithGeometry = terrains.filter((t: any) => t.has_geometry || t.geometrie);
@@ -177,8 +177,13 @@ const AdminDiagnostic: React.FC = () => {
       });
 
       // 5. Diagnostic Gestionnaires
-      const gestionnairesResponse = await apiService.get('/admin/users?role=gestionnaire');
-      const gestionnaires = gestionnairesResponse.data?.users || [];
+      const { data: gestionnairesData } = await apiService.get('/admin/users?role=gestionnaire');
+      const gestionnairesRaw = Array.isArray(gestionnairesData)
+        ? gestionnairesData
+        : (typeof gestionnairesData === 'object' && gestionnairesData !== null
+            ? (gestionnairesData as { users?: unknown }).users
+            : undefined);
+      const gestionnaires = Array.isArray(gestionnairesRaw) ? gestionnairesRaw : [];
 
       results.push({
         title: 'Gestion des Gestionnaires',

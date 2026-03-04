@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import apiService from '../services/api';
+import apiService, { type TerrainDTO, type AbonnementDTO, type SubscriptionResponseDTO } from '../services/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -18,14 +18,20 @@ import type {
 const DUREES_SEANCE = [1, 2, 3];
 const NB_SEANCES = [1, 2, 3];
 
+const mapTerrainDto = (dto: TerrainDTO) => ({
+  ...dto,
+  nom: dto.nom ?? (dto as any).name ?? `Terrain ${dto.id}`,
+  prix_heure: Number(dto.prix_heure ?? 0),
+});
+
 const AbonnementsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { terrainId } = useParams<{ terrainId: string }>();
 
-  const [terrains, setTerrains] = useState<any[]>([]);
-  const [terrainSelectionne, setTerrainSelectionne] = useState<any | null>(null);
-  const [abonnements, setAbonnements] = useState<any[]>([]);
+  const [terrains, setTerrains] = useState<TerrainDTO[]>([]);
+  const [terrainSelectionne, setTerrainSelectionne] = useState<TerrainDTO | null>(null);
+  const [abonnements, setAbonnements] = useState<AbonnementDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [traitement, setTraitement] = useState(false);
   const [dureeSeance, setDureeSeance] = useState(1);
@@ -110,29 +116,15 @@ const AbonnementsPage: React.FC = () => {
   const fetchTerrains = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getTerrains();
-      console.log('🔍 Debug - Réponse API terrains:', response);
-      
-      if (response.success && response.data) {
-        // Gérer la structure paginée ou non
-        let terrainsData: any[] = [];
-        if (Array.isArray(response.data)) {
-          terrainsData = response.data;
-        } else if (Array.isArray(response.data?.data)) {
-          terrainsData = response.data.data;
-        } else {
-          terrainsData = [];
-        }
-        
-        console.log('🔍 Debug - Terrains extraits:', terrainsData);
-        setTerrains(terrainsData);
-        
-        if (terrainsData.length === 0) {
-          toast.error('Aucun terrain disponible');
-        }
-      } else {
-        setTerrains([]);
-        toast.error('Erreur lors du chargement des terrains');
+      const { data } = await apiService.getTerrains();
+      console.log('🔍 Debug - Réponse API terrains (normalisée):', data);
+
+      const terrainsData = Array.isArray(data) ? data.map(mapTerrainDto) : [];
+      console.log('🔍 Debug - Terrains extraits:', terrainsData);
+      setTerrains(terrainsData);
+
+      if (terrainsData.length === 0) {
+        toast.error('Aucun terrain disponible');
       }
     } catch (error) {
       console.error('❌ Erreur fetchTerrains:', error);
@@ -145,14 +137,12 @@ const AbonnementsPage: React.FC = () => {
 
   const fetchAbonnements = async () => {
     try {
-      const response = await apiService.getAbonnements();
-      if (response.success && response.data) {
-        setAbonnements(response.data);
-      } else {
-        setAbonnements([]);
-      }
-    } catch {
+      const { data } = await apiService.getAbonnements();
+      setAbonnements(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('❌ Erreur fetchAbonnements:', error);
       setAbonnements([]);
+      toast.error('Erreur lors du chargement des abonnements');
     }
   };
 
@@ -212,7 +202,7 @@ const AbonnementsPage: React.FC = () => {
     
     setVerificationEnCours(true);
     try {
-      const response = await abonnementConditionsService.verifierDisponibiliteAbonnement({
+      const availability = await abonnementConditionsService.verifierDisponibiliteAbonnement({
         terrain_id: terrainSelectionne.id,
         jours_preferes: joursPreferes,
         creneaux_preferes: creneauxPreferes,
@@ -220,10 +210,8 @@ const AbonnementsPage: React.FC = () => {
         nb_seances: nbSeances
       });
       
-      if (response.success) {
-        setDisponibiliteCreneaux(response.data);
-        console.log('✅ Disponibilité vérifiée:', response.data);
-      }
+      setDisponibiliteCreneaux(availability);
+      console.log('✅ Disponibilité vérifiée:', availability);
     } catch (error) {
       console.error('Erreur lors de la vérification de disponibilité:', error);
       toast.error('Erreur lors de la vérification de disponibilité');
@@ -234,11 +222,32 @@ const AbonnementsPage: React.FC = () => {
 
   const calculerPrix = (type: 'mensuel' | 'trimestriel' | 'annuel') => {
     if (!terrainSelectionne) return null;
-    const prixHeure = terrainSelectionne.prix_heure;
+    const prix = Number(terrainSelectionne.prix_heure ?? 0);
     let nbSemaines = 4;
     if (type === 'trimestriel') nbSemaines = 12;
     if (type === 'annuel') nbSemaines = 52;
-    return prixHeure * dureeSeance * nbSeances * nbSemaines;
+    return prix * dureeSeance * nbSeances * nbSemaines;
+  };
+
+  const buildSubscriptionDetails = (response: SubscriptionResponseDTO, terrain: TerrainDTO) => {
+    const startDate = response.date_debut ? new Date(response.date_debut) : new Date();
+    const endDate = response.date_fin ? new Date(response.date_fin) : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const type = response.type_abonnement === 'trimestriel'
+      ? 'trimestriel'
+      : response.type_abonnement === 'annuel'
+        ? 'annuel'
+        : 'mensuel';
+
+    return {
+      subscriptionId: response.abonnement_id ?? response.id,
+      terrainName: response.terrain_nom ?? terrain.nom,
+      totalAmount: response.prix_total ?? calculerPrix(type) ?? 0,
+      duration: type,
+      startDate: format(startDate, 'dd/MM/yyyy', { locale: fr }),
+      endDate: format(endDate, 'dd/MM/yyyy', { locale: fr }),
+      status: response.statut ?? 'pending',
+      preferences: response.preferences,
+    };
   };
 
   const souscrireAbonnement = async (abonnementId: number, type: 'mensuel' | 'trimestriel' | 'annuel') => {
@@ -284,30 +293,23 @@ const AbonnementsPage: React.FC = () => {
       };
       console.log('  - payload envoyé:', payload);
       
-      const response = await apiService.souscrireAbonnement(abonnementId, payload);
-      console.log('  - réponse API:', response);
-      
-      if (response.success) {
-        console.log('✅ Souscription réussie');
-        toast.success('Souscription initiée avec succès !');
-        navigate('/payment', {
-          state: {
-            subscriptionDetails: {
-              subscriptionId: response.data.abonnement_id,
-              terrainName: response.data.terrain_nom || terrainSelectionne.nom,
-              totalAmount: response.data.prix_total,
-              duration: response.data.type_abonnement,
-              startDate: format(new Date(response.data.date_debut), 'dd/MM/yyyy', { locale: fr }),
-              endDate: format(new Date(response.data.date_fin), 'dd/MM/yyyy', { locale: fr }),
-              status: response.data.statut,
-              preferences: response.data.preferences
-            }
-          }
-        });
-      } else {
-        console.log('❌ Erreur API:', response.message);
-        toast.error(response.message || 'Erreur lors de la souscription');
+      const { data, meta } = await apiService.souscrireAbonnement(abonnementId, payload);
+      console.log('  - réponse API:', data);
+
+      if (!data) {
+        const errorMessage = (meta?.message as string | undefined) ?? 'Erreur lors de la souscription';
+        console.log('❌ Erreur API:', errorMessage);
+        toast.error(errorMessage);
+        return;
       }
+
+      console.log('✅ Souscription réussie');
+      toast.success((meta?.message as string | undefined) ?? 'Souscription initiée avec succès !');
+      navigate('/payment', {
+        state: {
+          subscriptionDetails: buildSubscriptionDetails(data, terrainSelectionne),
+        },
+      });
     } catch (error) {
       console.error('❌ Exception lors de la souscription:', error);
       toast.error('Erreur lors de la souscription');
@@ -603,7 +605,7 @@ const AbonnementsPage: React.FC = () => {
                      </div>
                     <p className="text-gray-600 mb-4">{abonnement.description}</p>
                     <div className="space-y-2 mb-6">
-                      {abonnement.avantages.map((avantage: string, index: number) => (
+                      {(abonnement.avantages ?? []).map((avantage: string, index: number) => (
                         <div key={index} className="flex items-center gap-2 text-sm">
                           <CheckCircle className="w-4 h-4 text-green-500" />
                           <span>{avantage}</span>

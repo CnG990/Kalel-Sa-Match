@@ -54,17 +54,17 @@ const ProfilePage: React.FC = () => {
   const loadProfile = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getProfile();
-      if (response.success && response.data) {
-        const profileData = response.data;
-        setProfile(profileData);
+      const { data } = await apiService.getProfile();
+      if (data) {
+        const profileData = data;
+        setProfile(profileData as any);
         setFormData({
           nom: profileData.nom || '',
           prenom: profileData.prenom || '',
           telephone: profileData.telephone || '',
-          adresse: profileData.adresse || '',
-          date_naissance: profileData.date_naissance || '',
-          slogan: profileData.slogan || ''
+          adresse: (profileData.adresse as string) || '',
+          date_naissance: (profileData.date_naissance as string) || '',
+          slogan: (profileData.slogan as string) || ''
         });
       }
     } catch (error) {
@@ -86,8 +86,8 @@ const ProfilePage: React.FC = () => {
         updateData.append('profile_image', imageFile);
       }
 
-      const response = await apiService.updateProfile(updateData);
-      if (response.success) {
+      const { data } = await apiService.updateProfile(updateData);
+      if (data) {
         toast.success('Profil mis à jour avec succès');
         setEditing(false);
         await loadProfile();

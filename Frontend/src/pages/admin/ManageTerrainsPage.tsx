@@ -7,12 +7,11 @@ interface Terrain {
   nom: string;
   description?: string;
   adresse: string;
-  latitude?: string | number;
-  longitude?: string | number;
+  latitude?: number;
+  longitude?: number;
   image_principale?: string;
   images?: string[];
   est_actif: boolean;
-  gestionnaire_id?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -34,7 +33,7 @@ const ManageTerrainsPageSimple: React.FC = () => {
         adresse: terrain.adresse || '',
         latitude: terrain.latitude ? Number(terrain.latitude) : undefined,
         longitude: terrain.longitude ? Number(terrain.longitude) : undefined,
-        gestionnaire_id: terrain.gestionnaire_id || null
+        est_actif: terrain.est_actif ?? true
       }));
       
       setTerrains(validTerrains);

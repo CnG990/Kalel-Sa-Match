@@ -89,19 +89,19 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({ session, isOpen, onCl
     setLoading(true);
     
     try {
-      const response = await apiService.rescheduleSession(session.id, {
+      const { data, meta } = await apiService.rescheduleSession(session.id, {
         nouvelle_date: selectedSlot.date,
         nouvelle_heure_debut: selectedSlot.heure_debut,
         nouvelle_heure_fin: selectedSlot.heure_fin,
         reason: reason
       });
 
-      if (response.success) {
+      if (data) {
         toast.success('Séance reportée avec succès');
         onSuccess();
         onClose();
       } else {
-        toast.error(response.message || 'Erreur lors du report');
+        toast.error(meta.message || 'Erreur lors du report');
       }
     } catch (error) {
       console.error('Erreur report:', error);
@@ -296,13 +296,13 @@ const SubscriptionSessionsManager: React.FC = () => {
 
   const markSessionAbsent = async (sessionId: number) => {
     try {
-      const response = await apiService.markSessionAbsent(sessionId, 'Absence constatée par le gestionnaire');
+      const { data, meta } = await apiService.markSessionAbsent(sessionId, 'Absence constatée par le gestionnaire');
       
-      if (response.success) {
+      if (data) {
         toast.success('Absence marquée - Amende de 5 000 CFA appliquée');
         fetchSessions();
       } else {
-        toast.error(response.message || 'Erreur lors du marquage');
+        toast.error(meta.message || 'Erreur lors du marquage');
       }
     } catch (error) {
       console.error('Erreur marquage absence:', error);

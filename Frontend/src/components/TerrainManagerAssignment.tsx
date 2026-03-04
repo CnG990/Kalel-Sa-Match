@@ -8,7 +8,7 @@ interface Manager {
   nom: string;
   prenom: string;
   email: string;
-  telephone?: string;
+  telephone?: string | null;
   terrains_count?: number;
 }
 
@@ -52,14 +52,20 @@ const TerrainManagerAssignment: React.FC<Props> = ({ isOpen, onClose, onSuccess,
   const loadManagers = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getAllUsers();
-      if (response.success) {
-        // Filtrer seulement les gestionnaires
-        const managersData = response.data.data?.filter((user: any) => 
-          user.role === 'gestionnaire'
-        ) || [];
-        setManagers(managersData);
-      }
+      const { data } = await apiService.getAllUsers();
+      const managersData = Array.isArray(data)
+        ? data
+            .filter((user: any) => user.role === 'gestionnaire')
+            .map((user: any) => ({
+              id: user.id,
+              nom: user.nom,
+              prenom: user.prenom,
+              email: user.email,
+              telephone: user.telephone ?? null,
+              terrains_count: user.terrains_count ?? user.nombre_terrains ?? 0,
+            }))
+        : [];
+      setManagers(managersData);
     } catch (error) {
       console.error('Erreur lors du chargement des gestionnaires:', error);
       toast.error('Erreur lors du chargement des gestionnaires');
@@ -71,10 +77,8 @@ const TerrainManagerAssignment: React.FC<Props> = ({ isOpen, onClose, onSuccess,
   const loadTerrains = async () => {
     try {
       const response = await apiService.getAllTerrains();
-      if (response.success) {
-        const terrainsData = response.data?.data || response.data || [];
-        setTerrains(terrainsData);
-      }
+      const terrainsData = Array.isArray(response) ? response : [];
+      setTerrains(terrainsData);
     } catch (error) {
       console.error('Erreur lors du chargement des terrains:', error);
     }
@@ -88,16 +92,16 @@ const TerrainManagerAssignment: React.FC<Props> = ({ isOpen, onClose, onSuccess,
 
     setIsSubmitting(true);
     try {
-      const response = await apiService.updateTerrain(selectedTerrain.id, {
+      const { data, meta } = await apiService.updateTerrain(selectedTerrain.id, {
         gestionnaire_id: selectedManagerId
       });
 
-      if (response.success) {
+      if (data) {
         toast.success('Gestionnaire attribué avec succès !');
         onSuccess();
         onClose();
       } else {
-        toast.error(response.message || 'Erreur lors de l\'attribution');
+        toast.error(meta.message || 'Erreur lors de l\'attribution');
       }
     } catch (error) {
       toast.error('Erreur lors de l\'attribution du gestionnaire');
@@ -112,16 +116,16 @@ const TerrainManagerAssignment: React.FC<Props> = ({ isOpen, onClose, onSuccess,
 
     setIsSubmitting(true);
     try {
-      const response = await apiService.updateTerrain(selectedTerrain.id, {
+      const { data, meta } = await apiService.updateTerrain(selectedTerrain.id, {
         gestionnaire_id: null
       });
 
-      if (response.success) {
+      if (data) {
         toast.success('Gestionnaire retiré du terrain');
         onSuccess();
         onClose();
       } else {
-        toast.error(response.message || 'Erreur lors du retrait');
+        toast.error(meta.message || 'Erreur lors du retrait');
       }
     } catch (error) {
       toast.error('Erreur lors du retrait du gestionnaire');

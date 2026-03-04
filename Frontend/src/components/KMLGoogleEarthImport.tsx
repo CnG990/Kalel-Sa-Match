@@ -52,9 +52,9 @@ const KMLGoogleEarthImport: React.FC<Props> = ({ isOpen, onClose, onSuccess }) =
 
   const loadPostGISStats = async () => {
     try {
-      const response = await apiService.getPostGISStats();
-      if (response.success) {
-        setPostgisStats(response.data);
+      const { data } = await apiService.getPostGISStats();
+      if (data) {
+        setPostgisStats(data);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des stats PostGIS:', error);
@@ -105,15 +105,16 @@ const KMLGoogleEarthImport: React.FC<Props> = ({ isOpen, onClose, onSuccess }) =
         formData.append(`files[${index}]`, file);
       });
 
-      const response = await apiService.importKMLBatch(formData);
+      const { data, meta } = await apiService.importKMLBatch(formData);
       
-      if (response.success) {
-        setImportResult(response.data as KMLImportResult);
-        toast.success(`Import réussi ! ${response.data.success_count}/${response.data.processed_files} fichiers traités`);
-        loadPostGISStats(); // Actualiser les stats
-        onSuccess(); // Actualiser la liste des terrains
+      if (data) {
+        const result = data as KMLImportResult;
+        setImportResult(result);
+        toast.success(meta.message || `Import réussi ! ${result.success_count}/${result.processed_files} fichiers traités`);
+        loadPostGISStats();
+        onSuccess();
       } else {
-        toast.error(response.message || 'Erreur lors de l\'import');
+        toast.error(meta.message || 'Erreur lors de l\'import');
       }
     } catch (error) {
       toast.error('Erreur lors de l\'import KML');

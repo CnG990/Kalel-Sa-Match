@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, Download, FileText, Map, CheckCircle, AlertTriangle, X, Edit, Eye } from 'lucide-react';
 import apiService from '../../services/api';
 
@@ -65,9 +65,24 @@ const GeoImportPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await apiService.getAllTerrains();
-      if (response.success && response.data) {
-        setTerrains(response.data.data || response.data);
-      }
+      const terrainsData = Array.isArray(response) ? response : [];
+      const normalizedTerrains: Terrain[] = terrainsData.map((terrain: any) => ({
+        id: terrain.id ?? 0,
+        nom: terrain.nom ?? 'Terrain sans nom',
+        adresse: terrain.adresse ?? '',
+        latitude:
+          terrain.latitude !== undefined && terrain.latitude !== null
+            ? Number(terrain.latitude)
+            : undefined,
+        longitude:
+          terrain.longitude !== undefined && terrain.longitude !== null
+            ? Number(terrain.longitude)
+            : undefined,
+        surface: terrain.surface ?? undefined,
+        geometrie: terrain.geometrie ?? undefined,
+        created_at: terrain.created_at ?? ''
+      }));
+      setTerrains(normalizedTerrains);
     } catch (error) {
       // Erreur silencieuse, les terrains sont chargés ailleurs
     } finally {
@@ -137,11 +152,11 @@ const GeoImportPage: React.FC = () => {
       formData.append('file', selectedFile);
       formData.append('type', importType);
       
-      const response = await apiService.importGeoData(formData);
-      setUploadResult(response as ImportResult);
+      const { data, meta } = await apiService.importGeoData(formData);
+      setUploadResult({ success: !!data, message: meta.message || (data?.message ?? 'Import terminé'), data });
       
       // Recharger les terrains après import réussi
-      if (response.success) {
+      if (data) {
         loadTerrains();
       }
     } catch (error) {
@@ -156,10 +171,10 @@ const GeoImportPage: React.FC = () => {
 
   const handleExport = async (format: 'kml' | 'geojson' | 'csv') => {
     try {
-      const response = await apiService.exportGeoData(format);
-      if (response.success) {
+      const { data } = await apiService.exportGeoData(format);
+      if (data) {
         // Créer un lien de téléchargement
-        const blob = new Blob([JSON.stringify(response.data)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -174,11 +189,11 @@ const GeoImportPage: React.FC = () => {
 
   const validateDataIntegrity = async () => {
     try {
-      const response = await apiService.validateDataIntegrity();
+      const { data, meta } = await apiService.validateDataIntegrity();
       setUploadResult({
-        success: response.success,
-        message: response.message || 'Validation terminée',
-        data: response.data
+        success: !!data,
+        message: meta.message || 'Validation terminée',
+        data
       });
     } catch (error) {
       setUploadResult({

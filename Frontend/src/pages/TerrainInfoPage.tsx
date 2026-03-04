@@ -57,10 +57,11 @@ const TerrainInfoPage: React.FC = () => {
       return;
     }
     try {
-      const result = await apiService.getTerrain(id);
+      const { data, meta } = await apiService.getTerrain(id);
+      const result = data;
 
       if (!result) {
-        throw new Error('Terrain non trouvé');
+        throw new Error(meta.message || 'Terrain non trouvé');
       }
 
       const normalizedTerrain: TerrainUI = {

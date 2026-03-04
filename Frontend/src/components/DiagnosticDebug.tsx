@@ -52,11 +52,11 @@ const DiagnosticDebug: React.FC<DiagnosticDebugProps> = ({ isOpen, onClose }) =>
 
     // Test 2: API Profile
     try {
-      const profileResponse = await apiService.getProfile();
-      if (profileResponse.success) {
-        updateResult('API Profile', 'success', 'API Profile OK', profileResponse.data);
+      const { data } = await apiService.getProfile();
+      if (data) {
+        updateResult('API Profile', 'success', 'API Profile OK', data);
       } else {
-        updateResult('API Profile', 'error', profileResponse.message || 'Échec API Profile');
+        updateResult('API Profile', 'error', 'Profil indisponible');
       }
     } catch (error: any) {
       updateResult('API Profile', 'error', `Erreur: ${error.message}`);
@@ -64,26 +64,22 @@ const DiagnosticDebug: React.FC<DiagnosticDebugProps> = ({ isOpen, onClose }) =>
 
     // Test 3: API Terrains Gestionnaire
     try {
-      const terrainsResponse = await apiService.getManagerTerrains();
-      if (terrainsResponse.success) {
-        updateResult('API Terrains Gestionnaire', 'success', `${terrainsResponse.data?.length || 0} terrains trouvés`, terrainsResponse.data);
-      } else {
-        updateResult('API Terrains Gestionnaire', 'error', terrainsResponse.message || 'Échec API Terrains');
-      }
+      const { data } = await apiService.getManagerTerrains();
+      updateResult('API Terrains Gestionnaire', 'success', `${data?.length || 0} terrains trouvés`, data);
     } catch (error: any) {
       updateResult('API Terrains Gestionnaire', 'error', `Erreur: ${error.message}`);
     }
 
     // Test 4: API Statistiques (avec un terrain de test)
     try {
-      const terrainsResponse = await apiService.getManagerTerrains();
-      if (terrainsResponse.success && terrainsResponse.data?.length > 0) {
-        const premierTerrain = terrainsResponse.data[0];
-        const statsResponse = await apiService.getTerrainStatistiques(premierTerrain.id);
-        if (statsResponse.success) {
-          updateResult('API Statistiques', 'success', 'API Statistiques OK', statsResponse.data);
+      const { data: terrains } = await apiService.getManagerTerrains();
+      if (terrains && terrains.length > 0) {
+        const premierTerrain = terrains[0];
+        const { data: stats } = await apiService.getTerrainStatistics(premierTerrain.id);
+        if (stats) {
+          updateResult('API Statistiques', 'success', 'API Statistiques OK', stats);
         } else {
-          updateResult('API Statistiques', 'error', statsResponse.message || 'Échec API Statistiques');
+          updateResult('API Statistiques', 'error', 'Données statistiques indisponibles');
         }
       } else {
         updateResult('API Statistiques', 'error', 'Aucun terrain pour tester');

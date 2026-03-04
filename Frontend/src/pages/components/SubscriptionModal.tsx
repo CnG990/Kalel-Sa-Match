@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import apiService from '../../services/api';
 
 interface Abonnement {
@@ -34,23 +35,29 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ abonnement, onClo
   };
 
   const handleSubscribe = async () => {
-    // Logique de souscription
-    console.log("Souscription à", abonnement.nom, "avec les préférences:", preferences);
-    // Ici, appeler l'API, puis rediriger vers le paiement
-    const response = await apiService.souscrireAbonnement(abonnement.id, preferences);
-    if(response.success && response.data) {
-        navigate('/payment', { 
-            state: { 
-              // Adapter les détails pour le paiement d'un abonnement
-              reservationDetails: {
-                abonnementId: response.data.id,
-                terrainName: `Abonnement ${abonnement.nom}`, // Le nom est plus générique
-                date: new Date().toLocaleDateString(),
-                time: 'N/A',
-                price: abonnement.prix,
-              }
-            } 
-          });
+    try {
+      const { data, meta } = await apiService.souscrireAbonnement(abonnement.id, preferences);
+
+      if (!data) {
+        toast.error((meta?.message as string | undefined) ?? 'Erreur lors de la souscription');
+        return;
+      }
+
+      toast.success((meta?.message as string | undefined) ?? 'Souscription initiée');
+      navigate('/payment', {
+        state: {
+          reservationDetails: {
+            abonnementId: data.abonnement_id ?? data.id,
+            terrainName: data.terrain_nom ?? `Abonnement ${abonnement.nom}`,
+            date: data.date_debut ?? new Date().toISOString(),
+            time: 'N/A',
+            price: data.prix_total ?? abonnement.prix,
+          },
+        },
+      });
+    } catch (error: any) {
+      console.error('Erreur souscription abonnement:', error);
+      toast.error(error?.message ?? 'Impossible de souscrire à cet abonnement');
     }
   };
 

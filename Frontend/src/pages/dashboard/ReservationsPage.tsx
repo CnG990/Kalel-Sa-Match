@@ -80,9 +80,9 @@ const ReservationsPage: React.FC = () => {
     const fetchReservations = async () => {
       try {
         setLoading(true);
-        const response = await apiService.getMyReservations();
-        if (response.success && Array.isArray(response.data)) {
-          setReservations(response.data);
+        const { data } = await apiService.getMyReservations();
+        if (data && Array.isArray(data)) {
+          setReservations(data as any);
         } else {
           setError('Impossible de charger vos réservations.');
         }
@@ -112,8 +112,8 @@ const ReservationsPage: React.FC = () => {
     }
     
     try {
-      const response = await apiService.requestRefund(reservationId);
-      if (response.success) {
+      const { data, meta } = await apiService.requestRefund(reservationId);
+      if (data) {
         setReservations(prevReservations => 
           prevReservations.map(r => 
             r.id === reservationId ? { ...r, statut: 'annulee' } : r
@@ -121,7 +121,7 @@ const ReservationsPage: React.FC = () => {
         );
         alert("Votre demande d'annulation a été prise en compte.");
       } else {
-        setError(response.message || "L'annulation a échoué.");
+        setError(meta.message || "L'annulation a échoué.");
       }
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue lors de l\'annulation.');

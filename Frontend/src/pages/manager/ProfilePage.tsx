@@ -4,6 +4,12 @@ import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api';
 import toast from 'react-hot-toast';
 
+const toRequiredString = (value: unknown, fallback = ''): string =>
+  typeof value === 'string' ? value : fallback;
+
+const toOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
 interface UserProfile {
   id: number;
   nom: string;
@@ -45,40 +51,37 @@ const ProfilePage: React.FC = () => {
   const loadProfile = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getProfile();
-      
-      if (response.success && response.data) {
-        const data = response.data;
-        console.log('🖼️ Données profil reçues:', data);
-        console.log('🖼️ profile_image_url:', data.profile_image_url);
-        
-        setProfile({
-          id: data.id,
-          nom: data.nom || '',
-          prenom: data.prenom || '',
-          email: data.email || '',
-          telephone: data.telephone || '',
-          profile_image: data.profile_image_url,
-          profile_image_url: data.profile_image_url,
-          nom_entreprise: data.nom_entreprise || '',
-          adresse: data.adresse || '',
-          description: data.description || '',
-          statut_validation: data.statut_validation || 'en_attente',
-          numero_ninea: data.numero_ninea || '',
-          numero_registre_commerce: data.numero_registre_commerce || '',
-          adresse_entreprise: data.adresse_entreprise || '',
-          role: data.role
-        });
-        
-        if (data.profile_image_url) {
-          console.log('🖼️ Définition imagePreview avec:', data.profile_image_url);
-          setImagePreview(data.profile_image_url);
-        } else {
-          console.log('🖼️ Aucune image de profil trouvée');
-        }
-      } else {
+      const { data } = await apiService.getProfile();
+
+      if (!data) {
         toast.error('Erreur lors du chargement du profil');
+        return;
       }
+
+      const status = ['en_attente', 'approuve', 'rejete', 'suspendu'].includes(data.statut_validation ?? '')
+        ? (data.statut_validation as UserProfile['statut_validation'])
+        : 'en_attente';
+
+      const sanitized: UserProfile = {
+        id: data.id,
+        nom: toRequiredString(data.nom),
+        prenom: toRequiredString(data.prenom),
+        email: toRequiredString(data.email),
+        telephone: toRequiredString(data.telephone),
+        profile_image: toOptionalString(data.profile_image_url),
+        profile_image_url: toOptionalString(data.profile_image_url),
+        nom_entreprise: toRequiredString((data as Record<string, unknown>).nom_entreprise, ''),
+        adresse: toRequiredString((data as Record<string, unknown>).adresse, ''),
+        description: toRequiredString((data as Record<string, unknown>).description, ''),
+        statut_validation: status,
+        numero_ninea: toRequiredString((data as Record<string, unknown>).numero_ninea, ''),
+        numero_registre_commerce: toRequiredString((data as Record<string, unknown>).numero_registre_commerce, ''),
+        adresse_entreprise: toRequiredString((data as Record<string, unknown>).adresse_entreprise, ''),
+        role: data.role,
+      };
+
+      setProfile(sanitized);
+      setImagePreview(sanitized.profile_image_url ?? null);
     } catch (error) {
       console.error('Erreur chargement profil:', error);
       toast.error('Erreur lors du chargement du profil');
@@ -140,22 +143,15 @@ const ProfilePage: React.FC = () => {
         formData.append('profile_image', selectedImage);
       }
 
-      const response = await apiService.updateProfile(formData);
-      
-      if (response.success) {
-        toast.success('Profil mis à jour avec succès', { id: toastId });
-        
-        // Recharger le profil pour obtenir les dernières données
-        await loadProfile();
-        
-        // Mettre à jour le contexte utilisateur
-        await refreshUser();
-        
-        setEditing(false);
-        setSelectedImage(null);
-      } else {
-        toast.error(response.message || 'Erreur lors de la mise à jour du profil', { id: toastId });
-      }
+      await apiService.updateProfile(formData);
+
+      toast.success('Profil mis à jour avec succès', { id: toastId });
+
+      await loadProfile();
+      await refreshUser();
+
+      setEditing(false);
+      setSelectedImage(null);
     } catch (error: any) {
       console.error('Erreur sauvegarde:', error);
       toast.error(error.message || 'Erreur lors de la sauvegarde du profil', { id: toastId });

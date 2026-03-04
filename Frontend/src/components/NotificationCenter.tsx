@@ -58,6 +58,14 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className = '' 
     }
   };
 
+  const getNotificationMessage = (data: unknown): string | null => {
+    if (data && typeof data === 'object' && 'message' in data) {
+      const value = (data as { message?: unknown }).message;
+      return typeof value === 'string' ? value : null;
+    }
+    return null;
+  };
+
   return (
     <div className={`relative ${className}`}>
       {/* Bouton de notification */}
@@ -125,61 +133,67 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className = '' 
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-4 border-l-4 transition-colors hover:bg-gray-50 ${
-                        notification.read_at ? 'opacity-60' : ''
-                      } ${getPriorityColor(notification.priority)}`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        {/* Icône */}
-                        <div className="flex-shrink-0 mt-1">
-                          {getNotificationIcon(notification.type, notification.priority)}
-                        </div>
+                  {notifications.map((notification) => {
+                    const extraMessage = getNotificationMessage(notification.data);
 
-                        {/* Contenu */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900">
-                                {getNotificationTitle(notification.type)}
-                              </p>
-                              <p className="text-sm text-gray-600 mt-1">
-                                {notification.data.message}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-2">
-                                {formatDistanceToNow(new Date(notification.created_at), {
-                                  addSuffix: true,
-                                  locale: fr
-                                })}
-                              </p>
-                            </div>
+                    return (
+                      <div
+                        key={notification.id}
+                        className={`p-4 border-l-4 transition-colors hover:bg-gray-50 ${
+                          notification.read_at ? 'opacity-60' : ''
+                        } ${getPriorityColor(notification.priority || 'normal')}`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          {/* Icône */}
+                          <div className="flex-shrink-0 mt-1">
+                            {getNotificationIcon(notification.type || 'info', notification.priority || 'normal')}
+                          </div>
 
-                            {/* Actions */}
-                            <div className="flex items-center space-x-1 ml-2">
-                              {!notification.read_at && (
+                          {/* Contenu */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {getNotificationTitle(notification.type)}
+                                </p>
+                                {extraMessage && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {extraMessage}
+                                  </p>
+                                )}
+                                <p className="text-xs text-gray-400 mt-2">
+                                  {formatDistanceToNow(new Date(notification.created_at), {
+                                    addSuffix: true,
+                                    locale: fr
+                                  })}
+                                </p>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center space-x-1 ml-2">
+                                {!notification.read_at && (
+                                  <button
+                                    onClick={() => markAsRead(notification.id)}
+                                    className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                    title="Marquer comme lu"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                )}
                                 <button
-                                  onClick={() => markAsRead(notification.id)}
-                                  className="p-1 text-gray-400 hover:text-green-600 transition-colors"
-                                  title="Marquer comme lu"
+                                  onClick={() => deleteNotification(notification.id)}
+                                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                  title="Supprimer"
                                 >
-                                  <Check className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
-                              )}
-                              <button
-                                onClick={() => deleteNotification(notification.id)}
-                                className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                                title="Supprimer"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

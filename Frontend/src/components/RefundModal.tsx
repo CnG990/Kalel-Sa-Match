@@ -95,19 +95,19 @@ const RefundModal: React.FC<RefundModalProps> = ({
     setLoading(true);
     try {
       const refundData = {
-        refund_type: 'partial',
+        refund_type: 'refund_partial' as const,
         reason: raison,
         weather_evidence: 'N/A' // Placeholder, actual evidence would be fetched
       };
 
-      const response = await apiService.requestRefund(reservation.id, refundData);
+      const { data, meta } = await apiService.requestRefund(reservation.id, refundData);
       
-      if (response.success) {
-        toast.success(response.message || 'Remboursement traité avec succès');
+      if (data) {
+        toast.success(meta.message || 'Remboursement traité avec succès');
         onRefundSuccess();
         onClose();
       } else {
-        toast.error(response.message || 'Erreur lors de la demande de remboursement');
+        toast.error(meta.message || 'Erreur lors de la demande de remboursement');
       }
     } catch (error) {
       console.error('Erreur remboursement:', error);
@@ -121,14 +121,14 @@ const RefundModal: React.FC<RefundModalProps> = ({
     setLoading(true);
     try {
       // Corriger l'appel à l'API
-      const response = await apiService.updateAdminReservationStatus(reservation.id, 'annulee');
+      const { data, meta } = await apiService.updateAdminReservationStatus(reservation.id, 'annulee');
       
-      if (response.success) {
+      if (data) {
         toast.success('Réservation annulée avec succès');
         onRefundSuccess();
         onClose();
       } else {
-        toast.error(response.message || 'Erreur lors de l\'annulation');
+        toast.error(meta.message || 'Erreur lors de l\'annulation');
       }
     } catch (error) {
       console.error('Erreur annulation:', error);

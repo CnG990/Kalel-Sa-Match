@@ -6,6 +6,7 @@ import { fr } from 'date-fns/locale'; // Locale française
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api';
+
 import type { TerrainUI } from '../../types/terrain.ts';
 
 interface ReservationModalProps {
@@ -44,12 +45,9 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
         setError(null);
         try {
           // Note: La durée est en dur (1h), à rendre dynamique plus tard
-          const response = await apiService.checkAvailability(terrain.id, format(selectedDate, 'yyyy-MM-dd'), 1);
-          if (response.success && Array.isArray(response.data)) {
-            setAvailableSlots(response.data);
-          } else {
-            setAvailableSlots([]);
-          }
+          const { data } = await apiService.checkAvailability(terrain.id, format(selectedDate, 'yyyy-MM-dd'), 1);
+          setAvailableSlots(Array.isArray(data) ? data : []);
+
         } catch (error: any) {
           console.error("Erreur lors de la vérification des disponibilités:", error);
           if (error.message === 'Unauthenticated.') {
@@ -102,24 +100,22 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
         date_fin: endDate.toISOString(),
       };
 
-      const response = await apiService.createReservation(reservationData);
+      const { data } = await apiService.createReservation(reservationData);
 
-      if (response.success && response.data) {
+      if (data) {
         navigate('/payment', { 
           state: { 
             reservationDetails: {
-              reservationId: response.data.id,
+              reservationId: data.id,
               terrainName: terrain.nom,
               date: format(selectedDate, 'dd/MM/yyyy', { locale: fr }),
               time: selectedSlot,
-              price: response.data.montant_total,
+              price: data.montant_total,
             }
           } 
         });
       } else {
-        setError(
-          response.message || "La création de la réservation a échoué."
-        );
+        setError("La création de la réservation a échoué.");
       }
     } catch (e: any) {
       console.error("Erreur lors de la réservation:", e);
@@ -140,12 +136,9 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
             setLoadingSlots(true);
             setError(null);
             try {
-              const response = await apiService.checkAvailability(terrain.id, format(selectedDate, 'yyyy-MM-dd'), 1);
-              if (response.success && Array.isArray(response.data)) {
-                setAvailableSlots(response.data);
-              } else {
-                setAvailableSlots([]);
-              }
+              const { data } = await apiService.checkAvailability(terrain.id, format(selectedDate, 'yyyy-MM-dd'), 1);
+              setAvailableSlots(Array.isArray(data) ? data : []);
+
             } catch (error: any) {
               setAvailableSlots([]);
             } finally {

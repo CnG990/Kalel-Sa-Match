@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import apiService from '../services/api';
+import apiService, { type TerrainDTO } from '../services/api';
 
 interface Terrain {
   id: number;
@@ -25,6 +25,26 @@ interface Terrain {
     est_ouvert: boolean;
   };
 }
+
+const mapTerrainDtoToTerrain = (dto: TerrainDTO): Terrain => ({
+  id: dto.id,
+  name: (dto as any).name ?? dto.nom ?? `Terrain ${dto.id}`,
+  description: dto.description ?? '',
+  adresse: dto.adresse ?? '',
+  prix_heure: Number(dto.prix_heure ?? 0),
+  area: Number((dto as any).area ?? 0),
+  capacite_spectateurs: Number((dto as any).capacite_spectateurs ?? dto.capacite ?? 0),
+  equipements: Array.isArray(dto.equipements) ? (dto.equipements as string[]) : [],
+  gestionnaire: ((dto as any).gestionnaire as string) ?? '',
+  contact_telephone: ((dto as any).contact_telephone as string) ?? '',
+  contact_email: ((dto as any).contact_email as string) ?? '',
+  horaires_ouverture: (dto as any).horaires_ouverture ?? null,
+  etat: dto.est_actif === false ? 'maintenance' : 'disponible',
+  latitude: dto.latitude ? Number(dto.latitude) : 0,
+  longitude: dto.longitude ? Number(dto.longitude) : 0,
+  distance: (dto as any).distance,
+  stats: (dto as any).stats,
+});
 
 const TerrainsPage: React.FC = () => {
   const [terrains, setTerrains] = useState<Terrain[]>([]);
@@ -57,15 +77,12 @@ const TerrainsPage: React.FC = () => {
         prix_max: priceRange[1],
         ...options,
       };
-      const response = await apiService.getTerrains(params);
-      if (response.success && response.data) {
-        setTerrains(response.data.data as any);
-        setTotalPages(response.data.last_page);
-        setCurrentPage(response.data.current_page);
-        setTotalTerrains(response.data.total);
-      } else {
-        setError(response.message || 'Erreur lors de la récupération des terrains');
-      }
+      const { data, meta } = await apiService.getTerrains(params);
+      const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];
+      setTerrains(normalized);
+      setTotalPages(Number(meta?.last_page ?? meta?.pages ?? 1));
+      setCurrentPage(Number(meta?.current_page ?? page));
+      setTotalTerrains(Number(meta?.count ?? normalized.length ?? 0));
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue.');
     } finally {
@@ -86,15 +103,16 @@ const TerrainsPage: React.FC = () => {
         return;
       }
 
-      const response = await apiService.getNearbyTerrains(location.latitude, location.longitude, 10);
+      const { data, meta } = await apiService.getNearbyTerrains(location.latitude, location.longitude, 10);
       
-      if (response.success && response.data) {
-        setTerrains(response.data);
-        setTotalTerrains(response.data.length);
+      if (data) {
+        const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];
+        setTerrains(normalized);
+        setTotalTerrains(normalized.length);
         setTotalPages(1);
         setCurrentPage(1);
       } else {
-        setError(response.message || 'Erreur lors de la recherche des terrains à proximité');
+        setError(meta.message || 'Erreur lors de la recherche des terrains à proximité');
       }
     } catch (err: any) {
       console.error('Erreur recherche proximité:', err);
@@ -134,21 +152,18 @@ const TerrainsPage: React.FC = () => {
         search: searchTerm,
         _timestamp: Date.now()
       };
-      const response = await apiService.getTerrains({
+      const { data, meta } = await apiService.getTerrains({
         per_page: params.per_page,
         page: params.page,
         search: params.search,
         sort_by: params.sort_by,
         sort_direction: params.sort_direction as 'asc' | 'desc'
       });
-      if (response.success && response.data) {
-        setTerrains(response.data.data as any);
-        setTotalPages(response.data.last_page);
-        setCurrentPage(response.data.current_page);
-        setTotalTerrains(response.data.total);
-      } else {
-        setError(response.message || 'Erreur lors de la récupération des terrains');
-      }
+      const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];
+      setTerrains(normalized);
+      setTotalPages(Number(meta?.last_page ?? meta?.pages ?? 1));
+      setCurrentPage(Number(meta?.current_page ?? params.page));
+      setTotalTerrains(Number(meta?.count ?? normalized.length ?? 0));
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue.');
     } finally {
@@ -201,15 +216,16 @@ const TerrainsPage: React.FC = () => {
     setError(null);
     
     try {
-      const response = await apiService.searchTerrainsByLocation(locationName);
+      const { data, meta } = await apiService.searchTerrainsByLocation(locationName);
       
-      if (response.success && response.data) {
-        setTerrains(response.data);
-        setTotalTerrains(response.data.length);
+      if (data) {
+        const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];
+        setTerrains(normalized);
+        setTotalTerrains(normalized.length);
         setTotalPages(1);
         setCurrentPage(1);
       } else {
-        setError(response.message || 'Erreur lors de la recherche par localisation');
+        setError(meta.message || 'Erreur lors de la recherche par localisation');
       }
     } catch (err: any) {
       console.error('Erreur recherche localisation:', err);

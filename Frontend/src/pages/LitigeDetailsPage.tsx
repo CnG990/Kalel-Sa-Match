@@ -71,15 +71,17 @@ const LitigeDetailsPage: React.FC = () => {
         apiService.get(`/litiges/${id}/messages`)
       ]);
 
-      if (litigeResponse.success) {
-        setLitige(litigeResponse.data);
+      const litigeData = litigeResponse.data;
+      if (litigeData) {
+        setLitige(litigeData as LitigeDetails);
       } else {
-        toast.error('Erreur lors du chargement du litige');
+        toast.error(litigeResponse.meta?.message || 'Erreur lors du chargement du litige');
         navigate('/dashboard/litiges');
       }
 
-      if (messagesResponse.success) {
-        setMessages(messagesResponse.data || []);
+      const messagesData = messagesResponse.data;
+      if (messagesData) {
+        setMessages(Array.isArray(messagesData) ? messagesData : []);
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -102,12 +104,12 @@ const LitigeDetailsPage: React.FC = () => {
         message: newMessage.trim()
       });
 
-      if (response.success) {
+      if (response.data) {
         setNewMessage('');
         await chargerDetailsLitige(); // Recharger pour avoir le nouveau message
-        toast.success('Message envoyé avec succès');
+        toast.success(response.meta?.message || 'Message envoyé avec succès');
       } else {
-        toast.error(response.message || 'Erreur lors de l\'envoi du message');
+        toast.error(response.meta?.message || 'Erreur lors de l\'envoi du message');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -124,11 +126,11 @@ const LitigeDetailsPage: React.FC = () => {
 
     try {
       const response = await apiService.post(`/litiges/${id}/escalader`);
-      if (response.success) {
-        toast.success('Litige escaladé avec succès');
+      if (response.data) {
+        toast.success(response.meta?.message || 'Litige escaladé avec succès');
         await chargerDetailsLitige();
       } else {
-        toast.error(response.message || 'Erreur lors de l\'escalade');
+        toast.error(response.meta?.message || 'Erreur lors de l\'escalade');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -143,11 +145,11 @@ const LitigeDetailsPage: React.FC = () => {
 
     try {
       const response = await apiService.post(`/litiges/${id}/fermer`);
-      if (response.success) {
-        toast.success('Litige fermé avec succès');
+      if (response.data) {
+        toast.success(response.meta?.message || 'Litige fermé avec succès');
         await chargerDetailsLitige();
       } else {
-        toast.error(response.message || 'Erreur lors de la fermeture');
+        toast.error(response.meta?.message || 'Erreur lors de la fermeture');
       }
     } catch (error) {
       console.error('Erreur:', error);

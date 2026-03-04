@@ -26,7 +26,7 @@ const DisputesPage: React.FC = () => {
       if (statusFilter) params.statut = statusFilter;
 
       const response = await apiService.getDisputes(params);
-      if (response.success && response.data) {
+      if (response.data) {
         setDisputes(response.data.data || []);
         setTotalPages(response.data.last_page || 1);
       }

@@ -43,23 +43,21 @@ const PaymentsPage: React.FC = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const response = await apiService.get('/admin/payments');
+      const { data } = await apiService.get('/admin/payments');
       
-      // Vérification robuste des données avec fallbacks
-      const paymentsData = response?.data?.payments || response?.data || [];
-      setPayments(Array.isArray(paymentsData) ? paymentsData : []);
-      
+      const paymentsRaw = Array.isArray(data)
+        ? data
+        : (typeof data === 'object' && data !== null ? (data as { payments?: unknown }).payments : undefined);
+      const paymentsData = Array.isArray(paymentsRaw) ? paymentsRaw : [];
+      setPayments(paymentsData);
+
       // Calculer les statistiques avec protection contre les erreurs
-      const total = paymentsData?.length || 0;
-      const completed = paymentsData?.filter((p: Payment) => p.statut === 'completed').length || 0;
-      const pending = paymentsData?.filter((p: Payment) => p.statut === 'pending').length || 0;
-      const failed = paymentsData?.filter((p: Payment) => p.statut === 'failed').length || 0;
-      const totalAmount = paymentsData?.reduce((sum: number, p: Payment) => {
-        return sum + (p.montant || 0);
-      }, 0) || 0;
-      const commissionTotal = paymentsData?.reduce((sum: number, p: Payment) => {
-        return sum + (p.commission || 0);
-      }, 0) || 0;
+      const total = paymentsData.length;
+      const completed = paymentsData.filter((p: Payment) => p.statut === 'completed').length;
+      const pending = paymentsData.filter((p: Payment) => p.statut === 'pending').length;
+      const failed = paymentsData.filter((p: Payment) => p.statut === 'failed').length;
+      const totalAmount = paymentsData.reduce((sum: number, p: Payment) => sum + (p.montant || 0), 0);
+      const commissionTotal = paymentsData.reduce((sum: number, p: Payment) => sum + (p.commission || 0), 0);
       
       setStats({ total, completed, pending, failed, totalAmount, commissionTotal });
     } catch (error) {

@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Ticket, CheckCircle, XCircle, AlertCircle, Users, Search, Hash, Clock, Sparkles, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
-import apiService from '../../services/api';
+import apiService, { type TicketValidationHistoryDTO, type TicketValidationReservationDTO } from '../../services/api';
 
 interface ValidationResult {
   valid: boolean;
-  reservation?: {
-    id: number;
-    terrain_nom: string;
-    client_nom: string;
-    date_debut: string;
-    date_fin: string;
-    statut: string;
-    code_ticket: string;
-  };
+  reservation?: TicketValidationReservationDTO;
   message: string;
 }
 
@@ -36,7 +28,6 @@ const TicketValidationPage: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Charger l'historique des validations récentes
   useEffect(() => {
     loadValidationHistory();
   }, []);
@@ -44,9 +35,16 @@ const TicketValidationPage: React.FC = () => {
   const loadValidationHistory = async () => {
     try {
       setIsLoading(true);
-      const response = await apiService.getValidationHistory({ limit: 5 });
-      if (response.success && response.data) {
-        setValidationHistory(response.data.slice(0, 5)); // Dernières 5 validations
+      const { data } = await apiService.getValidationHistory({ limit: 5 });
+      if (data) {
+        const normalized = data.slice(0, 5).map((item: TicketValidationHistoryDTO) => ({
+          valid: Boolean(item.valid),
+          reservation: item.reservation,
+          message: item.message ?? (item.valid ? 'Ticket validé' : 'Ticket invalide'),
+        }));
+        setValidationHistory(normalized);
+      } else {
+        setValidationHistory([]);
       }
     } catch (error) {
       console.error('Erreur chargement historique:', error);
@@ -65,33 +63,32 @@ const TicketValidationPage: React.FC = () => {
     setIsValidating(true);
     
     try {
-      const response = await apiService.validateTicketCode(code.trim().toUpperCase());
+      const { data, meta } = await apiService.validateTicketCode(code.trim().toUpperCase());
 
-      if (response.success && response.data) {
+      if (data?.reservation) {
         const result: ValidationResult = {
           valid: true,
-          reservation: response.data.reservation,
-          message: 'Ticket validé avec succès !'
+          reservation: data.reservation,
+          message: data.message ?? 'Ticket validé avec succès !',
         };
-        
+
         setValidationResult(result);
         setValidationHistory(prev => [result, ...prev.slice(0, 4)]);
         toast.success('✅ Ticket validé !');
-        setTicketCode(''); // Vider le champ après validation réussie
-        
+        setTicketCode('');
       } else {
         const result: ValidationResult = {
           valid: false,
-          message: response.message || 'Code de ticket invalide'
+          message: data?.message ?? meta.message ?? 'Code de ticket invalide',
         };
         setValidationResult(result);
         toast.error('❌ ' + result.message);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur validation:', error);
       const result: ValidationResult = {
         valid: false,
-        message: error.response?.data?.message || 'Erreur lors de la validation'
+        message: error instanceof Error ? error.message : 'Erreur lors de la validation',
       };
       setValidationResult(result);
       toast.error('❌ Erreur de validation');

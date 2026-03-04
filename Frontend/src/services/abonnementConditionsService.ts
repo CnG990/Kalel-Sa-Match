@@ -1,5 +1,4 @@
 import apiService from './api';
-import type { ApiResponse } from './api';
 
 export interface TerrainConditions {
   terrain: {
@@ -63,6 +62,18 @@ export interface DisponibiliteResponse {
   creneau: string;
 }
 
+export interface DisponibiliteAbonnementResponse {
+  disponibilite_suffisante: boolean;
+  creneaux_disponibles_count: number;
+  conflits_count: number;
+  conflits_detectes: Array<{
+    jour: string;
+    creneau: string;
+    raison: string;
+  }>;
+  details?: Record<string, unknown>;
+}
+
 export interface CalculPrixRequest {
   terrain_id: number;
   type_abonnement: 'mensuel' | 'trimestriel' | 'semestriel' | 'annuel';
@@ -87,13 +98,11 @@ class AbonnementConditionsService {
    */
   async getConditionsTerrain(terrainId: number): Promise<TerrainConditions> {
     try {
-      const response = await apiService.get(`/abonnements/conditions/${terrainId}`);
-      
-      if (response.success) {
-        return response.data;
-      } else {
-        throw new Error(response.message || 'Erreur lors de la récupération des conditions');
+      const { data, meta } = await apiService.get<TerrainConditions>(`/abonnements/conditions/${terrainId}`);
+      if (data) {
+        return data;
       }
+      throw new Error((meta?.message as string | undefined) || 'Erreur lors de la récupération des conditions');
     } catch (error) {
       console.error('Erreur getConditionsTerrain:', error);
       throw error;
@@ -105,13 +114,11 @@ class AbonnementConditionsService {
    */
   async getHistoriqueReservations(terrainId: number): Promise<HistoriqueData> {
     try {
-      const response = await apiService.get(`/abonnements/historique/${terrainId}`);
-      
-      if (response.success) {
-        return response.data;
-      } else {
-        throw new Error(response.message || 'Erreur lors de la récupération de l\'historique');
+      const { data, meta } = await apiService.get<HistoriqueData>(`/abonnements/historique/${terrainId}`);
+      if (data) {
+        return data;
       }
+      throw new Error((meta?.message as string | undefined) || 'Erreur lors de la récupération de l\'historique');
     } catch (error) {
       console.error('Erreur getHistoriqueReservations:', error);
       throw error;
@@ -123,13 +130,11 @@ class AbonnementConditionsService {
    */
   async verifierDisponibilite(request: DisponibiliteRequest): Promise<DisponibiliteResponse> {
     try {
-      const response = await apiService.post('/abonnements/verifier-disponibilite', request);
-      
-      if (response.success) {
-        return response.data;
-      } else {
-        throw new Error(response.message || 'Erreur lors de la vérification de disponibilité');
+      const { data, meta } = await apiService.post<DisponibiliteResponse>('/abonnements/verifier-disponibilite', request);
+      if (data) {
+        return data;
       }
+      throw new Error((meta?.message as string | undefined) || 'Erreur lors de la vérification de disponibilité');
     } catch (error) {
       console.error('Erreur verifierDisponibilite:', error);
       throw error;
@@ -145,10 +150,16 @@ class AbonnementConditionsService {
     creneaux_preferes: string[];
     duree_seance: number;
     nb_seances: number;
-  }): Promise<ApiResponse> {
+  }): Promise<DisponibiliteAbonnementResponse> {
     try {
-      const response = await apiService.post('/abonnements/verifier-disponibilite-abonnement', request);
-      return response;
+      const { data, meta } = await apiService.post<DisponibiliteAbonnementResponse>(
+        '/abonnements/verifier-disponibilite-abonnement',
+        request,
+      );
+      if (data) {
+        return data;
+      }
+      throw new Error((meta?.message as string | undefined) || 'Erreur lors de la vérification des créneaux');
     } catch (error) {
       console.error('Erreur verifierDisponibiliteAbonnement:', error);
       throw error;
@@ -160,13 +171,11 @@ class AbonnementConditionsService {
    */
   async calculerPrixAbonnement(request: CalculPrixRequest): Promise<CalculPrixResponse> {
     try {
-      const response = await apiService.post('/abonnements/calculer-prix', request);
-      
-      if (response.success) {
-        return response.data;
-      } else {
-        throw new Error(response.message || 'Erreur lors du calcul du prix');
+      const { data, meta } = await apiService.post<CalculPrixResponse>('/abonnements/calculer-prix', request);
+      if (data) {
+        return data;
       }
+      throw new Error((meta?.message as string | undefined) || 'Erreur lors du calcul du prix');
     } catch (error) {
       console.error('Erreur calculerPrixAbonnement:', error);
       throw error;

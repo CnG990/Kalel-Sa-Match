@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import apiService from '../services/api';
+import apiService, { type ReservationDTO } from '../services/api';
 
 interface Reservation {
   id: number;
@@ -15,6 +15,19 @@ interface Reservation {
     adresse: string;
   };
 }
+
+const mapReservationDto = (dto: ReservationDTO): Reservation => ({
+  id: dto.id,
+  date_debut: dto.date_debut,
+  date_fin: dto.date_fin,
+  statut: (dto.statut as Reservation['statut']) ?? 'en_attente',
+  montant_total: Number(dto.montant_total ?? 0),
+  terrain: {
+    id: dto.terrain?.id ?? dto.terrain_id,
+    name: dto.terrain?.nom ?? 'Nom non disponible',
+    adresse: dto.terrain?.adresse ?? 'Adresse non disponible',
+  },
+});
 
 const ClientDashboardPage: React.FC = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
@@ -31,22 +44,11 @@ const ClientDashboardPage: React.FC = () => {
       setReservationsLoading(true);
       setError(null);
       try {
-        const response = await apiService.getMyReservations();
-        if (response.success && Array.isArray(response.data)) {
-          const formattedReservations = response.data
-            .filter((res: any) => res.terrain) // S'assurer que le terrain existe
-            .map((res: any) => ({
-              ...res,
-              terrain: {
-                id: res.terrain.id,
-                name: res.terrain.name || 'Nom non disponible',
-                adresse: res.terrain.adresse || 'Adresse non disponible',
-              }
-          }));
-          setReservations(formattedReservations);
-        } else {
-          setError(response.message || 'Impossible de charger vos réservations.');
-        }
+        const { data } = await apiService.getMyReservations();
+        const formattedReservations = Array.isArray(data)
+          ? data.map(mapReservationDto)
+          : [];
+        setReservations(formattedReservations);
       } catch (err: any) {
         setError('Une erreur est survenue lors de la récupération de vos réservations.');
         console.error(err);

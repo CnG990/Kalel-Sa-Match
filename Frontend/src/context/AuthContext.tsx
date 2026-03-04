@@ -1,30 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import apiService from '../services/api';
+import apiService, { type UserDTO } from '../services/api';
 
-export interface User {
-  id: number;
-  nom: string;
-  prenom: string;
-  email: string;
-  telephone?: string;
-  role: 'client' | 'gestionnaire' | 'admin';
-  statut_validation?: 'en_attente' | 'approuve' | 'rejete' | 'suspendu';
-  nom_entreprise?: string;
-  numero_ninea?: string;
-  numero_registre_commerce?: string;
-  adresse_entreprise?: string;
-  adresse?: string;
-  entreprise?: string;
-  description?: string;
-  documents_legaux?: string[];
-  taux_commission_defaut?: number;
-  date_validation?: string;
-  valide_par?: number;
-  notes_admin?: string;
-  email_verified_at?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+export type User = UserDTO;
 
 interface RegisterData {
   nom: string;
@@ -71,9 +48,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const savedToken = localStorage.getItem('token');
       if (savedToken) {
         try {
-          const response = await apiService.getProfile();
-          if (response.success && response.data) {
-            setUser(response.data);
+          const { data } = await apiService.getProfile();
+          if (data) {
+            setUser(data);
             setToken(savedToken);
           } else {
             localStorage.removeItem('token');
@@ -95,15 +72,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await apiService.login(email, password);
-      console.log('Raw login response:', response);
-      // Handle direct JWT response (no success wrapper)
       const jwtResponse = response as any;
       if (jwtResponse.access && jwtResponse.refresh && jwtResponse.user) {
         const { access: userToken, user: userData } = jwtResponse;
         localStorage.setItem('token', userToken);
-        setUser(userData);
+        setUser(userData as UserDTO);
         setToken(userToken);
-        console.log('Login successful - Token stored, user set:', userData);
         return true;
       }
       console.error('Login failed - Invalid response structure:', response);
@@ -116,10 +90,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData): Promise<{ success: boolean; message?: string; }> => {
     try {
-      const response = await apiService.register({ ...userData } as Record<string, unknown>);
+      const { meta } = await apiService.register({ ...userData } as Record<string, unknown>);
       return {
-        success: Boolean(response?.success),
-        message: response?.message
+        success: true,
+        message: (meta?.message as string | undefined) ?? 'Inscription réussie'
       };
     } catch (error) {
       console.error('Register error:', error);
@@ -141,9 +115,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!token) return;
     
     try {
-      const response = await apiService.getProfile();
-      if (response.success && response.data) {
-        setUser(response.data);
+      const { data } = await apiService.getProfile();
+      if (data) {
+        setUser(data);
       }
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'utilisateur:', error);

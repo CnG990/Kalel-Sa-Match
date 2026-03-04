@@ -108,14 +108,16 @@ const ManagerDiagnostic: React.FC = () => {
       });
 
       // 3. Diagnostic Statistiques
-      let statsResponse;
+      let stats = null;
+      let statsError: string | null = null;
       try {
-        statsResponse = await apiService.get('/manager/stats/dashboard');
+        const { data, meta } = await apiService.getManagerStats();
+        stats = data ?? null;
+        statsError = meta.message ?? meta.detail ?? null;
       } catch (error) {
-        statsResponse = { success: false, data: null };
+        statsError = error instanceof Error ? error.message : 'Erreur inconnue';
       }
-
-      const stats = statsResponse.data;
+      const hasStats = Boolean(stats);
 
       results.push({
         title: 'Statistiques et Données',
@@ -123,13 +125,13 @@ const ManagerDiagnostic: React.FC = () => {
         items: [
           {
             name: 'Dashboard API',
-            status: statsResponse.success ? 'success' : 'error',
-            message: statsResponse.success ? 'Données temps réel chargées' : 'Erreur de chargement',
-            details: stats ? [
-              `Réservations du mois : ${stats.reservations_mois || 0}`,
-              `Revenus mensuels : ${stats.revenus_mois || 0} FCFA`,
-              `Taux occupation : ${stats.taux_occupation || 0}%`
-            ] : ['API non disponible - Données factices possibles']
+            status: hasStats ? 'success' : 'error',
+            message: hasStats ? 'Données temps réel chargées' : (statsError || 'Erreur de chargement'),
+            details: hasStats ? [
+              `Réservations du mois : ${stats?.reservations_mois || 0}`,
+              `Revenus mensuels : ${stats?.revenus_mois || 0} FCFA`,
+              `Taux occupation : ${stats?.taux_occupation || 0}%`
+            ] : [statsError || 'API non disponible - Données factices possibles']
           },
           {
             name: 'Calculs dynamiques',

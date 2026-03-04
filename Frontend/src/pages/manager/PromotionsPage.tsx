@@ -1,26 +1,10 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import apiService from '../../services/api';
-
-interface Promotion {
-  id: number;
-  nom: string;
-  description: string;
-  type_reduction: 'pourcentage' | 'montant_fixe';
-  valeur_reduction: number;
-  date_debut: string;
-  date_fin: string;
-  code_promo?: string;
-  limite_utilisations?: number;
-  utilisations_actuelles: number;
-  est_active: boolean;
-  cible_abonnes: boolean;
-  created_at: string;
-}
+import apiService, { type ManagerPromotionDTO } from '../../services/api';
 
 const PromotionsPage: React.FC = () => {
   const { } = useAuth();
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [promotions, setPromotions] = useState<ManagerPromotionDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,10 +13,8 @@ const PromotionsPage: React.FC = () => {
 
   const fetchPromotions = async () => {
     try {
-      const response = await apiService.get('/manager/promotions');
-      if (response.success) {
-        setPromotions(response.data || []);
-      }
+      const { data } = await apiService.getManagerPromotions();
+      setPromotions(data ?? []);
     } catch (error) {
       console.error('Erreur fetch promotions:', error);
     }

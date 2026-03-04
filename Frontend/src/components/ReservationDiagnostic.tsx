@@ -28,10 +28,9 @@ const ReservationDiagnostic: React.FC = () => {
     try {
       // 1. Diagnostic Système de Réservations
       let reservationsData: any[] = [];
-      let reservationsResponse;
       try {
-        reservationsResponse = await apiService.get('/admin/reservations');
-        reservationsData = reservationsResponse.data?.data || [];
+        const { data } = await apiService.get('/admin/reservations');
+        reservationsData = (data as any)?.data || [];
       } catch (error) {
         reservationsData = [];
       }
@@ -72,7 +71,7 @@ const ReservationDiagnostic: React.FC = () => {
           },
           {
             name: 'Gestion des disponibilités',
-            status: reservationsResponse?.success ? 'success' : 'warning',
+            status: reservationsData.length > 0 ? 'success' : 'warning',
             message: 'API checkAvailability utilisée',
             details: ['Vérification temps réel dans ReservationModal', 'Intégration correcte avec backend']
           }
@@ -82,9 +81,8 @@ const ReservationDiagnostic: React.FC = () => {
       // 2. Diagnostic TerrainPricingDisplay
       let terrainsData: any[] = [];
       try {
-        const terrainsResponse = await apiService.getTerrains();
-        terrainsData = Array.isArray(terrainsResponse.data?.data) ? terrainsResponse.data.data : 
-                     Array.isArray(terrainsResponse.data) ? terrainsResponse.data : [];
+        const { data } = await apiService.getTerrains();
+        terrainsData = Array.isArray(data) ? data : [];
       } catch (error) {
         terrainsData = [];
       }
@@ -132,8 +130,8 @@ const ReservationDiagnostic: React.FC = () => {
       // 3. Diagnostic Abonnements
       let abonnementsData: any[] = [];
       try {
-        const abonnementsResponse = await apiService.getAbonnements();
-        abonnementsData = abonnementsResponse.data || [];
+        const response = await apiService.getAbonnements();
+        abonnementsData = (response.data as any) || [];
       } catch (error) {
         abonnementsData = [];
       }
@@ -184,12 +182,12 @@ const ReservationDiagnostic: React.FC = () => {
       const apiResults: DiagnosticItem[] = [];
       for (const test of apiTests) {
         try {
-          const response = await apiService.get(test.endpoint);
+          const { data } = await apiService.get(test.endpoint);
           apiResults.push({
             name: test.name,
-            status: response.success ? 'success' : 'warning',
-            message: response.success ? 'API fonctionnelle' : 'Erreur API',
-            details: response.success ? [`${Array.isArray(response.data) ? response.data.length : 'N/A'} éléments`] : [response.message || 'Erreur inconnue']
+            status: data ? 'success' : 'warning',
+            message: data ? 'API fonctionnelle' : 'Erreur API',
+            details: data ? [`${Array.isArray(data) ? data.length : 'N/A'} éléments`] : ['Données indisponibles']
           });
         } catch (error) {
           apiResults.push({

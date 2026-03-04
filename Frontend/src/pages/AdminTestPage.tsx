@@ -1,48 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import apiService from '../services/api';
+import apiService, { type UserDTO } from '../services/api';
+
+const normalizeUsersResponse = (data: unknown, meta?: Record<string, unknown>) => ({
+  data: Array.isArray(data) ? (data as UserDTO[]) : [],
+  meta,
+});
 
 const AdminTestPage: React.FC = () => {
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [usersData, setUsersData] = useState<any>(null);
+  const [usersData, setUsersData] = useState<{ data: UserDTO[]; meta?: Record<string, unknown> } | null>(null);
   const [error, setError] = useState<string>('');
 
   const testAdminLogin = async () => {
     try {
       setError('');
-      console.log('🔐 Tentative de connexion admin...');
+      console.log(' Tentative de connexion admin...');
       
       // Essayer de se connecter avec les credentials admin par défaut
       const loginResponse = await apiService.login('admin@terrasyn.sn', 'password');
       
-      if (loginResponse.success) {
-        console.log('✅ Connexion admin réussie');
+      if ((loginResponse as any)?.success) {
+        console.log(' Connexion admin réussie');
         setAuthStatus('Connecté comme admin');
         
         // Stocker le token
-        if (loginResponse.data?.token) {
-          localStorage.setItem('token', loginResponse.data.token);
+        const token = (loginResponse as any)?.data?.token;
+        if (token) {
+          localStorage.setItem('token', token);
         }
         
         // Récupérer le profil
         const profileResponse = await apiService.getProfile();
-        if (profileResponse.success) {
-          setUserProfile(profileResponse.data);
-          console.log('👤 Profil admin récupéré:', profileResponse.data);
+        if ((profileResponse as any)?.success && (profileResponse as any)?.data) {
+          setUserProfile((profileResponse as any).data);
+          console.log(' Profil admin récupéré:', (profileResponse as any).data);
         }
         
         // Tester l'API getAllUsers
-        const usersResponse = await apiService.getAllUsers();
-        if (usersResponse.success) {
-          setUsersData(usersResponse.data);
-          console.log('👥 Utilisateurs récupérés:', usersResponse.data);
-        } else {
-          setError(`Erreur getAllUsers: ${usersResponse.message}`);
-        }
+        const { data: usersList, meta } = await apiService.getAllUsers();
+        setUsersData(normalizeUsersResponse(usersList, meta));
+        console.log(' Utilisateurs récupérés:', usersList);
         
       } else {
-        setError(`Erreur connexion: ${loginResponse.message}`);
-        console.error('❌ Erreur de connexion:', loginResponse.message);
+        const message = (loginResponse as any)?.message || 'Erreur inconnue';
+        setError(`Erreur connexion: ${message}`);
+        console.error(' Erreur de connexion:', message);
+        console.error('❌ Erreur de connexion:', message);
       }
     } catch (err: any) {
       console.error('🚨 Erreur générale:', err);
@@ -64,18 +68,14 @@ const AdminTestPage: React.FC = () => {
       
       // Vérifier le profil
       const profileResponse = await apiService.getProfile();
-      if (profileResponse.success) {
-        setUserProfile(profileResponse.data);
+      if ((profileResponse as any)?.success && (profileResponse as any)?.data) {
+        setUserProfile((profileResponse as any).data);
         setAuthStatus('Token valide');
         
         // Tester l'API getAllUsers
-        const usersResponse = await apiService.getAllUsers();
-        if (usersResponse.success) {
-          setUsersData(usersResponse.data);
-          console.log('👥 Utilisateurs récupérés avec token:', usersResponse.data);
-        } else {
-          setError(`Erreur getAllUsers avec token: ${usersResponse.message}`);
-        }
+        const { data: usersList, meta } = await apiService.getAllUsers();
+        setUsersData({ data: Array.isArray(usersList) ? usersList : [], meta });
+        console.log('👥 Utilisateurs récupérés avec token:', usersList);
       } else {
         setError('Token invalide ou expiré');
       }

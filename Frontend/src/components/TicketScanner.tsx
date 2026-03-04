@@ -1,26 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Search, CheckCircle, User, Clock, MapPin, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import apiService from '../services/api';
+import apiService, { type TicketValidationReservationDTO } from '../services/api';
 
 interface TicketValidation {
   reservation_id: number;
   code_ticket: string;
   client_nom: string;
-  client_email: string;
-  client_telephone: string;
+  client_email?: string;
+  client_telephone?: string;
   terrain_nom: string;
   date_debut: string;
   date_fin: string;
-  montant_total: number;
+  montant_total?: number;
   statut: string;
-  derniere_validation: string;
-  temps_restant: {
-    status: string;
-    message: string;
-    minutes: number;
-  };
+  derniere_validation?: string;
 }
+
+const mapReservationDto = (dto: TicketValidationReservationDTO): TicketValidation => ({
+  reservation_id: dto.id,
+  code_ticket: dto.code_ticket,
+  client_nom: dto.client_nom,
+  client_email: dto.client_email,
+  client_telephone: dto.client_telephone,
+  terrain_nom: dto.terrain_nom,
+  date_debut: dto.date_debut,
+  date_fin: dto.date_fin,
+  montant_total: dto.montant_total,
+  statut: dto.statut,
+  derniere_validation: dto.derniere_validation,
+});
 
 interface TicketScannerProps {
   isOpen: boolean;
@@ -89,14 +98,15 @@ const TicketScanner: React.FC<TicketScannerProps> = ({ isOpen, onClose }) => {
     setValidationResult(null);
 
     try {
-      const response = await apiService.validateTicketCode(manualCode.trim());
+      const { data, meta } = await apiService.validateTicketCode(manualCode.trim());
+      const infoMessage = (meta?.message as string | undefined) ?? 'Ticket validé avec succès !';
       
-      if (response.success && response.data) {
-        setValidationResult(response.data);
-        toast.success(response.message || 'Ticket validé avec succès !');
+      if (data?.reservation) {
+        setValidationResult(mapReservationDto(data.reservation));
+        toast.success(infoMessage);
         setManualCode('');
       } else {
-        toast.error(response.message || 'Code de ticket invalide');
+        toast.error(infoMessage || 'Code de ticket invalide');
       }
     } catch (error: any) {
       console.error('Erreur validation code:', error);
@@ -270,13 +280,15 @@ const TicketScanner: React.FC<TicketScannerProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${getStatusColor(validationResult.temps_restant.status)}`}>
-                  {validationResult.temps_restant.message}
+                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${getStatusColor(validationResult.statut)}`}>
+                  {validationResult.statut}
                 </div>
 
-                <div className="text-gray-600">
-                  Montant : {validationResult.montant_total.toLocaleString()} FCFA
-                </div>
+                {validationResult.montant_total !== undefined && (
+                  <div className="text-gray-600">
+                    Montant : {validationResult.montant_total.toLocaleString()} FCFA
+                  </div>
+                )}
               </div>
             </div>
 

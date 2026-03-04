@@ -1,18 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import apiService from '../services/api';
-
-interface Notification {
-  id: number;
-  type: string;
-  data: any;
-  read_at: string | null;
-  priority: 'low' | 'normal' | 'high' | 'urgent';
-  created_at: string;
-}
+import apiService, { type NotificationDTO } from '../services/api';
 
 interface UseNotificationsReturn {
-  notifications: Notification[];
+  notifications: NotificationDTO[];
   unreadCount: number;
   loading: boolean;
   markAsRead: (id: number) => Promise<void>;
@@ -22,7 +13,8 @@ interface UseNotificationsReturn {
 }
 
 export const useNotifications = (): UseNotificationsReturn => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
+
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -35,10 +27,11 @@ export const useNotifications = (): UseNotificationsReturn => {
 
     try {
       setLoading(true);
-      const response = await apiService.getNotifications();
-      if (response.success) {
-        setNotifications(response.data);
+      const { data } = await apiService.listNotifications();
+      if (data) {
+        setNotifications(data);
       }
+
     } catch (error) {
       console.error('Erreur chargement notifications:', error);
     } finally {
@@ -49,14 +42,13 @@ export const useNotifications = (): UseNotificationsReturn => {
   // Marquer une notification comme lue
   const markAsRead = useCallback(async (id: number) => {
     try {
-      const response = await apiService.markNotificationAsRead(id);
-      if (response.success) {
-        setNotifications(prev => 
-          prev.map(n => 
-            n.id === id ? { ...n, read_at: new Date().toISOString() } : n
-          )
+      const { data } = await apiService.markNotificationAsRead(id);
+      if (data?.success) {
+        setNotifications(prev =>
+          prev.map(n => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
         );
       }
+
     } catch (error) {
       console.error('Erreur marquage notification:', error);
     }
@@ -65,12 +57,11 @@ export const useNotifications = (): UseNotificationsReturn => {
   // Marquer toutes les notifications comme lues
   const markAllAsRead = useCallback(async () => {
     try {
-      const response = await apiService.markAllNotificationsAsRead();
-      if (response.success) {
-        setNotifications(prev => 
-          prev.map(n => ({ ...n, read_at: new Date().toISOString() }))
-        );
+      const { data } = await apiService.markAllNotificationsAsRead();
+      if (data?.success) {
+        setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
       }
+
     } catch (error) {
       console.error('Erreur marquage toutes notifications:', error);
     }
@@ -79,10 +70,9 @@ export const useNotifications = (): UseNotificationsReturn => {
   // Supprimer une notification
   const deleteNotification = useCallback(async (id: number) => {
     try {
-      const response = await apiService.deleteNotification(id);
-      if (response.success) {
-        setNotifications(prev => prev.filter(n => n.id !== id));
-      }
+      await apiService.deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+
     } catch (error) {
       console.error('Erreur suppression notification:', error);
     }
@@ -119,7 +109,7 @@ export const useNotifications = (): UseNotificationsReturn => {
         const data = JSON.parse(event.data);
         
         if (data.type === 'new_notification') {
-          setNotifications(prev => [data.notification, ...prev]);
+          setNotifications(prev => [data.notification as NotificationDTO, ...prev]);
           
           // Afficher notification navigateur si permission accordée
           if (Notification.permission === 'granted') {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import apiService from '../services/api';
 
 interface PrixVariable {
@@ -39,9 +40,14 @@ const PrixVariablesDisplay: React.FC<PrixVariablesDisplayProps> = ({
   const fetchPrixVariables = async () => {
     try {
       setLoading(true);
-      const response = await apiService.get(`/admin/terrains/${terrainId}/prix-variables`);
-      if (response.success) {
-        setPrixVariables(response.data);
+      const { data, meta } = await apiService.get<PrixVariable[]>(`/admin/terrains/${terrainId}/prix-variables`);
+      if (Array.isArray(data)) {
+        setPrixVariables(data);
+      } else {
+        setPrixVariables([]);
+        if (meta.message) {
+          console.warn(meta.message);
+        }
       }
     } catch (error) {
       console.error('Erreur lors de la récupération des prix variables:', error);
@@ -60,13 +66,16 @@ const PrixVariablesDisplay: React.FC<PrixVariablesDisplayProps> = ({
       if (selectedPeriode) params.periode = selectedPeriode;
       if (selectedJour) params.jour = selectedJour;
 
-      const response = await apiService.post('/admin/terrains/calculer-prix', params);
-      if (response.success) {
-        setSelectedPrix(response.data);
-        onPrixChange?.(response.data.prix);
+      const { data, meta } = await apiService.post<PrixVariable>('/admin/terrains/calculer-prix', params);
+      if (data) {
+        setSelectedPrix(data);
+        onPrixChange?.(data.prix);
+      } else if (meta.message) {
+        toast.error(meta.message);
       }
     } catch (error) {
       console.error('Erreur lors du calcul du prix:', error);
+      toast.error('Erreur lors du calcul du prix');
     }
   };
 

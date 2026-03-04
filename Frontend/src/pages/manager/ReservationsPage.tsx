@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import apiService from '../../services/api';
+import React, { useState, useEffect, useCallback } from 'react';
+import apiService, { type ManagerReservationDTO } from '../../services/api';
 import RefundModal from '../../components/RefundModal';
 import { 
   Calendar, 
@@ -14,24 +14,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-interface Reservation {
-  id: number;
-  date_debut: string;
-  date_fin: string;
-  statut: string;
-  prix_total: number;
-  montant_total: number;
-  client: {
-    nom: string;
-    prenom: string;
-    telephone: string;
-  };
-  terrain: {
-    nom: string;
-    adresse: string;
-  };
-  code_ticket?: string;
-}
+type Reservation = ManagerReservationDTO;
 
 const ReservationsPage: React.FC = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -40,53 +23,39 @@ const ReservationsPage: React.FC = () => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showRefundModal, setShowRefundModal] = useState(false);
 
-  useEffect(() => {
-    fetchReservations();
-  }, []);
-
-  const fetchReservations = async () => {
+  const fetchReservations = useCallback(async () => {
     try {
       setLoading(true);
-      // Utiliser la vraie API backend
-      const response = await apiService.getManagerReservations();
-      
-      if (response.success) {
-        setReservations(response.data || []);
-      } else {
-        console.error('Erreur API:', response.message);
-        toast.error(response.message || "Impossible de charger les réservations.");
-      }
+      const { data } = await apiService.getManagerReservations();
+      setReservations(data ?? []);
     } catch (error: any) {
       console.error('Erreur lors du chargement:', error);
-      
-      // Gestion d'erreur plus spécifique
+
       if (error.message?.includes('404') || error.message?.includes('Endpoint non trouvé')) {
-        toast.error("Service de réservations temporairement indisponible. Veuillez réessayer plus tard.");
+        toast.error('Service de réservations temporairement indisponible. Veuillez réessayer plus tard.');
       } else if (error.message?.includes('401') || error.message?.includes('Unauthenticated')) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
+        toast.error('Session expirée. Veuillez vous reconnecter.');
       } else if (error.message?.includes('500')) {
-        toast.error("Erreur serveur. Veuillez contacter le support technique.");
+        toast.error('Erreur serveur. Veuillez contacter le support technique.');
       } else {
-        toast.error("Erreur lors du chargement des réservations.");
+        toast.error('Erreur lors du chargement des réservations.');
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchReservations();
+  }, [fetchReservations]);
 
   const updateReservationStatus = async (reservationId: number, newStatus: string) => {
     try {
-      // Utiliser la vraie API
-      const response = await apiService.updateManagerReservationStatus(reservationId, newStatus);
-      
-      if (response.success) {
-        setReservations(reservations.map(r => 
-          r.id === reservationId ? { ...r, statut: newStatus } : r
-        ));
-        toast.success(response.message || `Réservation ${newStatus === 'confirmee' ? 'confirmée' : 'annulée'}.`);
-      } else {
-        toast.error(response.message || 'Erreur lors de la mise à jour');
-      }
+      const { meta } = await apiService.updateManagerReservationStatus(reservationId, newStatus);
+      setReservations(prev =>
+        prev.map(r => (r.id === reservationId ? { ...r, statut: newStatus } : r)),
+      );
+      toast.success(meta.message || `Réservation ${newStatus === 'confirmee' ? 'confirmée' : 'annulée'}.`);
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error);
       toast.error("Erreur lors de la mise à jour.");
@@ -127,6 +96,8 @@ const ReservationsPage: React.FC = () => {
     if (filter === 'toutes') return true;
     return reservation.statut === filter;
   });
+
+  const formatAmount = (reservation: Reservation) => (reservation.prix_total ?? reservation.montant_total ?? 0).toLocaleString();
 
   if (loading) {
     return (
@@ -188,7 +159,7 @@ const ReservationsPage: React.FC = () => {
                 <div className="flex-1">
                   <div className="flex items-center space-x-4 mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {reservation.terrain.nom}
+                      {reservation.terrain?.nom ?? 'Terrain'}
                     </h3>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(reservation.statut)}`}>
                       {getStatusIcon(reservation.statut)}
@@ -199,7 +170,7 @@ const ReservationsPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
                     <div className="flex items-center">
                       <User className="w-4 h-4 mr-2" />
-                      <span>{reservation.client.prenom} {reservation.client.nom}</span>
+                      <span>{reservation.client?.prenom} {reservation.client?.nom}</span>
                     </div>
                     
                     <div className="flex items-center">
@@ -229,14 +200,14 @@ const ReservationsPage: React.FC = () => {
                     <div className="flex items-center">
                       <DollarSign className="w-4 h-4 mr-2" />
                       <span className="font-medium text-green-600">
-                        {reservation.prix_total.toLocaleString()} CFA
+                        {formatAmount(reservation)} CFA
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-3 flex items-center text-sm text-gray-600">
                     <MapPin className="w-4 h-4 mr-2" />
-                    <span>{reservation.terrain.adresse}</span>
+                    <span>{reservation.terrain?.adresse ?? 'Adresse non disponible'}</span>
                   </div>
                 </div>
 

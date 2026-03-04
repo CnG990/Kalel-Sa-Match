@@ -294,11 +294,11 @@ const ManagerValidationPage: React.FC = () => {
   const fetchPendingManagers = async () => {
     setLoading(true);
     try {
-      const response = await apiService.getPendingManagers();
-      if (response.success) {
-        setManagers((response.data as Manager[]) || []);
+      const { data, meta } = await apiService.getPendingManagers();
+      if (data) {
+        setManagers((data as Manager[]) || []);
       } else {
-        toast.error(response.message || 'Erreur lors du chargement des gestionnaires.');
+        toast.error(meta.message || 'Erreur lors du chargement des gestionnaires.');
       }
     } catch (error) {
       toast.error('Une erreur réseau est survenue.');
@@ -318,14 +318,14 @@ const ManagerValidationPage: React.FC = () => {
 
   const handleApprove = async (managerId: number, companyData?: any) => {
     try {
-      const response = await apiService.approveManagerWithContract(managerId, companyData);
+      const { data, meta } = await apiService.approveManagerWithContract(managerId, companyData);
 
-      if (response.success) {
+      if (data) {
         toast.success('Gestionnaire approuvé avec succès');
         setManagers(managers.filter(m => m.id !== managerId));
         setDetailsModalOpen(false);
       } else {
-        toast.error(response.message || 'Erreur lors de l\'approbation');
+        toast.error(meta.message || 'Erreur lors de l\'approbation');
       }
     } catch (error) {
       toast.error('Une erreur est survenue lors de l\'approbation');
@@ -334,16 +334,16 @@ const ManagerValidationPage: React.FC = () => {
 
   const handleReject = async (managerId: number, raison?: string) => {
     try {
-      const response = await apiService.rejectManager(managerId, raison);
+      const { data, meta } = await apiService.rejectManager(managerId, raison);
 
-      if (response.success) {
+      if (data) {
         toast.success('Gestionnaire rejeté');
         setManagers(managers.filter(m => m.id !== managerId));
         setDetailsModalOpen(false);
         setRejectModalOpen(false);
         setRejectReason('');
       } else {
-        toast.error(response.message || 'Erreur lors du rejet');
+        toast.error(meta.message || 'Erreur lors du rejet');
       }
     } catch (error) {
       toast.error('Une erreur est survenue lors du rejet');
@@ -363,12 +363,12 @@ const ManagerValidationPage: React.FC = () => {
     setManagers(managers.filter(m => m.id !== managerId));
 
     try {
-      const response = await apiService.approveManager(managerId);
+      const { data, meta } = await apiService.approveManager(managerId);
 
-      if (response.success) {
+      if (data) {
         toast.success('Gestionnaire approuvé rapidement');
       } else {
-        toast.error(response.message || 'Erreur lors de l\'approbation');
+        toast.error(meta.message || 'Erreur lors de l\'approbation');
         setManagers(originalManagers);
       }
     } catch (error) {

@@ -271,7 +271,7 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
 
     try {
       setIsSaving(true);
-      const response = await apiService.createAdminTerrain({
+      const { data, meta } = await apiService.createAdminTerrain({
         nom: form.nom,
         description: form.description,
         adresse: form.adresse,
@@ -284,12 +284,12 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
         source_creation: 'field',
       });
 
-      if ('success' in response && response.success === false) {
-        toast.error(response.message || "Impossible d'ajouter ce terrain");
+      if (!data) {
+        toast.error(meta.message || "Impossible d'ajouter ce terrain");
         return;
       }
 
-      toast.success('Terrain ajouté depuis le terrain');
+      toast.success(meta.message || 'Terrain ajouté depuis le terrain');
       onSuccess();
       onClose();
     } catch (error) {

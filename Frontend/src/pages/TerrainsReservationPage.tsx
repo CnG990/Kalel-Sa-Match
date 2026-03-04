@@ -36,9 +36,9 @@ const TerrainsReservationPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiService.getTerrains();
-      if (response.success && response.data) {
-        let terrainsData = response.data.data || response.data;
+      const { data } = await apiService.getTerrains();
+      if (data) {
+        let terrainsData = data as any;
         
         if (searchTerm) {
           terrainsData = terrainsData.filter((terrain: any) =>
@@ -101,9 +101,9 @@ const TerrainsReservationPage: React.FC = () => {
     try {
       const location = await apiService.getUserLocation();
       if (location) {
-        const response = await apiService.getNearbyTerrains(location.latitude, location.longitude, 15);
-        if (response.success && response.data) {
-          setTerrains(response.data);
+        const { data } = await apiService.getNearbyTerrains(location.latitude, location.longitude, 15);
+        if (data) {
+          setTerrains(data);
         }
       }
     } catch (err) {

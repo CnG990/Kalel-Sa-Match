@@ -58,12 +58,13 @@ const MesTicketsPage: React.FC = () => {
   const fetchMyTickets = async () => {
     try {
       setLoading(true);
-      const response = await apiService.get('/user/tickets');
-      
-      if (response.success) {
-        setTickets(response.data || []);
+      const { data, meta } = await apiService.get('/user/tickets');
+
+      if (Array.isArray(data)) {
+        setTickets(data as TicketWithReservation[]);
       } else {
-        toast.error('Erreur lors du chargement des tickets');
+        setTickets([]);
+        toast.error(meta.message || 'Erreur lors du chargement des tickets');
       }
     } catch (error) {
       console.error('Erreur lors du chargement des tickets:', error);
@@ -75,9 +76,9 @@ const MesTicketsPage: React.FC = () => {
 
   const downloadTicket = async (ticketId: number) => {
     try {
-      const response = await apiService.get(`/tickets/${ticketId}/download`);
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = await apiService.downloadFile(`/tickets/${ticketId}/download/`);
+
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `ticket-${ticketId}.pdf`);
@@ -195,9 +196,8 @@ const MesTicketsPage: React.FC = () => {
             </h3>
             <p className="text-gray-500">
               {filter === 'all' 
-                ? 'Vous n\'avez pas encore de tickets. Effectuez une réservation pour obtenir votre premier ticket.'
-                : `Vous n'avez pas de tickets avec le statut "${filter}".`
-              }
+                ? "Vous n'avez pas encore de tickets. Effectuez une réservation pour obtenir votre premier ticket."
+                : `Vous n'avez pas de tickets avec le statut "${filter}".`}
             </p>
           </div>
         ) : (

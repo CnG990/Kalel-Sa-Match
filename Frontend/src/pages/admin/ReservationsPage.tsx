@@ -79,15 +79,15 @@ const ReservationsPage: React.FC = () => {
   const fetchReservations = async () => {
     setLoading(true);
     try {
-      const response = await apiService.getAllReservations({ 
+      const { data, meta } = await apiService.getAllReservations({ 
         search: searchTerm,
         ...filters 
       });
-      if (response.success) {
-        setReservations(response.data?.data || []);
-        setStats(response.data?.stats || null);
+      if (data) {
+        setReservations(data?.data || []);
+        setStats(data?.stats || null);
       } else {
-        toast.error("Impossible de charger les réservations.");
+        toast.error(meta.message || "Impossible de charger les réservations.");
       }
     } catch (error) {
       // Erreur déjà gérée par toast.error dans le bloc try
@@ -100,12 +100,12 @@ const ReservationsPage: React.FC = () => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette réservation ? Cette action est irréversible.')) return;
     
     try {
-      const response = await apiService.deleteReservation(id);
-      if (response.success) {
+      const { data, meta } = await apiService.deleteReservation(id);
+      if (data) {
         toast.success('Réservation supprimée avec succès');
         fetchReservations();
       } else {
-        toast.error(response.message || 'Erreur lors de la suppression');
+        toast.error(meta.message || 'Erreur lors de la suppression');
       }
     } catch (error) {
       // Erreur déjà gérée par toast.error dans le bloc try
@@ -116,14 +116,14 @@ const ReservationsPage: React.FC = () => {
     if (!selectedReservation || !adminNotes.trim()) return;
     
     try {
-      const response = await apiService.updateReservationNotes(selectedReservation.id, adminNotes);
-      if (response.success) {
+      const { data, meta } = await apiService.updateReservationNotes(selectedReservation.id, adminNotes);
+      if (data) {
         toast.success('Notes ajoutées avec succès');
         setShowNotesModal(false);
         setAdminNotes('');
         fetchReservations();
       } else {
-        toast.error(response.message || 'Erreur lors de l\'ajout des notes');
+        toast.error(meta.message || 'Erreur lors de l\'ajout des notes');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -132,12 +132,12 @@ const ReservationsPage: React.FC = () => {
 
   const handleGenerateTicket = async (reservationId: number) => {
     try {
-      const response = await apiService.post(`/admin/reservations/${reservationId}/generate-ticket`);
-      if (response.success) {
+      const { data } = await apiService.post(`/admin/reservations/${reservationId}/generate-ticket`);
+      if (data) {
         toast.success('Ticket généré avec succès');
         fetchReservations();
       } else {
-        toast.error(response.message || 'Erreur lors de la génération du ticket');
+        toast.error('Erreur lors de la génération du ticket');
       }
     } catch (error) {
       // Erreur déjà gérée par toast.error dans le bloc try
@@ -152,17 +152,17 @@ const ReservationsPage: React.FC = () => {
 
     setValidatingTicket(true);
     try {
-      const response = await apiService.post('/admin/tickets/validate', {
+      const { data } = await apiService.post('/admin/tickets/validate', {
         code_ticket: ticketCode
       });
       
-      if (response.success) {
+      if (data) {
         toast.success('Ticket validé avec succès');
         setTicketCode('');
         setShowTicketModal(false);
         fetchReservations();
       } else {
-        toast.error(response.message || 'Code de ticket invalide');
+        toast.error('Code de ticket invalide');
       }
     } catch (error) {
       console.error('Erreur:', error);

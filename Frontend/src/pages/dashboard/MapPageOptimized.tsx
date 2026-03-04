@@ -2,21 +2,32 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { AlertTriangle, MapPin, ChevronsDown, Eye, } from 'lucide-react';
-import apiService from '../../services/api';
+import apiService, { type TerrainDTO } from '../../services/api';
+
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { calculateDistance } from '../../utils/distance';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+interface CachedData {
+  terrainsData: Terrain[];
+  reservationsData: ReservationDTO[];
+}
+
 // Cache pour éviter les rechargements inutiles
-const mapCache = {
-  terrains: null as any,
+const mapCache: {
+  terrains: CachedData | null;
+  lastFetch: number;
+  cacheTime: number;
+} = {
+  terrains: null,
   lastFetch: 0,
   cacheTime: 5 * 60 * 1000, // 5 minutes
 };
 
 interface Terrain {
+
   id: number;
   nom: string;
   adresse: string;
@@ -61,6 +72,38 @@ interface TerrainWithDistance extends Terrain {
   distance: number;
 }
 
+interface ReservationDTO {
+  id: number;
+  terrain_id: number;
+  [key: string]: unknown;
+}
+
+const mapTerrainDtoToTerrain = (dto: TerrainDTO): Terrain => ({
+  id: dto.id,
+  nom: dto.nom ?? (dto as any).name ?? `Terrain ${dto.id}`,
+  adresse: dto.adresse ?? 'Adresse non disponible',
+  latitude: dto.latitude ? Number(dto.latitude) : 0,
+  longitude: dto.longitude ? Number(dto.longitude) : 0,
+  prix_heure: Number(dto.prix_heure ?? 0),
+  type_surface: (dto as any).type_surface ?? 'Inconnue',
+  description: dto.description,
+  images: Array.isArray(dto.images) ? dto.images : undefined,
+  est_actif: dto.est_actif ?? true,
+  est_disponible: dto.est_disponible ?? true,
+  image_principale: dto.image_principale,
+  surface: (dto as any).surface,
+  terrain_synthetique: (dto as any).terrain_synthetique,
+  capacite_spectateurs: (dto as any).capacite_spectateurs,
+});
+
+const normalizeReservations = (raw: unknown): ReservationDTO[] => {
+  if (!raw) return [];
+  const data = (raw as any).data ?? raw;
+  if (Array.isArray(data)) return data as ReservationDTO[];
+  if (data && Array.isArray((data as any).data)) return (data as any).data as ReservationDTO[];
+  return [];
+};
+
 const MapPageOptimized: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -85,7 +128,7 @@ const MapPageOptimized: React.FC = () => {
   };
 
   // Fonction optimisée pour créer les marqueurs
-  const createOptimizedTerrainMarkers = useCallback((mapInstance: mapboxgl.Map, terrainsData: Terrain[], reservationsData: any[]) => {
+  const createOptimizedTerrainMarkers = useCallback((mapInstance: mapboxgl.Map, terrainsData: Terrain[], reservationsData: ReservationDTO[]) => {
     // Nettoyer les anciens marqueurs
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
@@ -93,7 +136,8 @@ const MapPageOptimized: React.FC = () => {
     terrainsData.forEach((terrain: Terrain) => {
       if (!terrain.latitude || !terrain.longitude) return;
 
-      const isReserved = reservationsData.some((r: any) => r.terrain_id === terrain.id);
+      const isReserved = reservationsData.some((r: ReservationDTO) => r.terrain_id === terrain.id);
+
       const terrainData = terrain.terrain_synthetique || terrain;
       const nom = terrainData.nom || terrain.name || 'Terrain sans nom';
       const adresse = terrainData.adresse || terrain.adresse || 'Adresse non disponible';
@@ -189,38 +233,26 @@ const MapPageOptimized: React.FC = () => {
 
     try {
       console.log('📡 Chargement des terrains depuis l\'API...');
-      const [terrainsResponse, reservationsResponse] = await Promise.all([
+      const [{ data: terrainDtos }, reservationsResponse] = await Promise.all([
         apiService.getTerrains({ per_page: 999 }),
-        apiService.getMyReservations().catch(() => ({ success: false, data: [] }))
+        apiService.getMyReservations().catch(() => ({ data: [] })),
       ]);
 
-      let reservationsData: any[] = [];
-      if (reservationsResponse.success && reservationsResponse.data) {
-        reservationsData = Array.isArray(reservationsResponse.data) 
-          ? reservationsResponse.data 
-          : reservationsResponse.data.data || [];
-        
-        const ids = new Set(reservationsData.map((r: any) => r.terrain_id as number));
-        setReservedTerrainIds(ids);
-      }
+      const reservationsData = normalizeReservations(reservationsResponse);
+      setReservedTerrainIds(new Set(reservationsData.map((r) => r.terrain_id)));
 
-      if (terrainsResponse.success && terrainsResponse.data) {
-        const terrainsData = Array.isArray(terrainsResponse.data) 
-          ? terrainsResponse.data 
-          : terrainsResponse.data.data || [];
-        
-        // Mise en cache
-        mapCache.terrains = { terrainsData, reservationsData };
+      if (Array.isArray(terrainDtos)) {
+        const mappedTerrains = terrainDtos.map(mapTerrainDtoToTerrain).filter((terrain) => terrain.latitude && terrain.longitude);
+        mapCache.terrains = { terrainsData: mappedTerrains, reservationsData };
         mapCache.lastFetch = now;
-        
-        console.log(`✅ ${terrainsData.length} terrains chargés et mis en cache`);
-        return { terrainsData, reservationsData };
+        console.log(`✅ ${mappedTerrains.length} terrains chargés et mis en cache`);
+        return { terrainsData: mappedTerrains, reservationsData };
       }
     } catch (error) {
       console.error('❌ Erreur chargement terrains:', error);
       toast.error("Erreur de chargement des terrains");
     }
-    
+
     return { terrainsData: [], reservationsData: [] };
   }, []);
 

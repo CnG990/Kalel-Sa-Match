@@ -72,14 +72,14 @@ const CreateNotificationModal: React.FC<CreateNotificationModalProps> = ({ onClo
         return;
       }
 
-      const response = await apiService.createNotification(formData);
+      const { data, meta } = await apiService.createNotification(formData);
       
-      if (response.success) {
+      if (data) {
         toast.success('Notification créée avec succès !');
         onSuccess();
         onClose();
       } else {
-        toast.error(response.message || 'Erreur lors de la création');
+        toast.error(meta.message || 'Erreur lors de la création');
       }
     } catch (error) {
       toast.error('Erreur lors de la création de la notification');
@@ -307,29 +307,39 @@ const NotificationsPage: React.FC = () => {
         apiService.get('/admin/notifications'),
         apiService.get('/admin/notification-templates')
       ]);
-      
-      // Vérification robuste des données avec fallbacks
-      const notificationsData = notificationsRes?.data?.notifications || notificationsRes?.data || [];
-      const templatesData = templatesRes?.data?.templates || templatesRes?.data || [];
-      
-      setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
-      setTemplates(Array.isArray(templatesData) ? templatesData : []);
-      
+
+      const notificationsDataRaw = Array.isArray(notificationsRes.data)
+        ? notificationsRes.data
+        : (typeof notificationsRes.data === 'object' && notificationsRes.data !== null
+            ? (notificationsRes.data as { notifications?: unknown }).notifications
+            : undefined);
+      const templatesDataRaw = Array.isArray(templatesRes.data)
+        ? templatesRes.data
+        : (typeof templatesRes.data === 'object' && templatesRes.data !== null
+            ? (templatesRes.data as { templates?: unknown }).templates
+            : undefined);
+
+      const notificationsData = Array.isArray(notificationsDataRaw) ? notificationsDataRaw : [];
+      const templatesData = Array.isArray(templatesDataRaw) ? templatesDataRaw : [];
+
+      setNotifications(notificationsData);
+      setTemplates(templatesData);
+
       // Calculer les statistiques avec protection contre les erreurs
-      const totalNotifications = notificationsData?.length || 0;
-      const sentToday = notificationsData?.filter((n: Notification) => {
+      const totalNotifications = notificationsData.length;
+      const sentToday = notificationsData.filter((n: Notification) => {
         try {
           const today = new Date().toDateString();
           return n.date_envoi && new Date(n.date_envoi).toDateString() === today;
         } catch {
           return false;
         }
-      }).length || 0;
-      const totalRecipients = notificationsData?.reduce((sum: number, n: Notification) => {
+      }).length;
+      const totalRecipients = notificationsData.reduce((sum: number, n: Notification) => {
         return sum + (n.nombre_destinataires || 0);
-      }, 0) || 0;
-      const totalTemplates = templatesData?.length || 0;
-      
+      }, 0);
+      const totalTemplates = templatesData.length;
+
       setStats({ 
         totalNotifications, 
         sentToday, 

@@ -105,12 +105,12 @@ const CreateSubscriptionModal: React.FC<CreateSubscriptionModalProps> = ({ onClo
 
       const response = await apiService.createSubscription(subscriptionData);
       
-      if (response.success) {
+      if (response.data) {
         toast.success('Abonnement créé avec succès !');
         onSuccess();
         onClose();
       } else {
-        toast.error(response.message || 'Erreur lors de la création');
+        toast.error(response.meta?.message || 'Erreur lors de la création');
       }
     } catch (error) {
       toast.error('Erreur lors de la création de l\'abonnement');
@@ -387,26 +387,30 @@ const SubscriptionsPage: React.FC = () => {
         apiService.get('/admin/subscribers')
       ]);
 
-      // Normaliser les formes possibles de réponse
-      const subsList: Subscription[] =
-        subscriptionsRes?.data?.subscriptions ??
-        subscriptionsRes?.data ??
-        [];
+      const subscriptionsRaw = Array.isArray(subscriptionsRes.data)
+        ? subscriptionsRes.data
+        : (typeof subscriptionsRes.data === 'object' && subscriptionsRes.data !== null
+            ? (subscriptionsRes.data as { subscriptions?: unknown }).subscriptions
+            : undefined);
 
-      const subscrList: Subscriber[] =
-        subscribersRes?.data?.subscribers ??
-        subscribersRes?.data ??
-        [];
+      const subscribersRaw = Array.isArray(subscribersRes.data)
+        ? subscribersRes.data
+        : (typeof subscribersRes.data === 'object' && subscribersRes.data !== null
+            ? (subscribersRes.data as { subscribers?: unknown }).subscribers
+            : undefined);
 
-      setSubscriptions(Array.isArray(subsList) ? subsList : []);
-      setSubscribers(Array.isArray(subscrList) ? subscrList : []);
+      const subsList: Subscription[] = Array.isArray(subscriptionsRaw) ? subscriptionsRaw : [];
+      const subscrList: Subscriber[] = Array.isArray(subscribersRaw) ? subscribersRaw : [];
+
+      setSubscriptions(subsList);
+      setSubscribers(subscrList);
       
       // Calculer les statistiques
-      const totalPlans = Array.isArray(subsList) ? subsList.length : 0;
-      const activePlans = Array.isArray(subsList) ? subsList.filter((s: Subscription) => s.statut === 'active').length : 0;
-      const totalSubscribers = Array.isArray(subscrList) ? subscrList.length : 0;
-      const activeSubscribers = Array.isArray(subscrList) ? subscrList.filter((s: Subscriber) => s.statut === 'active').length : 0;
-      const totalRevenue = Array.isArray(subscrList) ? subscrList.reduce((sum: number, s: Subscriber) => sum + (s.montant_paye || 0), 0) : 0;
+      const totalPlans = subsList.length;
+      const activePlans = subsList.filter((s: Subscription) => s.statut === 'active').length;
+      const totalSubscribers = subscrList.length;
+      const activeSubscribers = subscrList.filter((s: Subscriber) => s.statut === 'active').length;
+      const totalRevenue = subscrList.reduce((sum: number, s: Subscriber) => sum + (s.montant_paye || 0), 0);
       
       setStats({ 
         totalPlans, 

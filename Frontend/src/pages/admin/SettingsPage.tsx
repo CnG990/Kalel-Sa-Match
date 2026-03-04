@@ -58,23 +58,22 @@ const SettingsPage: React.FC = () => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getSystemConfig();
-      if (response.success) {
-        const apiData = response.data;
+      const { data } = await apiService.getSystemConfig();
+      if (data) {
         setSettings({
           general: {
-            site_name: apiData.general?.nom_application || 'Terrains Synthétiques Dakar',
-            default_currency: apiData.general?.devise || 'FCFA',
-            timezone: apiData.general?.timezone || 'Africa/Dakar',
-            maintenance_mode: apiData.maintenance?.mode_maintenance || false
+            site_name: data.general?.nom_application || 'Terrains Synthétiques Dakar',
+            default_currency: data.general?.devise || 'FCFA',
+            timezone: data.general?.timezone || 'Africa/Dakar',
+            maintenance_mode: data.maintenance?.mode_maintenance || false
           },
           payments: {
-            commission_rate: apiData.paiements?.commission_defaut || 10,
-            refund_policy_days: apiData.paiements?.delai_remboursement || 7
+            commission_rate: data.paiements?.commission_defaut || 10,
+            refund_policy_days: data.paiements?.delai_remboursement || 7
           },
           notifications: {
-            email_notifications: apiData.notifications?.email_notifications || true,
-            sms_notifications: apiData.notifications?.sms_notifications || false
+            email_notifications: data.notifications?.email_notifications || true,
+            sms_notifications: data.notifications?.sms_notifications || false
           }
         });
         toast.success('Paramètres chargés avec succès');
@@ -88,9 +87,9 @@ const SettingsPage: React.FC = () => {
 
   const loadSystemPerformance = async () => {
     try {
-      const response = await apiService.getSystemPerformance();
-      if (response.success) {
-        setSystemPerformance(response.data);
+      const { data } = await apiService.getSystemPerformance();
+      if (data) {
+        setSystemPerformance(data);
       }
     } catch (error) {
       // Erreur silencieuse pour les métriques de performance
@@ -121,11 +120,11 @@ const SettingsPage: React.FC = () => {
         }
       };
 
-      const response = await apiService.updateSystemConfig(configData);
-      if (response.success) {
+      const { data, meta } = await apiService.updateSystemConfig(configData);
+      if (data) {
         toast.success('Paramètres sauvegardés avec succès');
       } else {
-        toast.error('Erreur lors de la sauvegarde');
+        toast.error(meta.message || 'Erreur lors de la sauvegarde');
       }
     } catch (error) {
       toast.error('Erreur lors de la sauvegarde');

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import apiService from '../../services/api';
+import apiService, { type ReservationDTO } from '../../services/api';
+
 import { Calendar, MapPin, BarChart2, PlusCircle, User } from 'lucide-react';
 
 interface Reservation {
@@ -10,6 +11,16 @@ interface Reservation {
   terrain: { name: string; adresse: string };
   statut: string;
 }
+
+const mapReservationDtoToReservation = (dto: ReservationDTO): Reservation => ({
+  id: dto.id,
+  date_debut: dto.date_debut,
+  terrain: {
+    name: dto.terrain?.nom ?? 'Terrain non disponible',
+    adresse: dto.terrain?.adresse ?? 'Adresse non disponible',
+  },
+  statut: dto.statut,
+});
 
 const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string | number; color: string }> = ({ icon, label, value, color }) => (
   <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
@@ -32,15 +43,14 @@ const DashboardOverview: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiService.getMyReservations();
-        if (res.success && Array.isArray(res.data)) {
-          const upcoming = res.data
-            .filter((r: any) => new Date(r.date_debut) >= new Date() && r.statut !== 'annulée')
-            .sort((a: any, b: any) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
-          
-          setNextReservation(upcoming[0] || null);
-          setTotalReservations(res.data.length);
-        }
+        const { data } = await apiService.getMyReservations();
+        const normalized = Array.isArray(data) ? data.map(mapReservationDtoToReservation) : [];
+        const upcoming = normalized
+          .filter((r) => new Date(r.date_debut) >= new Date() && r.statut !== 'annulée')
+          .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+
+        setNextReservation(upcoming[0] || null);
+        setTotalReservations(normalized.length);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {

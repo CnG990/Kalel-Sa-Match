@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import apiService from '../../services/api';
+import apiService, { type SupportTicketDTO } from '../../services/api';
 
 const SupportPage: React.FC = () => {
   // const [activeTab, setActiveTab] = useState<'tickets' | 'disputes'>('tickets');
   const [loading, setLoading] = useState(true);
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<SupportTicketDTO[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -18,21 +18,22 @@ const SupportPage: React.FC = () => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, string | number> = {
         page: currentPage,
-        per_page: 15
+        per_page: 15,
       };
 
       if (search) params.search = search;
       if (statusFilter) params.statut = statusFilter;
 
-      const response = await apiService.getSupportTickets(params);
-      if (response.success && response.data) {
-        setTickets(response.data.data || []);
-        setTotalPages(response.data.last_page || 1);
-      }
+      const { data } = await apiService.getSupportTickets(params);
+      setTickets(Array.isArray(data?.data) ? data.data : []);
+      setTotalPages(data?.last_page ?? 1);
+      setError(null);
     } catch (err) {
+      console.error('Erreur support tickets:', err);
       setError('Erreur lors du chargement des tickets');
+      setTickets([]);
     } finally {
       setLoading(false);
     }

@@ -130,17 +130,15 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
     setLoading(true);
     
     try {
-      const response = await apiService.createRecurringSubscription({
+      const { data, meta } = await apiService.createRecurringSubscription({
         terrain_id: terrainId,
         ...formData,
       });
 
-      if (response.success) {
-        toast.success('Abonnement récurrent créé avec succès !');
+      if (data) {
+        toast.success(meta.message || 'Abonnement récurrent créé avec succès !');
         onSuccess?.();
         onClose();
-        
-        // Reset form
         setFormData({
           type_recurrence: 'hebdomadaire',
           jours_semaine: [],
@@ -152,7 +150,7 @@ const RecurringSubscriptionModal: React.FC<RecurringSubscriptionModalProps> = ({
           pourcentage_acompte: 40,
         });
       } else {
-        toast.error(response.message || 'Erreur lors de la création');
+        toast.error(meta.message || 'Erreur lors de la création');
       }
     } catch (error) {
       console.error('Erreur création abonnement:', error);

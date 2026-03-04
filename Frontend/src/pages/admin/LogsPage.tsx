@@ -40,16 +40,20 @@ const LogsPage: React.FC = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const response = await apiService.get('/admin/logs');
-      setLogs(response.data.logs || []);
+      const { data } = await apiService.get('/admin/logs');
+      const logsDataCandidate = Array.isArray(data)
+        ? data
+        : (typeof data === 'object' && data !== null ? (data as { logs?: unknown }).logs : undefined);
+      const logsData = Array.isArray(logsDataCandidate) ? logsDataCandidate : [];
+      setLogs(logsData);
       
       // Calculer les statistiques
-      const total = response.data.logs?.length || 0;
-      const info = response.data.logs?.filter((l: Log) => l.niveau === 'info').length || 0;
-      const warning = response.data.logs?.filter((l: Log) => l.niveau === 'warning').length || 0;
-      const error = response.data.logs?.filter((l: Log) => l.niveau === 'error').length || 0;
-      const critical = response.data.logs?.filter((l: Log) => l.niveau === 'critical').length || 0;
-      const today = response.data.logs?.filter((l: Log) => {
+      const total = logsData.length || 0;
+      const info = logsData.filter((l: Log) => l.niveau === 'info').length || 0;
+      const warning = logsData.filter((l: Log) => l.niveau === 'warning').length || 0;
+      const error = logsData.filter((l: Log) => l.niveau === 'error').length || 0;
+      const critical = logsData.filter((l: Log) => l.niveau === 'critical').length || 0;
+      const today = logsData.filter((l: Log) => {
         const today = new Date().toDateString();
         return new Date(l.date_creation).toDateString() === today;
       }).length || 0;

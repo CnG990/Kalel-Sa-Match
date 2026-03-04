@@ -45,12 +45,12 @@ const FinancesPage: React.FC = () => {
     const fetchFinances = async () => {
       setLoading(true);
       try {
-        const response = await apiService.getAdminFinances({ page });
-        if (response.success) {
-          setStats(response.data.stats as Stats);
-          setTransactions(response.data.transactions as PaginatedTransactions);
+        const { data, meta } = await apiService.getAdminFinances({ page });
+        if (data) {
+          setStats(data.stats as Stats);
+          setTransactions(data.transactions as PaginatedTransactions);
         } else {
-          toast.error("Impossible de charger les données financières.");
+          toast.error(meta.message || "Impossible de charger les données financières.");
         }
       } catch (error) {
         toast.error("Erreur réseau lors du chargement des finances.");

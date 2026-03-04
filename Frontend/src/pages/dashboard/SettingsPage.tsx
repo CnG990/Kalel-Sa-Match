@@ -28,18 +28,18 @@ const SettingsPage: React.FC = () => {
     }
 
     try {
-      const response = await apiService.post('/auth/change-password', {
+      const { data, meta } = await apiService.post('/auth/change-password', {
         current_password: '', // À compléter avec l'ancien mot de passe
         new_password: newPassword,
         new_password_confirmation: confirmPassword
       });
-      
-      if (response.success) {
-        toast.success('Mot de passe modifié avec succès');
+
+      if (data !== null || meta) {
+        toast.success((meta as { message?: string } | undefined)?.message || 'Mot de passe modifié avec succès');
         setNewPassword('');
         setConfirmPassword('');
       } else {
-        toast.error('Erreur lors du changement de mot de passe');
+        toast.error((meta as { message?: string } | undefined)?.message || 'Erreur lors du changement de mot de passe');
       }
     } catch (error) {
       toast.error('Erreur lors du changement de mot de passe');
