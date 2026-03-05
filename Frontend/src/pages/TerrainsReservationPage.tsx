@@ -101,9 +101,9 @@ const TerrainsReservationPage: React.FC = () => {
     try {
       const location = await apiService.getUserLocation();
       if (location) {
-        const { data } = await apiService.getNearbyTerrains(location.latitude, location.longitude, 15);
+        const { data } = await apiService.getNearbyTerrains(location.lat, location.lng, 15);
         if (data) {
-          setTerrains(data);
+          setTerrains(data as any);
         }
       }
     } catch (err) {

@@ -103,7 +103,7 @@ const TerrainsPage: React.FC = () => {
         return;
       }
 
-      const { data, meta } = await apiService.getNearbyTerrains(location.latitude, location.longitude, 10);
+      const { data, meta } = await apiService.getNearbyTerrains(location.lat, location.lng, 10);
       
       if (data) {
         const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];

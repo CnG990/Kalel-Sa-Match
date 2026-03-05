@@ -532,6 +532,61 @@ class ApiService {
     });
   }
 
+  // Password Reset ------------------------------------------
+  forgotPassword(email: string) {
+    const url = `${API_ROOT}/accounts/forgot-password/`;
+    return this.request(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ email }),
+    }) as Promise<any>;
+  }
+
+  resetPassword(email: string, token: string, password: string, passwordConfirmation: string) {
+    const url = `${API_ROOT}/accounts/reset-password/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ email, token, password, password_confirmation: passwordConfirmation }),
+    });
+  }
+
+  // Terrains - Geo Search -----------------------------------
+  getNearbyTerrains(lat: number, lng: number, radius?: number) {
+    const params: QueryParams = { latitude: lat, longitude: lng };
+    if (radius) params.radius = radius;
+    const url = `${ENDPOINTS.terrains}${buildQueryString(params)}`;
+    return this.requestNormalized<TerrainDTO[]>(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  searchTerrainsByLocation(latOrSearch: number | string, lng?: number, radius?: number) {
+    if (typeof latOrSearch === 'string') {
+      return this.getTerrains({ search: latOrSearch });
+    }
+    return this.getNearbyTerrains(latOrSearch, lng!, radius);
+  }
+
+  getUserLocation(): Promise<{ lat: number; lng: number }> {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Géolocalisation non supportée'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
+        (error) => reject(error),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+  }
+
+  get apiURL() {
+    return API_ROOT;
+  }
+
   // Terrains ----------------------------------------------
   listTerrains(params?: QueryParams) {
     const url = `${ENDPOINTS.terrains}${buildQueryString(params)}`;
@@ -880,6 +935,391 @@ class ApiService {
     return this.requestNormalized(url, {
       method: 'POST',
       headers: this.headers(),
+    });
+  }
+
+  // Admin - User Management -----------------------------------
+  getUser(userId: number) {
+    const url = `${API_ROOT}/admin/users/${userId}/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  createUser(userData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/users/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(userData),
+    });
+  }
+
+  updateUser(userId: number, userData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/users/${userId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify(userData),
+    });
+  }
+
+  deleteUser(userId: number) {
+    const url = `${API_ROOT}/admin/users/${userId}/`;
+    return this.requestNormalized(url, {
+      method: 'DELETE',
+      headers: this.headers(),
+    });
+  }
+
+  resetUserPassword(userId: number, newPassword?: string) {
+    const url = `${API_ROOT}/admin/users/${userId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({ password: newPassword || 'TempPass123!' }),
+    });
+  }
+
+  approveManager(managerId: number, tauxCommission?: number, commentaires?: string) {
+    const url = `${API_ROOT}/admin/users/${managerId}/validate_user/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({
+        action: 'approuver',
+        taux_commission: tauxCommission,
+        commentaires,
+      }),
+    });
+  }
+
+  approveManagerWithContract(managerId: number, contractData?: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/users/${managerId}/validate_user/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({
+        action: 'approuver',
+        ...contractData,
+      }),
+    });
+  }
+
+  rejectManager(managerId: number, raison?: string) {
+    const url = `${API_ROOT}/admin/users/${managerId}/validate_user/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ action: 'rejeter', raison }),
+    });
+  }
+
+  getPendingManagers() {
+    const url = `${API_ROOT}/admin/users/pending_validations/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  updateManagerCommission(managerId: number, tauxCommission: number, commentaire?: string) {
+    const url = `${API_ROOT}/admin/users/${managerId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({
+        taux_commission_defaut: tauxCommission,
+        commentaire_commission: commentaire,
+      }),
+    });
+  }
+
+  getUserReservations(userId: number) {
+    const url = `${API_ROOT}/admin/payments/?user_id=${userId}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  getUserPaiements(userId: number) {
+    const url = `${API_ROOT}/admin/payments/?user_id=${userId}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Admin - Dashboard & Stats --------------------------------
+  getDashboardStats() {
+    const url = `${API_ROOT}/admin/stats/dashboard/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  getAdminFinances(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/payments/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Admin - Reservations --------------------------------------
+  getAllReservations(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/payments/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  deleteReservation(reservationId: number) {
+    const url = `${API_ROOT}/admin/payments/${reservationId}/`;
+    return this.requestNormalized(url, {
+      method: 'DELETE',
+      headers: this.headers(),
+    });
+  }
+
+  updateReservationNotes(reservationId: number, notes: string) {
+    const url = `${API_ROOT}/admin/payments/${reservationId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({ notes }),
+    });
+  }
+
+  // Admin - Reports -------------------------------------------
+  getReports(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/stats/dashboard/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  exportReport(type: string, params?: QueryParams) {
+    const url = `${API_ROOT}/admin/stats/dashboard/${buildQueryString({ ...params, export_type: type })}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Admin - Commissions (contrats) ----------------------------
+  getContratsCommission(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/users/${buildQueryString({ ...params, role: 'gestionnaire' })}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  createContratCommission(contratData: Record<string, unknown>) {
+    const managerId = contratData.gestionnaire_id;
+    const url = `${API_ROOT}/admin/users/${managerId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({
+        taux_commission_defaut: contratData.taux_commission,
+      }),
+    });
+  }
+
+  updateContratCommission(contratId: number, contratData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/users/${contratId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({
+        taux_commission_defaut: contratData.taux_commission,
+      }),
+    });
+  }
+
+  deleteContratCommission(contratId: number) {
+    const url = `${API_ROOT}/admin/users/${contratId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({ taux_commission_defaut: null }),
+    });
+  }
+
+  // Admin - Notifications (send) ------------------------------
+  createNotification(notifData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/notifications/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(notifData),
+    });
+  }
+
+  // Admin - Subscriptions -------------------------------------
+  createSubscription(subData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/notifications/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(subData),
+    });
+  }
+
+  // Admin - System Config & Performance -----------------------
+  getSystemConfig() {
+    const url = `${API_ROOT}/admin/stats/dashboard/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  updateSystemConfig(configData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/payment-config/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(configData),
+    });
+  }
+
+  getSystemPerformance() {
+    const url = `${API_ROOT}/admin/stats/dashboard/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Admin - Geo Import ----------------------------------------
+  importGeoData(geoData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/terrains/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(geoData),
+    });
+  }
+
+  exportGeoData(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/terrains/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  validateDataIntegrity() {
+    const url = `${API_ROOT}/admin/stats/dashboard/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Admin - Create Terrain ------------------------------------
+  createAdminTerrain(terrainData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/terrains/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(terrainData),
+    });
+  }
+
+  // Litiges - Create ----------------------------------------
+  creerLitige(litigeData: Record<string, unknown>) {
+    const url = `${API_ROOT}/litiges/litiges/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(litigeData),
+    });
+  }
+
+  // Tickets - Get single ------------------------------------
+  getTicket(ticketId: number) {
+    const url = `${ENDPOINTS.tickets}${ticketId}/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Terrains - Update ---------------------------------------
+  updateTerrain(terrainId: number, terrainData: Record<string, unknown>) {
+    const url = `${API_ROOT}/manager/terrains/${terrainId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify(terrainData),
+    });
+  }
+
+  // Admin - Reservation Status ------------------------------
+  updateAdminReservationStatus(reservationId: number, statut: string) {
+    const url = `${API_ROOT}/admin/payments/${reservationId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({ statut }),
+    });
+  }
+
+  // Subscriptions - Recurring -------------------------------
+  createRecurringSubscription(subData: Record<string, unknown>) {
+    const url = `${ENDPOINTS.abonnements}souscrire/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(subData),
+    });
+  }
+
+  // Geo - PostGIS Stats -------------------------------------
+  getPostGISStats() {
+    const url = `${API_ROOT}/admin/stats/dashboard/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Geo - KML Batch Import ----------------------------------
+  importKMLBatch(kmlData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/terrains/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(kmlData),
+    });
+  }
+
+  // Subscriptions - Session Management ----------------------
+  markSessionAbsent(sessionId: number, reason?: string) {
+    const url = `${ENDPOINTS.abonnements}sessions/${sessionId}/absent/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: reason ? JSON.stringify({ raison: reason }) : undefined,
+    });
+  }
+
+  rescheduleSession(sessionId: number, payload: string | Record<string, unknown>) {
+    const url = `${ENDPOINTS.abonnements}sessions/${sessionId}/reschedule/`;
+    const body = typeof payload === 'string' ? { nouvelle_date: payload } : payload;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(body),
     });
   }
 

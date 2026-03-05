@@ -63,14 +63,14 @@ const CSVTerrainImport: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
       formData.append('file', selectedFile);
       formData.append('type', 'csv');
 
-      const response = await apiService.importGeoData(formData);
+      const { data, meta } = await apiService.importGeoData(formData as any);
       
-      if (response.success) {
-        setImportResult(response.data as CSVImportResult);
-        toast.success(`Import réussi ! ${response.data.imported_count} terrain(s) importé(s)`);
+      if (data) {
+        setImportResult(data as CSVImportResult);
+        toast.success(`Import réussi ! ${(data as any).imported_count || 0} terrain(s) importé(s)`);
         onSuccess(); // Actualiser la liste des terrains
       } else {
-        toast.error(response.message || 'Erreur lors de l\'import');
+        toast.error(meta.message || 'Erreur lors de l\'import');
       }
     } catch (error) {
       toast.error('Erreur lors de l\'import CSV');

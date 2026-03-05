@@ -54,7 +54,7 @@ const KMLGoogleEarthImport: React.FC<Props> = ({ isOpen, onClose, onSuccess }) =
     try {
       const { data } = await apiService.getPostGISStats();
       if (data) {
-        setPostgisStats(data);
+        setPostgisStats(data as any);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des stats PostGIS:', error);
@@ -105,7 +105,7 @@ const KMLGoogleEarthImport: React.FC<Props> = ({ isOpen, onClose, onSuccess }) =
         formData.append(`files[${index}]`, file);
       });
 
-      const { data, meta } = await apiService.importKMLBatch(formData);
+      const { data, meta } = await apiService.importKMLBatch(formData as any);
       
       if (data) {
         const result = data as KMLImportResult;

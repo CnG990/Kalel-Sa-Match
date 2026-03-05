@@ -88,8 +88,9 @@ const ReservationsPage: React.FC = () => {
         ...filters 
       });
       if (data) {
-        setReservations(data?.data || []);
-        setStats(data?.stats || null);
+        const d = data as any;
+        setReservations(d?.data || (Array.isArray(d) ? d : []) || []);
+        setStats(d?.stats || null);
       } else {
         toast.error(meta.message || "Impossible de charger les réservations.");
       }

@@ -152,8 +152,8 @@ const GeoImportPage: React.FC = () => {
       formData.append('file', selectedFile);
       formData.append('type', importType);
       
-      const { data, meta } = await apiService.importGeoData(formData);
-      setUploadResult({ success: !!data, message: meta.message || (data?.message ?? 'Import terminé'), data });
+      const { data, meta } = await apiService.importGeoData(formData as any);
+      setUploadResult({ success: !!data, message: meta.message || ((data as any)?.message ?? 'Import terminé'), data: data as any });
       
       // Recharger les terrains après import réussi
       if (data) {
@@ -171,7 +171,7 @@ const GeoImportPage: React.FC = () => {
 
   const handleExport = async (format: 'kml' | 'geojson' | 'csv') => {
     try {
-      const { data } = await apiService.exportGeoData(format);
+      const { data } = await apiService.exportGeoData({ format } as any);
       if (data) {
         // Créer un lien de téléchargement
         const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
@@ -193,7 +193,7 @@ const GeoImportPage: React.FC = () => {
       setUploadResult({
         success: !!data,
         message: meta.message || 'Validation terminée',
-        data
+        data: data as any
       });
     } catch (error) {
       setUploadResult({

@@ -50,8 +50,9 @@ const FinancesPage: React.FC = () => {
       try {
         const { data, meta } = await apiService.getAdminFinances({ page });
         if (data) {
-          setStats(data.stats as Stats);
-          setTransactions(data.transactions as PaginatedTransactions);
+          const d = data as any;
+          setStats(d.stats as Stats || d as Stats);
+          setTransactions(d.transactions as PaginatedTransactions || null);
         } else {
           toast.error(meta.message || "Impossible de charger les données financières.");
         }

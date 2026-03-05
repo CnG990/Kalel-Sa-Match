@@ -116,10 +116,10 @@ const LitigeModal: React.FC<LitigeModalProps> = ({
         preuves: preuves
       };
 
-      const response = await apiService.creerLitige(litigeData);
+      const { data, meta } = await apiService.creerLitige(litigeData);
 
-      if (response.success) {
-        toast.success(`Litige créé avec succès (${response.data.numero_litige})`);
+      if (data) {
+        toast.success(`Litige créé avec succès (${(data as any).numero_litige || ''})`);
         onClose();
         // Reset form
         setFormData({
@@ -130,7 +130,7 @@ const LitigeModal: React.FC<LitigeModalProps> = ({
           preuves: []
         });
       } else {
-        toast.error(response.message || 'Erreur lors de la création du litige');
+        toast.error(meta.message || 'Erreur lors de la création du litige');
       }
     } catch (error: any) {
       console.error('Erreur création litige:', error);

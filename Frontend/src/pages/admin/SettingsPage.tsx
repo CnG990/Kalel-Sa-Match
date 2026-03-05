@@ -59,21 +59,22 @@ const SettingsPage: React.FC = () => {
     try {
       setLoading(true);
       const { data } = await apiService.getSystemConfig();
-      if (data) {
+      const d = data as any;
+      if (d) {
         setSettings({
           general: {
-            site_name: data.general?.nom_application || 'Terrains Synthétiques Dakar',
-            default_currency: data.general?.devise || 'FCFA',
-            timezone: data.general?.timezone || 'Africa/Dakar',
-            maintenance_mode: data.maintenance?.mode_maintenance || false
+            site_name: d.general?.nom_application || 'Terrains Synthétiques Dakar',
+            default_currency: d.general?.devise || 'FCFA',
+            timezone: d.general?.timezone || 'Africa/Dakar',
+            maintenance_mode: d.maintenance?.mode_maintenance || false
           },
           payments: {
-            commission_rate: data.paiements?.commission_defaut || 10,
-            refund_policy_days: data.paiements?.delai_remboursement || 7
+            commission_rate: d.paiements?.commission_defaut || 10,
+            refund_policy_days: d.paiements?.delai_remboursement || 7
           },
           notifications: {
-            email_notifications: data.notifications?.email_notifications || true,
-            sms_notifications: data.notifications?.sms_notifications || false
+            email_notifications: d.notifications?.email_notifications || true,
+            sms_notifications: d.notifications?.sms_notifications || false
           }
         });
         toast.success('Paramètres chargés avec succès');
@@ -89,7 +90,7 @@ const SettingsPage: React.FC = () => {
     try {
       const { data } = await apiService.getSystemPerformance();
       if (data) {
-        setSystemPerformance(data);
+        setSystemPerformance(data as any);
       }
     } catch (error) {
       // Erreur silencieuse pour les métriques de performance

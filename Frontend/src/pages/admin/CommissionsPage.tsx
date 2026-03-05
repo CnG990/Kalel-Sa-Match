@@ -48,7 +48,7 @@ const CommissionsPage: React.FC = () => {
     try {
       const { data, meta } = await apiService.getContratsCommission({ page: 1 });
       if (data) {
-        setContrats(data.data || []);
+        setContrats((data as any).data || (Array.isArray(data) ? data : []));
       } else {
         toast.error(meta.message || "Impossible de charger les contrats de commission.");
       }
@@ -93,7 +93,7 @@ const CommissionsPage: React.FC = () => {
         resetForm();
         fetchContrats();
       } else {
-        toast.error(response.message || 'Erreur lors de l\'opération');
+        toast.error((response as any)?.meta?.message || 'Erreur lors de l\'opération');
       }
     } catch (error) {
       toast.error('Erreur lors de l\'opération');

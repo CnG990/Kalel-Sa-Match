@@ -49,7 +49,14 @@ const AdminDashboard: React.FC = () => {
         setLoading(true);
         const { data, meta } = await apiService.getDashboardStats();
         if (data && typeof data === 'object') {
-          setStats(data as StatsData);
+          const d = data as any;
+          setStats({
+            revenue: d.revenus_mois ? `${Number(d.revenus_mois).toLocaleString('fr-FR')} FCFA` : (d.revenue || '0 FCFA'),
+            newUsers: d.users_count || d.newUsers || 0,
+            pendingManagers: d.gestionnaires_en_attente || d.pendingManagers || 0,
+            pendingRefunds: d.tickets_ouverts || d.pendingRefunds || 0,
+            openDisputes: d.openDisputes || 0,
+          });
         } else {
           toast.error(meta.message || "Impossible de charger les statistiques : format de données incorrect.");
         }

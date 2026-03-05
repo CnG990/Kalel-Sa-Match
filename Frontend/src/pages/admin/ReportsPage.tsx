@@ -41,9 +41,9 @@ const ReportsPage: React.FC = () => {
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      const { data, meta } = await apiService.getReports(dateRange);
+      const { data, meta } = await apiService.getReports(dateRange as any);
       if (data) {
-        setReportData(data);
+        setReportData(data as any);
       } else {
         toast.error(meta.message || "Impossible de charger les rapports.");
       }
@@ -56,11 +56,11 @@ const ReportsPage: React.FC = () => {
 
   const exportReport = async (format: 'pdf' | 'excel') => {
     try {
-      const { data, meta } = await apiService.exportReport(dateRange, format);
+      const { data, meta } = await apiService.exportReport(format, dateRange as any);
       if (data) {
         // Télécharger le fichier
         const link = document.createElement('a');
-        link.href = data.download_url;
+        link.href = (data as any).download_url;
         link.download = `rapport_${format}_${new Date().toISOString().split('T')[0]}.${format}`;
         link.click();
         toast.success(`Rapport exporté en ${format.toUpperCase()}`);
