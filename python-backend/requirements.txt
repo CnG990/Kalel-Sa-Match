@@ -13,3 +13,16 @@ redis==5.0.1
 gunicorn==21.2.0
 whitenoise==6.6.0
 
+# Exports Excel/PDF
+openpyxl==3.1.2
+reportlab==4.0.9
+Pillow==10.2.0
+
+# Notifications Firebase
+firebase-admin==6.4.0
+
+# QR Codes
+qrcode==7.4.2
+
+# Utilitaires
+python-dateutil==2.8.2

@@ -77,15 +77,40 @@ def create_reservation(request):
         duree_heures=duree_heures,
         montant_total=montant_total,
         telephone=telephone,
-        notes=notes
+        notes=notes,
+        statut='en_attente'  # En attente de paiement
     )
     
-    # Générer le QR code token
+    # Générer le QR code token et code ticket
     reservation.generer_qr_code_token()
+    import random
+    import string
+    reservation.code_ticket = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    reservation.save()
+    
+    # Créer automatiquement le paiement associé
+    from apps.payments.models import Payment
+    import uuid
+    
+    payment = Payment.objects.create(
+        reference=str(uuid.uuid4()),
+        montant=montant_total,
+        methode='en_attente',  # Sera mis à jour lors du choix de paiement
+        statut='en_attente',
+        user=request.user
+    )
+    
+    # Lier le paiement à la réservation
+    reservation.paiement = payment
+    reservation.save()
     
     return api_success(
-        data=ReservationSerializer(reservation).data,
-        message="Réservation créée avec succès",
+        data={
+            **ReservationSerializer(reservation).data,
+            'payment_id': payment.id,
+            'payment_reference': payment.reference
+        },
+        message="Réservation créée - Veuillez procéder au paiement",
         http_status=status.HTTP_201_CREATED
     )
 
@@ -135,9 +160,18 @@ def cancel_reservation(request, reservation_id):
 
 
 @api_view(['POST'])
-@permission_classes([permissions.AllowAny])  # Public pour le scan QR code
+@permission_classes([permissions.IsAuthenticated])
 def validate_qr_code(request):
-    """Valider un QR code de réservation"""
+    """Valider un QR code de réservation - GESTIONNAIRES UNIQUEMENT"""
+    from apps.accounts.models import User
+    
+    # Vérifier que l'utilisateur est gestionnaire
+    if request.user.role not in ['gestionnaire', 'admin']:
+        return api_error(
+            "Seuls les gestionnaires peuvent valider des QR codes",
+            status.HTTP_403_FORBIDDEN
+        )
+    
     qr_token = request.data.get('qr_token')
     
     if not qr_token:

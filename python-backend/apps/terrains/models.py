@@ -72,30 +72,9 @@ class Souscription(TimeStampedSoftDeleteModel):
         db_table = 'souscriptions'
 
 
-class Paiement(TimeStampedSoftDeleteModel):
-    STATUT_CHOICES = [
-        ('en_attente', 'En attente'),
-        ('reussi', 'Réussi'),
-        ('echoue', 'Échoué'),
-        ('rembourse', 'Remboursé'),
-    ]
-    METHODE_CHOICES = [
-        ('carte', 'Carte'),
-        ('mobile_money', 'Mobile Money'),
-        ('especes', 'Espèces'),
-    ]
-
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='paiements')
-    payable_id = models.PositiveBigIntegerField()
-    payable_type = models.CharField(max_length=255)
-    reference_transaction = models.CharField(max_length=255, unique=True)
-    montant = models.DecimalField(max_digits=10, decimal_places=2)
-    methode = models.CharField(max_length=50, choices=METHODE_CHOICES)
-    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
-    details_transaction = models.JSONField(default=dict, blank=True)
-
-    class Meta:
-        db_table = 'paiements'
+# DEPRECATED: Paiement model moved to apps.payments.models.Payment
+# This model is kept for backward compatibility but should not be used
+# Use apps.payments.models.Payment instead
 
 
 class TicketSupport(TimeStampedSoftDeleteModel):
@@ -147,7 +126,6 @@ __all__ = [
     'TerrainSynthetiquesDakar',
     'Abonnement',
     'Souscription',
-    'Paiement',
     'TicketSupport',
     'ReponseTicket',
     'Notification',

@@ -6,7 +6,6 @@ from rest_framework.pagination import PageNumberPagination
 from .models import (
     Abonnement,
     Notification,
-    Paiement,
     Souscription,
     TerrainSynthetiquesDakar,
     TicketSupport,
@@ -15,12 +14,13 @@ from .models import (
 from .serializers import (
     AbonnementSerializer,
     NotificationSerializer,
-    PaiementSerializer,
     SouscriptionSerializer,
     TerrainSerializer,
     TicketSupportSerializer,
     ReponseTicketSerializer,
 )
+from apps.payments.models import Payment
+from apps.payments.serializers import PaymentSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -70,6 +70,130 @@ class TerrainViewSet(BaseViewSet):
         serializer = self.get_serializer(terrain)
         return Response({'data': serializer.data, 'meta': {'success': True}})
 
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def all_for_map(self, request):
+        """Endpoint pour la carte - retourne tous les terrains actifs avec coordonnées"""
+        from apps.reservations.models import Reservation
+        from django.utils import timezone
+        from django.db.models import Q
+        
+        terrains = self.queryset.select_related('gestionnaire')
+        terrain_data = []
+        
+        now = timezone.now()
+        
+        for terrain in terrains:
+            if not terrain.latitude or not terrain.longitude:
+                continue
+                
+            reservations_actives = Reservation.objects.filter(
+                terrain=terrain,
+                statut__in=['confirmee', 'en_cours'],
+                date_debut__lte=now,
+                date_fin__gte=now,
+                deleted_at__isnull=True
+            ).exists()
+            
+            terrain_dict = self.get_serializer(terrain).data
+            terrain_dict['statut_reservation'] = 'reserve' if reservations_actives else 'libre'
+            terrain_data.append(terrain_dict)
+        
+        stats = {
+            'total': len(terrain_data),
+            'libres': sum(1 for t in terrain_data if t.get('statut_reservation') == 'libre'),
+            'reserves': sum(1 for t in terrain_data if t.get('statut_reservation') == 'reserve'),
+            'fermes': 0
+        }
+        
+        return Response({
+            'data': terrain_data,
+            'meta': {
+                'success': True,
+                'libres': stats['libres'],
+                'reserves': stats['reserves'],
+                'fermes': stats['fermes']
+            }
+        })
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def nearby(self, request):
+        """Recherche des terrains à proximité d'une position"""
+        from math import radians, cos, sin, asin, sqrt
+        
+        try:
+            lat = float(request.query_params.get('lat'))
+            lng = float(request.query_params.get('lng'))
+            radius = float(request.query_params.get('radius', 10))  # km
+        except (TypeError, ValueError):
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Paramètres lat, lng requis (nombres)'}
+            }, status=400)
+        
+        def haversine_distance(lat1, lon1, lat2, lon2):
+            """Calcule la distance en km entre deux points GPS"""
+            R = 6371  # Rayon de la Terre en km
+            lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+            c = 2 * asin(sqrt(a))
+            return R * c
+        
+        terrains = self.queryset.filter(
+            latitude__isnull=False,
+            longitude__isnull=False
+        )
+        
+        terrains_proches = []
+        for terrain in terrains:
+            distance = haversine_distance(lat, lng, float(terrain.latitude), float(terrain.longitude))
+            if distance <= radius:
+                terrain_dict = self.get_serializer(terrain).data
+                terrain_dict['distance'] = round(distance, 2)
+                terrains_proches.append(terrain_dict)
+        
+        # Trier par distance
+        terrains_proches.sort(key=lambda x: x['distance'])
+        
+        return Response({
+            'data': terrains_proches,
+            'meta': {
+                'success': True,
+                'count': len(terrains_proches),
+                'radius_km': radius
+            }
+        })
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def search_location(self, request):
+        """Recherche des terrains par nom de lieu/quartier"""
+        from django.db.models import Q
+        
+        query = request.query_params.get('q', '').strip()
+        
+        if not query:
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Paramètre q requis'}
+            }, status=400)
+        
+        terrains = self.queryset.filter(
+            Q(adresse__icontains=query) |
+            Q(nom__icontains=query)
+        )
+        
+        serializer = self.get_serializer(terrains, many=True)
+        
+        return Response({
+            'data': serializer.data,
+            'meta': {
+                'success': True,
+                'count': terrains.count(),
+                'query': query
+            }
+        })
+
 
 class AbonnementViewSet(BaseViewSet):
     serializer_class = AbonnementSerializer
@@ -110,10 +234,11 @@ class SouscriptionViewSet(BaseViewSet):
 
 
 class PaiementViewSet(BaseViewSet):
-    serializer_class = PaiementSerializer
+    """DEPRECATED: Use apps.payments endpoints instead"""
+    serializer_class = PaymentSerializer
 
     def get_queryset(self):
-        qs = Paiement.objects.all()
+        qs = Payment.objects.all()
         if self.request.user.role == 'client':
             qs = qs.filter(user=self.request.user)
         return qs
@@ -122,7 +247,7 @@ class PaiementViewSet(BaseViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         paiement = serializer.save(user=request.user)
-        return Response({'data': PaiementSerializer(paiement).data, 'meta': {'success': True, 'message': 'Paiement enregistré avec succès'}}, status=201)
+        return Response({'data': PaymentSerializer(paiement).data, 'meta': {'success': True, 'message': 'Paiement enregistré avec succès'}}, status=201)
 
     @action(detail=False, methods=['get'])
     def my_payments(self, request):

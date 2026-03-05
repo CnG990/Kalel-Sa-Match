@@ -63,12 +63,24 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=255,
         null=True,
         blank=True,
-        help_text='Nom/description du compte Wave (ex: Ch Tech Business)'
+        help_text='Nom/description du compte Wave (ex: Kalel Sa Match)'
+    )
+    orange_money_number = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text='Numéro marchand Orange Money (ex: 77 123 45 67)'
     )
     date_validation = models.DateTimeField(null=True, blank=True)
     email_verified_at = models.DateTimeField(null=True, blank=True)
     slogan = models.CharField(max_length=255, null=True, blank=True)
     profile_image_url = models.URLField(null=True, blank=True)
+    fcm_token = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text='Firebase Cloud Messaging token pour notifications push'
+    )
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

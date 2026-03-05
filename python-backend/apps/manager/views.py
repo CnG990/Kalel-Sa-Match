@@ -2,10 +2,14 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from django.http import HttpResponse
 
-from apps.terrains.models import TerrainSynthetiquesDakar, Paiement
-from apps.terrains.serializers import TerrainSerializer, PaiementSerializer
+from apps.terrains.models import TerrainSynthetiquesDakar
+from apps.terrains.serializers import TerrainSerializer
+from apps.payments.models import Payment
+from apps.payments.serializers import PaymentSerializer
 from apps.accounts.models import User
+from .exports import generate_reservations_excel_response, generate_statistiques_pdf_response, ManagerExports
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -68,13 +72,61 @@ class ManagerTerrainViewSet(BaseViewSet):
 
     @action(detail=True, methods=['get'])
     def statistiques(self, request, pk=None):
+        from apps.reservations.models import Reservation
+        from apps.payments.models import Payment
+        from django.db.models import Count, Sum, Q
+        from django.utils import timezone
+        from datetime import timedelta
+        
         terrain = self.get_object()
-        # Implémenter la logique des statistiques
+        now = timezone.now()
+        debut_mois = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Statistiques réservations
+        reservations_total = Reservation.objects.filter(
+            terrain=terrain,
+            deleted_at__isnull=True
+        ).count()
+        
+        reservations_ce_mois = Reservation.objects.filter(
+            terrain=terrain,
+            created_at__gte=debut_mois,
+            deleted_at__isnull=True
+        ).count()
+        
+        # Statistiques revenus
+        revenus_total = Reservation.objects.filter(
+            terrain=terrain,
+            statut__in=['confirmee', 'terminee'],
+            deleted_at__isnull=True
+        ).aggregate(total=Sum('montant_total'))['total'] or 0
+        
+        revenus_ce_mois = Reservation.objects.filter(
+            terrain=terrain,
+            statut__in=['confirmee', 'terminee'],
+            created_at__gte=debut_mois,
+            deleted_at__isnull=True
+        ).aggregate(total=Sum('montant_total'))['total'] or 0
+        
+        # Taux d'occupation ce mois
+        heures_reservees = Reservation.objects.filter(
+            terrain=terrain,
+            date_debut__gte=debut_mois,
+            statut__in=['confirmee', 'en_cours'],
+            deleted_at__isnull=True
+        ).aggregate(total=Sum('duree_heures'))['total'] or 0
+        
+        jours_mois = (now - debut_mois).days + 1
+        heures_disponibles = jours_mois * 24
+        taux_occupation = (heures_reservees / heures_disponibles * 100) if heures_disponibles > 0 else 0
+        
         stats = {
-            'reservations_total': 0,  # À calculer
-            'reservations_ce_mois': 0,  # À calculer
-            'revenus_total': 0,  # À calculer
-            'revenus_ce_mois': 0,  # À calculer
+            'reservations_total': reservations_total,
+            'reservations_ce_mois': reservations_ce_mois,
+            'revenus_total': float(revenus_total),
+            'revenus_ce_mois': float(revenus_ce_mois),
+            'taux_occupation': round(taux_occupation, 2),
+            'heures_reservees_mois': heures_reservees,
         }
         return Response({'data': stats, 'meta': {'success': True}})
 
@@ -84,22 +136,141 @@ class ManagerStatsViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
-        # Implémenter les statistiques du dashboard
+        from apps.reservations.models import Reservation
+        from apps.payments.models import Payment
+        from apps.accounts.models import User
+        from django.db.models import Sum, Count
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        user = request.user
+        now = timezone.now()
+        debut_mois = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Filtrer selon le rôle
+        if user.role == 'gestionnaire':
+            terrains = TerrainSynthetiquesDakar.objects.filter(gestionnaire=user)
+        else:
+            terrains = TerrainSynthetiquesDakar.objects.all()
+        
+        terrains_count = terrains.count()
+        terrains_actifs = terrains.filter(est_actif=True).count()
+        
+        # Réservations
+        reservations_mois = Reservation.objects.filter(
+            terrain__in=terrains,
+            created_at__gte=debut_mois,
+            deleted_at__isnull=True
+        ).count()
+        
+        # Revenus
+        revenus_mensuel = Reservation.objects.filter(
+            terrain__in=terrains,
+            statut__in=['confirmee', 'terminee'],
+            created_at__gte=debut_mois,
+            deleted_at__isnull=True
+        ).aggregate(total=Sum('montant_total'))['total'] or 0
+        
+        # Clients uniques
+        clients_count = Reservation.objects.filter(
+            terrain__in=terrains,
+            deleted_at__isnull=True
+        ).values('user').distinct().count()
+        
+        # Prochaines réservations
+        prochaines = Reservation.objects.filter(
+            terrain__in=terrains,
+            date_debut__gte=now,
+            statut='confirmee',
+            deleted_at__isnull=True
+        ).select_related('terrain', 'user').order_by('date_debut')[:5]
+        
+        prochaines_data = [{
+            'id': r.id,
+            'terrain_nom': r.terrain.nom,
+            'client_nom': f"{r.user.prenom} {r.user.nom}",
+            'date_debut': r.date_debut.isoformat(),
+            'montant': float(r.montant_total)
+        } for r in prochaines]
+        
         stats = {
-            'terrains_count': 0,
-            'reservations_count': 0,
-            'revenus_mensuel': 0,
-            'clients_count': 0,
+            'total_terrains': terrains_count,
+            'terrains_actifs': terrains_actifs,
+            'reservations_mois': reservations_mois,
+            'revenus_mois': float(revenus_mensuel),
+            'clients_count': clients_count,
+            'prochaines_reservations': prochaines_data,
         }
         return Response({'data': stats, 'meta': {'success': True}})
 
     @action(detail=False, methods=['get'])
     def revenue(self, request):
-        # Implémenter les statistiques de revenus
+        from apps.reservations.models import Reservation
+        from django.db.models import Sum
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        user = request.user
+        now = timezone.now()
+        
+        debut_mois = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        debut_mois_precedent = (debut_mois - timedelta(days=1)).replace(day=1)
+        
+        if user.role == 'gestionnaire':
+            terrains = TerrainSynthetiquesDakar.objects.filter(gestionnaire=user)
+        else:
+            terrains = TerrainSynthetiquesDakar.objects.all()
+        
+        # Total tous temps
+        total = Reservation.objects.filter(
+            terrain__in=terrains,
+            statut__in=['confirmee', 'terminee'],
+            deleted_at__isnull=True
+        ).aggregate(total=Sum('montant_total'))['total'] or 0
+        
+        # Ce mois
+        ce_mois = Reservation.objects.filter(
+            terrain__in=terrains,
+            statut__in=['confirmee', 'terminee'],
+            created_at__gte=debut_mois,
+            deleted_at__isnull=True
+        ).aggregate(total=Sum('montant_total'))['total'] or 0
+        
+        # Mois précédent
+        mois_precedent = Reservation.objects.filter(
+            terrain__in=terrains,
+            statut__in=['confirmee', 'terminee'],
+            created_at__gte=debut_mois_precedent,
+            created_at__lt=debut_mois,
+            deleted_at__isnull=True
+        ).aggregate(total=Sum('montant_total'))['total'] or 0
+        
+        # Revenus par terrain
+        revenus_par_terrain = []
+        for terrain in terrains[:10]:  # Top 10
+            revenus = Reservation.objects.filter(
+                terrain=terrain,
+                statut__in=['confirmee', 'terminee'],
+                deleted_at__isnull=True
+            ).aggregate(total=Sum('montant_total'))['total'] or 0
+            
+            nb_resa = Reservation.objects.filter(
+                terrain=terrain,
+                deleted_at__isnull=True
+            ).count()
+            
+            revenus_par_terrain.append({
+                'terrain_nom': terrain.nom,
+                'revenus': float(revenus),
+                'reservations_count': nb_resa
+            })
+        
         revenue_stats = {
-            'total': 0,
-            'ce_mois': 0,
-            'mois_precedent': 0,
+            'revenus_total': float(total),
+            'revenus_mois_actuel': float(ce_mois),
+            'revenus_mois_precedent': float(mois_precedent),
+            'evolution': round(((ce_mois - mois_precedent) / mois_precedent * 100) if mois_precedent > 0 else 0, 2),
+            'revenus_par_terrain': sorted(revenus_par_terrain, key=lambda x: x['revenus'], reverse=True),
         }
         return Response({'data': revenue_stats, 'meta': {'success': True}})
 
@@ -118,3 +289,78 @@ class ManagerValidationViewSet(viewsets.GenericViewSet):
         # Implémenter l'historique de validation
         history = []
         return Response({'data': history, 'meta': {'success': True}})
+
+
+class ManagerExportsViewSet(viewsets.GenericViewSet):
+    """Endpoints pour exporter les données gestionnaire en Excel/PDF"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @action(detail=False, methods=['get'])
+    def reservations_excel(self, request):
+        """Export Excel des réservations"""
+        if request.user.role != 'gestionnaire':
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Accès réservé aux gestionnaires'}
+            }, status=403)
+        
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        # Convertir dates si fournies
+        from datetime import datetime
+        if date_debut:
+            date_debut = datetime.strptime(date_debut, '%Y-%m-%d')
+        if date_fin:
+            date_fin = datetime.strptime(date_fin, '%Y-%m-%d')
+        
+        return generate_reservations_excel_response(request.user, date_debut, date_fin)
+    
+    @action(detail=False, methods=['get'])
+    def statistiques_pdf(self, request):
+        """Export PDF des statistiques mensuelles"""
+        if request.user.role != 'gestionnaire':
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Accès réservé aux gestionnaires'}
+            }, status=403)
+        
+        mois = request.query_params.get('mois')
+        annee = request.query_params.get('annee')
+        
+        if mois:
+            mois = int(mois)
+        if annee:
+            annee = int(annee)
+        
+        return generate_statistiques_pdf_response(request.user, mois, annee)
+    
+    @action(detail=False, methods=['get'])
+    def paiements_excel(self, request):
+        """Export Excel des paiements"""
+        if request.user.role != 'gestionnaire':
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Accès réservé aux gestionnaires'}
+            }, status=403)
+        
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        from datetime import datetime
+        if date_debut:
+            date_debut = datetime.strptime(date_debut, '%Y-%m-%d')
+        if date_fin:
+            date_fin = datetime.strptime(date_fin, '%Y-%m-%d')
+        
+        output = ManagerExports.export_paiements_excel(request.user, date_debut, date_fin)
+        
+        from django.utils import timezone
+        filename = f"paiements_{request.user.id}_{timezone.now().strftime('%Y%m%d')}.xlsx"
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response

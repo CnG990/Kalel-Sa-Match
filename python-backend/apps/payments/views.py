@@ -61,17 +61,37 @@ def init_payment(request):
             customer_phone=customer_phone,
             customer_name=customer_name
         )
-        # TODO: Intégrer API Wave ici
-        wave_payment.checkout_url = f"https://pay.wave.com/m/{wave_payment.payment.reference}"
+        
+        # Wave Business Link - Ch Tech Business
+        # Lien par défaut de l'admin, peut être remplacé par celui du gestionnaire
+        wave_business_link = "https://pay.wave.com/m/M_sn_OnnKDQNjnuxG/c/sn/"
+        
+        # Si la réservation a un terrain avec un gestionnaire qui a son propre lien Wave
+        reservation_id = serializer.validated_data.get('reservation_id')
+        if reservation_id:
+            from apps.reservations.models import Reservation
+            try:
+                reservation = Reservation.objects.get(id=reservation_id)
+                gestionnaire = reservation.terrain.gestionnaire
+                if gestionnaire and gestionnaire.wave_payment_link:
+                    wave_business_link = gestionnaire.wave_payment_link
+            except Reservation.DoesNotExist:
+                pass
+        
+        # Format Wave: ajouter montant et référence en paramètres
+        checkout_url = f"{wave_business_link}?amount={montant}&ref={payment.reference}"
+        wave_payment.checkout_url = checkout_url
         wave_payment.save()
         
         return api_success(
             data={
                 'payment_id': payment.id,
                 'reference': payment.reference,
-                'checkout_url': wave_payment.checkout_url
+                'checkout_url': wave_payment.checkout_url,
+                'montant': float(montant),
+                'methode': 'wave'
             },
-            message="Paiement Wave initialisé"
+            message="Paiement Wave initialisé - Veuillez payer via le lien"
         )
     
     elif methode == 'orange_money':
@@ -80,17 +100,29 @@ def init_payment(request):
             customer_phone=customer_phone,
             customer_name=customer_name
         )
-        # TODO: Intégrer API Orange Money ici
-        orange_payment.transaction_id = f"OM_{payment.reference}"
+        
+        # Orange Money - Format Sénégal: #144#montant#
+        # Génération transaction ID unique
+        import time
+        orange_payment.transaction_id = f"OM{int(time.time())}{payment.id}"
         orange_payment.save()
+        
+        # Instructions pour le client
+        instructions = f"Composez *144*montant# sur votre téléphone Orange Money"
+        ussd_code = f"*144*{int(montant)}#"
         
         return api_success(
             data={
                 'payment_id': payment.id,
                 'reference': payment.reference,
-                'transaction_id': orange_payment.transaction_id
+                'transaction_id': orange_payment.transaction_id,
+                'montant': float(montant),
+                'methode': 'orange_money',
+                'ussd_code': ussd_code,
+                'instructions': instructions,
+                'numero_marchand': '+221 XX XXX XX XX'  # À remplacer par le vrai numéro
             },
-            message="Paiement Orange Money initialisé"
+            message="Paiement Orange Money initialisé - Suivez les instructions"
         )
     
     return api_success(
@@ -103,34 +135,59 @@ def init_payment(request):
 @permission_classes([permissions.AllowAny])  # Webhook public
 def wave_webhook(request):
     """Webhook pour confirmer les paiements Wave"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
-        # TODO: Valider la signature Wave
         data = request.data
+        logger.info(f"Wave webhook reçu: {data}")
         
-        payment_reference = data.get('reference')
+        payment_reference = data.get('reference') or data.get('ref')
         payment_status = data.get('status')
-        transaction_id = data.get('transaction_id')
+        transaction_id = data.get('transaction_id') or data.get('id')
         
         if not payment_reference or not payment_status:
+            logger.error(f"Données webhook invalides: {data}")
             return api_error("Données webhook invalides", status.HTTP_400_BAD_REQUEST)
         
         try:
             payment = Payment.objects.get(reference=payment_reference)
         except Payment.DoesNotExist:
+            logger.error(f"Paiement non trouvé: {payment_reference}")
             return api_error("Paiement non trouvé", status.HTTP_404_NOT_FOUND)
         
-        # Mettre à jour le statut
-        if payment_status == 'success':
+        # Stocker les données du webhook
+        payment.webhook_data = data
+        
+        # Mettre à jour le statut selon la réponse Wave
+        if payment_status in ['success', 'completed', 'successful']:
             payment.statut = 'reussi'
             payment.transaction_id = transaction_id
-        elif payment_status == 'failed':
+            
+            # Si paiement lié à une réservation, la confirmer
+            if hasattr(payment, 'reservation'):
+                reservation = payment.reservation
+                reservation.statut = 'confirmee'
+                reservation.save()
+                logger.info(f"Réservation {reservation.id} confirmée suite au paiement")
+        
+        elif payment_status in ['failed', 'error', 'cancelled']:
             payment.statut = 'echoue'
+            
+            # Annuler la réservation si paiement échoué
+            if hasattr(payment, 'reservation'):
+                reservation = payment.reservation
+                reservation.statut = 'annulee'
+                reservation.motif_annulation = "Paiement échoué"
+                reservation.save()
         
         payment.save()
+        logger.info(f"Paiement {payment.reference} mis à jour: {payment.statut}")
         
         return api_success(message="Webhook traité avec succès")
     
     except Exception as e:
+        logger.exception(f"Erreur webhook: {str(e)}")
         return api_error(f"Erreur webhook: {str(e)}", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
