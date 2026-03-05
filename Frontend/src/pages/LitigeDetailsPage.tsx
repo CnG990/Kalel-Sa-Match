@@ -67,8 +67,8 @@ const LitigeDetailsPage: React.FC = () => {
     try {
       setLoading(true);
       const [litigeResponse, messagesResponse] = await Promise.all([
-        apiService.get(`/litiges/${id}`),
-        apiService.get(`/litiges/${id}/messages`)
+        apiService.get(`/litiges/litiges/${id}/`),
+        apiService.get(`/litiges/messages/?litige_id=${id}`)
       ]);
 
       const litigeData = litigeResponse.data;
@@ -100,8 +100,8 @@ const LitigeDetailsPage: React.FC = () => {
 
     try {
       setSendingMessage(true);
-      const response = await apiService.post(`/litiges/${id}/messages`, {
-        message: newMessage.trim()
+      const response = await apiService.post(`/litiges/litiges/${id}/add-message/`, {
+        contenu: newMessage.trim()
       });
 
       if (response.data) {

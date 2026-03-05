@@ -25,10 +25,18 @@ const DisputesPage: React.FC = () => {
       if (search) params.search = search;
       if (statusFilter) params.statut = statusFilter;
 
-      const response = await apiService.getDisputes(params);
+      const response = await apiService.get('/litiges/litiges/', { params });
       if (response.data) {
-        setDisputes(response.data.data || []);
-        setTotalPages(response.data.last_page || 1);
+        const responseData = response.data as any;
+        if (responseData.results) {
+          setDisputes(responseData.results);
+          setTotalPages(responseData.last_page || Math.ceil((responseData.count || 0) / 15));
+        } else if (Array.isArray(responseData)) {
+          setDisputes(responseData);
+        } else {
+          setDisputes(responseData.data || []);
+          setTotalPages(responseData.last_page || 1);
+        }
       }
     } catch (err) {
       setError('Erreur lors du chargement des litiges');

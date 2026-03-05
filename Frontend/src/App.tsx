@@ -42,6 +42,7 @@ import ManagerRevenuePage from './pages/manager/RevenuePage';
 import ManagerProfilePage from './pages/manager/ProfilePage';
 import ManagerSettingsPage from './pages/manager/SettingsPage';
 import QrScannerPage from './pages/manager/QrScannerPage';
+import ManagerDisputesPage from './pages/manager/DisputesPage';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -166,6 +167,7 @@ function App() {
             <Route path="profile" element={<ManagerProfilePage />} />
             <Route path="settings" element={<ManagerSettingsPage />} />
             <Route path="qr-scanner" element={<QrScannerPage />} />
+            <Route path="litiges" element={<ManagerDisputesPage />} />
           </Route>
 
           {/* Admin Routes */}

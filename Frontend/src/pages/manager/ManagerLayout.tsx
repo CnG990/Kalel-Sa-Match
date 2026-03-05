@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   Home,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle
 } from 'lucide-react';
 
 const ManagerLayout: React.FC = () => {
@@ -92,6 +93,14 @@ const ManagerLayout: React.FC = () => {
       emoji: '🎫',
       color: 'from-indigo-400 to-indigo-600',
       description: 'Scanner et valider les réservations'
+    },
+    { 
+      name: 'Litiges', 
+      path: '/manager/litiges', 
+      icon: AlertTriangle, 
+      emoji: '⚠️',
+      color: 'from-red-400 to-red-600',
+      description: 'Gérer les réclamations clients'
     },
     { 
       name: 'Mon Profil', 
