@@ -36,7 +36,7 @@ const TicketValidationPage: React.FC = () => {
     try {
       setIsLoading(true);
       const { data } = await apiService.getValidationHistory({ limit: 5 });
-      if (data) {
+      if (data && Array.isArray(data)) {
         const normalized = data.slice(0, 5).map((item: TicketValidationHistoryDTO) => ({
           valid: Boolean(item.valid),
           reservation: item.reservation,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Save, Loader2, Navigation, User } from 'lucide-react';
+import { Save, Loader2, Navigation, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Gestionnaire {

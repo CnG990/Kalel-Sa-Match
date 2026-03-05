@@ -1,0 +1,27 @@
+# robots.txt pour Kalél Sa Match
+User-agent: *
+Allow: /
+Allow: /terrains
+Allow: /catalogue
+Allow: /contact
+Disallow: /admin/
+Disallow: /manager/
+Disallow: /dashboard/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://kalelsamatch.web.app/sitemap.xml
+
+# Crawl-delay pour éviter surcharge serveur
+Crawl-delay: 1
+
+# Moteurs de recherche spécifiques
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /manager/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /manager/

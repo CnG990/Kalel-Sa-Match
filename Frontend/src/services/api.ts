@@ -704,14 +704,6 @@ class ApiService {
     });
   }
 
-  getValidationHistory(params?: QueryParams) {
-    const url = `${ENDPOINTS.manager.validationHistory}${buildQueryString(params)}`;
-    return this.requestNormalized<TicketValidationHistoryDTO[]>(url, {
-      method: 'GET',
-      headers: this.headers(),
-    });
-  }
-
   getSupportTickets(params?: QueryParams) {
     const url = `${ENDPOINTS.admin.supportTickets}${buildQueryString(params)}`;
     return this.requestNormalized<SupportTicketListDTO>(url, {
@@ -798,6 +790,147 @@ class ApiService {
     return this.request(url, {
       method: 'DELETE',
       headers: this.headers(),
+    });
+  }
+
+  // Manager - Validation & Exports ------------------------
+  validateReservation(reservationId: number, qrCode?: string) {
+    const url = `${API_ROOT}/manager/validation/validate/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ reservation_id: reservationId, qr_code: qrCode }),
+    });
+  }
+
+  getValidationHistory(params?: QueryParams) {
+    const url = `${API_ROOT}/manager/validation/history/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  exportManagerData(type: 'reservations' | 'revenue' | 'clients', params?: QueryParams) {
+    const url = `${API_ROOT}/manager/exports/${type}/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Admin - Payment Config -------------------------------
+  getPaymentConfig() {
+    const url = `${API_ROOT}/admin/payment-config/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  updatePaymentConfig(id: number, data: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/payment-config/${id}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify(data),
+    });
+  }
+
+  getPaymentStats(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/payment-stats/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  // Admin - Users & Terrains -----------------------------
+  getAdminUsers(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/users/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  updateUserRole(userId: number, role: string) {
+    const url = `${API_ROOT}/admin/users/${userId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  getAdminTerrains(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/terrains/${buildQueryString(params)}`;
+    return this.requestNormalized(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  approveTerrainMobile(terrainId: number) {
+    const url = `${API_ROOT}/admin/terrain-mobile/${terrainId}/approve/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+    });
+  }
+
+  // Upload Images --------------------------------------------
+  async uploadProfileImage(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_ROOT}/accounts/profile/upload-image/`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Erreur upload image');
+    }
+
+    const data = await response.json();
+    return data.image_url || data.url;
+  }
+
+  async uploadTerrainImages(terrainId: number, files: File[]): Promise<string[]> {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append(`images`, file);
+    });
+    
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_ROOT}/manager/terrains/${terrainId}/upload-images/`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Erreur upload images');
+    }
+
+    const data = await response.json();
+    return data.image_urls || data.urls || [];
+  }
+
+  async updateProfileImage(imageUrl: string) {
+    return this.requestNormalized(`${API_ROOT}/accounts/me/`, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({ photo_profil: imageUrl }),
     });
   }
 }
