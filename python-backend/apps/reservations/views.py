@@ -68,7 +68,18 @@ def create_reservation(request):
     prix_heure = terrain.prix_heure or 5000  # Prix par défaut
     montant_total = prix_heure * duree_heures
     
-    # Créer la réservation
+    # Calculer l'acompte selon la configuration du terrain
+    from decimal import Decimal
+    if terrain.type_acompte == 'montant_fixe' and terrain.montant_acompte_fixe:
+        montant_acompte = terrain.montant_acompte_fixe
+    else:
+        # Pourcentage par défaut
+        pourcentage = terrain.pourcentage_acompte or Decimal('30.00')
+        montant_acompte = (montant_total * pourcentage) / Decimal('100')
+    
+    montant_restant = montant_total - montant_acompte
+    
+    # Créer la réservation avec acompte
     reservation = Reservation.objects.create(
         terrain=terrain,
         user=request.user,
@@ -76,9 +87,11 @@ def create_reservation(request):
         date_fin=date_fin,
         duree_heures=duree_heures,
         montant_total=montant_total,
+        montant_acompte=montant_acompte,
+        montant_restant=montant_restant,
         telephone=telephone,
         notes=notes,
-        statut='en_attente'  # En attente de paiement
+        statut='en_attente'  # En attente de paiement acompte
     )
     
     # Générer le QR code token et code ticket
@@ -88,29 +101,34 @@ def create_reservation(request):
     reservation.code_ticket = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
     reservation.save()
     
-    # Créer automatiquement le paiement associé
+    # Créer le paiement pour l'ACOMPTE uniquement
     from apps.payments.models import Payment
     import uuid
     
-    payment = Payment.objects.create(
+    payment_acompte = Payment.objects.create(
         reference=str(uuid.uuid4()),
-        montant=montant_total,
-        methode='en_attente',  # Sera mis à jour lors du choix de paiement
+        montant=montant_acompte,  # Montant de l'acompte, pas le total
+        methode='en_attente',
         statut='en_attente',
-        user=request.user
+        user=request.user,
+        payment_type='acompte'
     )
     
-    # Lier le paiement à la réservation
-    reservation.paiement = payment
+    # Lier le paiement acompte à la réservation
+    reservation.paiement_acompte = payment_acompte
     reservation.save()
     
     return api_success(
         data={
             **ReservationSerializer(reservation).data,
-            'payment_id': payment.id,
-            'payment_reference': payment.reference
+            'payment_id': payment_acompte.id,
+            'payment_reference': payment_acompte.reference,
+            'montant_acompte': float(montant_acompte),
+            'montant_total': float(montant_total),
+            'montant_restant': float(montant_restant),
+            'pourcentage_acompte': float(terrain.pourcentage_acompte or 30)
         },
-        message="Réservation créée - Veuillez procéder au paiement",
+        message="Réservation créée - Veuillez payer l'acompte",
         http_status=status.HTTP_201_CREATED
     )
 

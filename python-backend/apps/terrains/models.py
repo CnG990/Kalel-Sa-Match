@@ -25,6 +25,55 @@ class TerrainSynthetiquesDakar(TimeStampedSoftDeleteModel):
     prix_heure = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='Prix par heure en FCFA')
     capacite = models.PositiveIntegerField(null=True, blank=True, help_text='Capacité maximale du terrain')
     
+    # Configuration acompte
+    TYPE_ACOMPTE_CHOICES = [
+        ('pourcentage', 'Pourcentage'),
+        ('montant_fixe', 'Montant fixe'),
+    ]
+    type_acompte = models.CharField(
+        max_length=20,
+        choices=TYPE_ACOMPTE_CHOICES,
+        default='pourcentage',
+        help_text='Type d\'acompte requis'
+    )
+    pourcentage_acompte = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=30.00,
+        help_text='Pourcentage d\'acompte requis (ex: 30.00 pour 30%)'
+    )
+    montant_acompte_fixe = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Montant fixe d\'acompte en FCFA (alternatif au pourcentage)'
+    )
+    
+    # Liens de paiement personnalisés du gestionnaire
+    wave_payment_link = models.URLField(
+        max_length=500,
+        blank=True,
+        help_text='Lien Wave Business personnel du gestionnaire'
+    )
+    orange_money_number = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text='Numéro Orange Money du gestionnaire'
+    )
+    
+    # Horaires et équipements (optionnel)
+    horaires_ouverture = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Horaires d\'ouverture par jour'
+    )
+    equipements = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Liste des équipements disponibles'
+    )
+    
     gestionnaire = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,

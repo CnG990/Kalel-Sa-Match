@@ -10,8 +10,9 @@ from apps.accounts.models import User
 class Reservation(TimeStampedSoftDeleteModel):
     """Modèle de réservation de terrain"""
     STATUT_CHOICES = [
-        ('en_attente', 'En attente'),
-        ('confirmee', 'Confirmée'),
+        ('en_attente', 'En attente de paiement'),
+        ('acompte_paye', 'Acompte payé - Solde à payer'),
+        ('confirmee', 'Confirmée (entièrement payée)'),
         ('annulee', 'Annulée'),
         ('terminee', 'Terminée'),
         ('en_cours', 'En cours'),
@@ -36,6 +37,27 @@ class Reservation(TimeStampedSoftDeleteModel):
     )
     
     montant_total = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Acompte et solde
+    montant_acompte = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text='Montant de l\'acompte à payer'
+    )
+    montant_restant = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text='Solde restant à payer'
+    )
+    acompte_paye = models.BooleanField(
+        default=False,
+        help_text='L\'acompte a été payé'
+    )
+    solde_paye = models.BooleanField(
+        default=False,
+        help_text='Le solde a été payé'
+    )
+    
     statut = models.CharField(
         max_length=20,
         choices=STATUT_CHOICES,
@@ -72,13 +94,31 @@ class Reservation(TimeStampedSoftDeleteModel):
         related_name='reservations_annulees'
     )
     
-    # Paiement
+    # Paiements séparés (acompte et solde)
+    paiement_acompte = models.ForeignKey(
+        'payments.Payment',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservation_acompte',
+        help_text='Paiement de l\'acompte'
+    )
+    paiement_solde = models.ForeignKey(
+        'payments.Payment',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservation_solde',
+        help_text='Paiement du solde'
+    )
+    
+    # DEPRECATED - Ancien champ paiement unique (gardé pour compatibilité migration)
     paiement = models.OneToOneField(
         'payments.Payment',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='reservation'
+        related_name='reservation_legacy'
     )
     
     class Meta:

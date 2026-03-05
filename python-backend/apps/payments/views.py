@@ -164,22 +164,52 @@ def wave_webhook(request):
             payment.statut = 'reussi'
             payment.transaction_id = transaction_id
             
-            # Si paiement lié à une réservation, la confirmer
-            if hasattr(payment, 'reservation'):
-                reservation = payment.reservation
+            # Si paiement d'acompte, marquer acompte comme payé
+            if hasattr(payment, 'reservation_acompte'):
+                reservation = payment.reservation_acompte.first()
+                if reservation:
+                    reservation.acompte_paye = True
+                    if reservation.montant_restant == 0 or payment.payment_type == 'total':
+                        reservation.statut = 'confirmee'
+                        reservation.solde_paye = True
+                    else:
+                        reservation.statut = 'acompte_paye'
+                    reservation.save()
+                    logger.info(f"Réservation {reservation.id} - Acompte payé")
+            
+            # Si paiement de solde, confirmer la réservation
+            elif hasattr(payment, 'reservation_solde'):
+                reservation = payment.reservation_solde.first()
+                if reservation:
+                    reservation.solde_paye = True
+                    reservation.statut = 'confirmee'
+                    reservation.save()
+                    logger.info(f"Réservation {reservation.id} - Solde payé, confirmée")
+            
+            # Ancien système (legacy) - paiement unique
+            elif hasattr(payment, 'reservation_legacy') and payment.reservation_legacy:
+                reservation = payment.reservation_legacy
                 reservation.statut = 'confirmee'
                 reservation.save()
-                logger.info(f"Réservation {reservation.id} confirmée suite au paiement")
+                logger.info(f"Réservation {reservation.id} confirmée (legacy)")
         
         elif payment_status in ['failed', 'error', 'cancelled']:
             payment.statut = 'echoue'
             
             # Annuler la réservation si paiement échoué
-            if hasattr(payment, 'reservation'):
-                reservation = payment.reservation
+            reservation = None
+            if hasattr(payment, 'reservation_acompte'):
+                reservation = payment.reservation_acompte.first()
+            elif hasattr(payment, 'reservation_solde'):
+                reservation = payment.reservation_solde.first()
+            elif hasattr(payment, 'reservation_legacy') and payment.reservation_legacy:
+                reservation = payment.reservation_legacy
+            
+            if reservation:
                 reservation.statut = 'annulee'
-                reservation.motif_annulation = "Paiement échoué"
+                reservation.motif_annulation = f"Paiement {payment.payment_type} échoué"
                 reservation.save()
+                logger.info(f"Réservation {reservation.id} annulée - paiement échoué")
         
         payment.save()
         logger.info(f"Paiement {payment.reference} mis à jour: {payment.statut}")

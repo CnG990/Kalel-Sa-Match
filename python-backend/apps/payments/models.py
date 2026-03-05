@@ -17,6 +17,13 @@ class Payment(TimeStampedSoftDeleteModel):
         ('orange_money', 'Orange Money'),
         ('especes', 'Espèces'),
         ('carte', 'Carte bancaire'),
+        ('en_attente', 'Méthode non choisie'),
+    ]
+    
+    TYPE_PAIEMENT_CHOICES = [
+        ('acompte', 'Acompte'),
+        ('solde', 'Solde'),
+        ('total', 'Paiement total'),
     ]
 
     reference = models.CharField(max_length=255, unique=True)
@@ -27,6 +34,18 @@ class Payment(TimeStampedSoftDeleteModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
     transaction_id = models.CharField(max_length=255, blank=True, null=True)
     webhook_data = models.JSONField(default=dict, blank=True)
+    
+    # Informations client
+    customer_phone = models.CharField(max_length=20, blank=True)
+    customer_name = models.CharField(max_length=255, blank=True)
+    
+    # Type de paiement
+    payment_type = models.CharField(
+        max_length=20,
+        choices=TYPE_PAIEMENT_CHOICES,
+        default='acompte',
+        help_text='Type de paiement (acompte, solde ou total)'
+    )
     
     class Meta:
         db_table = 'payments'
