@@ -7,8 +7,12 @@ interface Reservation {
   id: number;
   date_debut: string;
   date_fin: string;
-  statut: 'en_attente' | 'confirmee' | 'annulee' | 'terminee';
+  statut: 'en_attente' | 'confirmee' | 'acompte_paye' | 'annulee' | 'terminee' | 'en_cours';
   montant_total: number;
+  montant_acompte?: number;
+  montant_restant?: number;
+  acompte_paye?: boolean;
+  solde_paye?: boolean;
   terrain: {
     id: number;
     nom: string;
@@ -29,12 +33,21 @@ const ReservationCard = ({ reservation, onCancel }: ReservationCardProps) => {
   const getStatusBadge = (status: string) => {
     const styles: { [key: string]: string } = {
       confirmee: "text-green-800 bg-green-100",
+      acompte_paye: "text-blue-800 bg-blue-100",
       en_attente: "text-yellow-800 bg-yellow-100",
       annulee: "text-red-800 bg-red-100",
       terminee: "text-gray-800 bg-gray-100",
+      en_cours: "text-purple-800 bg-purple-100",
     };
-    const label = status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
-    return <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status] || styles.terminee}`}>{label}</span>;
+    const labels: { [key: string]: string } = {
+      acompte_paye: "Acompte payé",
+      en_attente: "En attente",
+      confirmee: "Confirmée",
+      annulee: "Annulée",
+      terminee: "Terminée",
+      en_cours: "En cours",
+    };
+    return <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status] || styles.terminee}`}>{labels[status] || status}</span>;
   };
 
   const isCancellable = reservation.statut === 'confirmee' && new Date(reservation.date_debut) > new Date();
@@ -53,7 +66,13 @@ const ReservationCard = ({ reservation, onCancel }: ReservationCardProps) => {
         <div className="mt-4 border-t pt-4 space-y-2 text-sm text-gray-700">
           <p><strong>Date :</strong> {formatDate(reservation.date_debut)}</p>
           <p><strong>Horaire :</strong> De {formatTime(reservation.date_debut)} à {formatTime(reservation.date_fin)}</p>
-          <p><strong>Montant :</strong> {reservation.montant_total.toLocaleString('fr-FR')} FCFA</p>
+          <p><strong>Montant total :</strong> {reservation.montant_total.toLocaleString('fr-FR')} FCFA</p>
+          {reservation.montant_acompte && (
+            <p className="text-blue-700"><strong>Acompte :</strong> {reservation.montant_acompte.toLocaleString('fr-FR')} FCFA {reservation.acompte_paye ? '✓ Payé' : '⏳ À payer'}</p>
+          )}
+          {reservation.montant_restant && reservation.montant_restant > 0 && (
+            <p className="text-gray-600"><strong>Solde :</strong> {reservation.montant_restant.toLocaleString('fr-FR')} FCFA {reservation.solde_paye ? '✓ Payé' : '⏳ À payer'}</p>
+          )}
         </div>
         
         {isCancellable && (

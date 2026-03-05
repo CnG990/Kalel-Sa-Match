@@ -7,8 +7,12 @@ interface Reservation {
   id: number;
   date_debut: string;
   date_fin: string;
-  statut: 'confirmée' | 'en_attente' | 'annulée' | 'terminée';
+  statut: 'confirmee' | 'en_attente' | 'acompte_paye' | 'annulee' | 'terminee' | 'en_cours';
   montant_total: number;
+  montant_acompte?: number;
+  montant_restant?: number;
+  acompte_paye?: boolean;
+  solde_paye?: boolean;
   terrain: {
     id: number;
     name: string;
@@ -22,6 +26,10 @@ const mapReservationDto = (dto: ReservationDTO): Reservation => ({
   date_fin: dto.date_fin,
   statut: (dto.statut as Reservation['statut']) ?? 'en_attente',
   montant_total: Number(dto.montant_total ?? 0),
+  montant_acompte: dto.montant_acompte ? Number(dto.montant_acompte) : undefined,
+  montant_restant: dto.montant_restant ? Number(dto.montant_restant) : undefined,
+  acompte_paye: dto.acompte_paye === true,
+  solde_paye: dto.solde_paye === true,
   terrain: {
     id: dto.terrain?.id ?? dto.terrain_id,
     name: dto.terrain?.nom ?? 'Nom non disponible',
@@ -68,8 +76,8 @@ const ClientDashboardPage: React.FC = () => {
     );
   }
 
-  const upcomingReservations = reservations.filter(r => new Date(r.date_debut) >= new Date() && r.statut !== 'annulée');
-  const pastReservations = reservations.filter(r => new Date(r.date_debut) < new Date() || r.statut === 'annulée');
+  const upcomingReservations = reservations.filter(r => new Date(r.date_debut) >= new Date() && r.statut !== 'annulee');
+  const pastReservations = reservations.filter(r => new Date(r.date_debut) < new Date() || r.statut === 'annulee');
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -128,8 +136,13 @@ const ClientDashboardPage: React.FC = () => {
                           <p className="font-semibold text-gray-800">{res.terrain.name}</p>
                           <p className="text-sm text-gray-600">{new Date(res.date_debut).toLocaleString('fr-FR')}</p>
                         </div>
-                        <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 capitalize">
-                          {res.statut.replace('_', ' ')}
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full capitalize ${
+                          res.statut === 'confirmee' ? 'bg-green-100 text-green-800' :
+                          res.statut === 'acompte_paye' ? 'bg-blue-100 text-blue-800' :
+                          res.statut === 'en_attente' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {res.statut === 'acompte_paye' ? 'Acompte payé' : res.statut.replace('_', ' ')}
                         </span>
                       </li>
                     ))}
@@ -156,8 +169,12 @@ const ClientDashboardPage: React.FC = () => {
                           <p className="font-semibold text-gray-800">{res.terrain.name}</p>
                           <p className="text-sm text-gray-600">{new Date(res.date_debut).toLocaleString('fr-FR')}</p>
                         </div>
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full capitalize ${res.statut === 'annulée' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
-                          {res.statut.replace('_', ' ')}
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full capitalize ${
+                          res.statut === 'annulee' ? 'bg-red-100 text-red-800' :
+                          res.statut === 'terminee' ? 'bg-gray-100 text-gray-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {res.statut === 'annulee' ? 'Annulée' : res.statut.replace('_', ' ')}
                         </span>
                       </li>
                     ))}
