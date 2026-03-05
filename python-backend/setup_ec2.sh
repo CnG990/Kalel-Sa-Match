@@ -67,12 +67,17 @@ except Exception as e:
     exit(1)
 "
 
+# 7. Vérifier les données existantes
+echo "🔍 Vérification des données existantes..."
+chmod +x check_existing_data.sh
+./check_existing_data.sh
+
 # 8. Appliquer les migrations Django
 echo "🔄 Application des migrations Django..."
 python manage.py migrate
 
 # 9. Créer le superuser
-echo "👤 Création du superuser..."
+echo "👤 Vérification/Création du superuser..."
 python manage.py shell << EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -86,6 +91,11 @@ if not User.objects.filter(email='admin@kalelsamatch.com').exists():
     print('✅ Superuser créé avec succès!')
 else:
     print('ℹ️  Superuser existe déjà')
+    # Afficher les utilisateurs existants
+    users = User.objects.filter(is_superuser=True)
+    print('📋 Superusers existants:')
+    for user in users:
+        print(f'   - {user.email} ({user.prenom} {user.nom})')
 EOF
 
 # 10. Créer les répertoires nécessaires
