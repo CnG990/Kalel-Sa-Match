@@ -111,9 +111,36 @@ const PaymentPage: React.FC = () => {
             </div>
           )}
           
-          <p className="mt-4 text-2xl font-bold text-orange-600">
-            Total à payer : {(paymentDetails.price || paymentDetails.totalAmount).toLocaleString()} FCFA
-          </p>
+          {/* Affichage acompte si applicable */}
+          {paymentDetails.montant_acompte && paymentDetails.payment_type === 'acompte' && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-700 mb-2">Système d'acompte actif</p>
+              <p className="text-lg font-semibold text-blue-900">
+                Montant total : {paymentDetails.totalAmount?.toLocaleString()} FCFA
+              </p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">
+                Acompte à payer : {paymentDetails.montant_acompte.toLocaleString()} FCFA
+              </p>
+              <p className="text-sm text-blue-600 mt-1">
+                Solde restant : {(paymentDetails.totalAmount - paymentDetails.montant_acompte).toLocaleString()} FCFA (à payer avant ou sur place)
+              </p>
+            </div>
+          )}
+          
+          {paymentDetails.montant_acompte && paymentDetails.payment_type === 'solde' && (
+            <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-sm text-green-700 mb-2">✓ Acompte déjà payé</p>
+              <p className="text-2xl font-bold text-green-600">
+                Solde à payer : {(paymentDetails.price || paymentDetails.totalAmount).toLocaleString()} FCFA
+              </p>
+            </div>
+          )}
+          
+          {!paymentDetails.montant_acompte && (
+            <p className="mt-4 text-2xl font-bold text-orange-600">
+              Total à payer : {(paymentDetails.price || paymentDetails.totalAmount).toLocaleString()} FCFA
+            </p>
+          )}
         </div>
 
         <div>

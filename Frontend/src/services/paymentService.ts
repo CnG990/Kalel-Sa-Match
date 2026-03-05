@@ -7,6 +7,8 @@ export interface PaymentDetails {
   reservationId?: number;
   terrainName: string;
   totalAmount: number;
+  montant_acompte?: number;
+  payment_type?: 'acompte' | 'solde' | 'total';
   duration?: string;
   startDate?: string;
   endDate?: string;
