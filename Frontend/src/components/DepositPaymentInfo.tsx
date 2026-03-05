@@ -17,7 +17,6 @@ export const DepositPaymentInfo: React.FC<DepositPaymentInfoProps> = ({
   montantRestant,
   acomptePaye,
   soldePaye,
-  statut,
   pourcentageAcompte = 30
 }) => {
   const formatPrice = (price: number) => {

@@ -160,6 +160,52 @@ class LitigeViewSet(viewsets.ModelViewSet):
             'meta': {'success': True, 'message': 'Litige fermé avec succès'}
         })
     
+    @action(detail=True, methods=['post'], url_path='escalader')
+    def escalader(self, request, pk=None):
+        """Escalader le litige au niveau supérieur"""
+        litige = self.get_object()
+        user = request.user
+        
+        # Vérifier les permissions
+        if user.role == 'client' and user != litige.client:
+            return Response({
+                'detail': 'Vous ne pouvez pas escalader ce litige'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if user.role == 'gestionnaire' and user != litige.gestionnaire:
+            return Response({
+                'detail': 'Ce litige ne vous concerne pas'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Escalader selon le niveau actuel
+        if litige.niveau_escalade == 'client':
+            litige.niveau_escalade = 'gestionnaire'
+            message_text = 'Litige escaladé au gestionnaire'
+        elif litige.niveau_escalade == 'gestionnaire':
+            litige.niveau_escalade = 'admin'
+            message_text = 'Litige escaladé à l\'administration'
+        else:
+            return Response({
+                'detail': 'Litige déjà au niveau maximum'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        litige.statut = 'escalade'
+        litige.save()
+        
+        # Créer un message d'action
+        MessageLitige.objects.create(
+            litige=litige,
+            auteur=user,
+            contenu=message_text,
+            est_interne=False
+        )
+        
+        serializer = self.get_serializer(litige)
+        return Response({
+            'data': serializer.data,
+            'meta': {'success': True, 'message': message_text}
+        })
+    
     @action(detail=True, methods=['post'], url_path='assigner')
     def assigner(self, request, pk=None):
         """Assigner un admin à un litige (admin seulement)"""
