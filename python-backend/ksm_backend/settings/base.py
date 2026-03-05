@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'apps.admin_panel',
     'apps.payments',
     'apps.reservations',
+    'apps.litiges',
 ]
 
 MIDDLEWARE = [

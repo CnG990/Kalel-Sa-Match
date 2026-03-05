@@ -112,8 +112,8 @@ def dashboard_stats(request):
     
     # Ajouter les stats des litiges si le modèle existe
     try:
-        from apps.support.models import SupportTicket
-        stats['openDisputes'] = SupportTicket.objects.filter(
+        from apps.litiges.models import Litige
+        stats['openDisputes'] = Litige.objects.filter(
             statut__in=['ouvert', 'en_cours']
         ).count()
     except (ImportError, AttributeError):
