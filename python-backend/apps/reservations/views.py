@@ -87,8 +87,8 @@ def create_reservation(request):
         date_fin=date_fin,
         duree_heures=duree_heures,
         montant_total=montant_total,
-        montant_acompte=montant_acompte,
-        montant_restant=montant_restant,
+        montant_acompte=montant_acompte,  # Toujours défini pour nouvelles réservations
+        montant_restant=montant_restant,  # Toujours défini pour nouvelles réservations
         telephone=telephone,
         notes=notes,
         statut='en_attente'  # En attente de paiement acompte

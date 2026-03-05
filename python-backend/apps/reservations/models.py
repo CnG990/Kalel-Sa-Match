@@ -42,11 +42,15 @@ class Reservation(TimeStampedSoftDeleteModel):
     montant_acompte = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        null=True,
+        blank=True,
         help_text='Montant de l\'acompte à payer'
     )
     montant_restant = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        null=True,
+        blank=True,
         help_text='Solde restant à payer'
     )
     acompte_paye = models.BooleanField(
