@@ -44,12 +44,12 @@ const MesLitigesPage: React.FC = () => {
   const chargerMesLitiges = async () => {
     try {
       setLoading(true);
-      const { data, meta } = await apiService.get('/litiges/mes-litiges');
-      if (Array.isArray(data)) {
-        setLitiges(data);
+      const { data } = await apiService.get('/litiges/litiges/');
+      const litigesData = Array.isArray(data) ? data : (data as any)?.results;
+      if (Array.isArray(litigesData)) {
+        setLitiges(litigesData);
       } else {
         setLitiges([]);
-        toast.error(meta?.message || 'Erreur lors du chargement des litiges');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -296,8 +296,9 @@ const CreateLitigeModal: React.FC<CreateLitigeModalProps> = ({ onClose, onSucces
 
   const chargerTerrains = async () => {
     try {
-      const { data } = await apiService.get('/terrains');
-      setTerrains(Array.isArray(data) ? data : []);
+      const { data } = await apiService.get('/terrains/terrains/');
+      const terrainsRaw = Array.isArray(data) ? data : (data as any)?.results;
+      setTerrains(Array.isArray(terrainsRaw) ? terrainsRaw : []);
     } catch (error) {
       console.error('Erreur chargement terrains:', error);
       setTerrains([]);
@@ -306,8 +307,9 @@ const CreateLitigeModal: React.FC<CreateLitigeModalProps> = ({ onClose, onSucces
 
   const chargerReservations = async () => {
     try {
-      const { data } = await apiService.get('/reservations/my-reservations');
-      setReservations(Array.isArray(data) ? data : []);
+      const { data } = await apiService.get('/reservations/my/');
+      const resaRaw = Array.isArray(data) ? data : (data as any)?.results;
+      setReservations(Array.isArray(resaRaw) ? resaRaw : []);
     } catch (error) {
       console.error('Erreur chargement réservations:', error);
       setReservations([]);
@@ -324,7 +326,7 @@ const CreateLitigeModal: React.FC<CreateLitigeModalProps> = ({ onClose, onSucces
 
     try {
       setLoading(true);
-      const { data, meta } = await apiService.post('/litiges', formData);
+      const { data, meta } = await apiService.post('/litiges/litiges/', formData);
       
       if (data) {
         toast.success(meta?.message || 'Litige créé avec succès');

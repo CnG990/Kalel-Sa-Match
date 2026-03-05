@@ -376,24 +376,22 @@ const ENDPOINTS = {
   },
   terrains: `${API_ROOT}/terrains/terrains/`,
   availability: `${API_ROOT}/terrains/check-availability/`,
-  reservations: `${API_ROOT}/terrains/reservations/`,
+  reservations: `${API_ROOT}/reservations/`,
   paiements: `${API_ROOT}/terrains/paiements/`,
   tickets: `${API_ROOT}/terrains/tickets/`,
   notifications: `${API_ROOT}/terrains/notifications/`,
   manager: {
-    reservations: `${API_ROOT}/manager/reservations/`,
     terrains: `${API_ROOT}/manager/terrains/`,
     statsDashboard: `${API_ROOT}/manager/stats/dashboard/`,
-    promotions: `${API_ROOT}/manager/promotions/`,
     revenue: `${API_ROOT}/manager/stats/revenue/`,
-    validateTicket: `${API_ROOT}/manager/validate-ticket/`,
-    validationHistory: `${API_ROOT}/manager/validation-history/`,
+    validateTicket: `${API_ROOT}/manager/validation/validate_ticket/`,
+    validationHistory: `${API_ROOT}/manager/validation/validation_history/`,
   },
   reservationActions: `${API_ROOT}/reservations/`,
   admin: {
-    supportTickets: `${API_ROOT}/terrains/tickets/`,
+    supportTickets: `${API_ROOT}/admin/support/tickets/`,
   },
-  abonnements: `${API_ROOT}/abonnements/`,
+  abonnements: `${API_ROOT}/terrains/abonnements/`,
 };
 
 type QueryParams = Record<string, string | number | boolean | null | undefined>;
@@ -601,7 +599,7 @@ class ApiService {
   }
 
   getAllTerrains() {
-    return this.requestNormalized<TerrainDTO[]>(ENDPOINTS.terrains, {
+    return this.requestNormalized<TerrainDTO[]>(`${ENDPOINTS.terrains}all/`, {
       method: 'GET',
       headers: this.headers(),
     });
@@ -654,7 +652,7 @@ class ApiService {
   }
 
   getMyReservations(params?: QueryParams) {
-    const url = `${ENDPOINTS.reservations}my-reservations/${buildQueryString(params)}`;
+    const url = `${ENDPOINTS.reservations}my/${buildQueryString(params)}`;
     return this.requestNormalized<ReservationDTO[]>(url, {
       method: 'GET',
       headers: this.headers(),
@@ -662,7 +660,7 @@ class ApiService {
   }
 
   getManagerReservations(params?: QueryParams) {
-    const url = `${ENDPOINTS.manager.reservations}${buildQueryString(params)}`;
+    const url = `${API_ROOT}/admin/payments/${buildQueryString(params)}`;
     return this.requestNormalized<ManagerReservationDTO[]>(url, {
       method: 'GET',
       headers: this.headers(),
@@ -677,12 +675,8 @@ class ApiService {
     });
   }
 
-  getManagerPromotions(params?: QueryParams) {
-    const url = `${ENDPOINTS.manager.promotions}${buildQueryString(params)}`;
-    return this.requestNormalized<ManagerPromotionDTO[]>(url, {
-      method: 'GET',
-      headers: this.headers(),
-    });
+  async getManagerPromotions(_params?: QueryParams): Promise<NormalizedResponse<ManagerPromotionDTO[]>> {
+    return { data: [], meta: { success: true, message: 'Promotions non disponibles' } };
   }
 
   getManagerRevenueStats(params?: QueryParams) {
@@ -694,7 +688,7 @@ class ApiService {
   }
 
   updateManagerTerrainPricing(terrainId: number, payload: Partial<Pick<ManagerTerrainDTO, 'prix_heure' | 'capacite'>>) {
-    const url = `${ENDPOINTS.manager.terrains}${terrainId}/prix-capacite/`;
+    const url = `${ENDPOINTS.manager.terrains}${terrainId}/prix_capacite/`;
     return this.requestNormalized<ManagerTerrainDTO>(url, {
       method: 'PUT',
       headers: this.headers(),
@@ -703,7 +697,7 @@ class ApiService {
   }
 
   toggleManagerTerrainDisponibilite(terrainId: number) {
-    const url = `${ENDPOINTS.manager.terrains}${terrainId}/toggle-disponibilite/`;
+    const url = `${ENDPOINTS.manager.terrains}${terrainId}/toggle_disponibilite/`;
     return this.requestNormalized<ManagerTerrainToggleDTO>(url, {
       method: 'PUT',
       headers: this.headers(),
@@ -736,10 +730,10 @@ class ApiService {
   }
 
   updateManagerReservationStatus(reservationId: number, statut: string, notes?: string) {
-    const url = `${ENDPOINTS.manager.reservations}${reservationId}/status/`;
+    const url = `${API_ROOT}/admin/payments/${reservationId}/`;
     const payload = { statut, ...(notes ? { notes } : {}) };
     return this.requestNormalized<ManagerReservationStatusDTO>(url, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: this.headers(),
       body: JSON.stringify(payload),
     });
@@ -867,7 +861,7 @@ class ApiService {
   }
 
   getValidationHistory(params?: QueryParams) {
-    const url = `${API_ROOT}/manager/validation/history/${buildQueryString(params)}`;
+    const url = `${ENDPOINTS.manager.validationHistory}${buildQueryString(params)}`;
     return this.requestNormalized(url, {
       method: 'GET',
       headers: this.headers(),

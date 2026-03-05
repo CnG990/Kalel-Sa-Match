@@ -38,7 +38,8 @@ const TerrainsReservationPage: React.FC = () => {
     try {
       const { data } = await apiService.getTerrains();
       if (data) {
-        let terrainsData = data as any;
+        const rawArr = Array.isArray(data) ? data : (data as any)?.results;
+        let terrainsData = Array.isArray(rawArr) ? rawArr : [] as any;
         
         if (searchTerm) {
           terrainsData = terrainsData.filter((terrain: any) =>

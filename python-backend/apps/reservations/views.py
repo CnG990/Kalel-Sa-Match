@@ -140,7 +140,7 @@ def my_reservations(request):
     reservations = Reservation.objects.filter(user=request.user).order_by('-date_debut')
     
     paginator = ReservationPagination()
-    page = paginator.paginate_queryset(reservations)
+    page = paginator.paginate_queryset(reservations, request)
     serializer = ReservationSerializer(page, many=True)
     
     return paginator.get_paginated_response(serializer.data)
@@ -191,12 +191,16 @@ def validate_qr_code(request):
         )
     
     qr_token = request.data.get('qr_token')
+    code_ticket = request.data.get('code_ticket')
     
-    if not qr_token:
-        return api_error("Token QR code requis", status.HTTP_400_BAD_REQUEST)
+    if not qr_token and not code_ticket:
+        return api_error("Token QR code ou code ticket requis", status.HTTP_400_BAD_REQUEST)
     
     try:
-        reservation = Reservation.objects.get(qr_code_token=qr_token)
+        if qr_token:
+            reservation = Reservation.objects.get(qr_code_token=qr_token)
+        else:
+            reservation = Reservation.objects.get(code_ticket=code_ticket)
         
         if not reservation.est_valide:
             return api_error("Réservation non valide", status.HTTP_400_BAD_REQUEST)

@@ -53,8 +53,9 @@ const ClientDashboardPage: React.FC = () => {
       setError(null);
       try {
         const { data } = await apiService.getMyReservations();
-        const formattedReservations = Array.isArray(data)
-          ? data.map(mapReservationDto)
+        const rawArr = Array.isArray(data) ? data : (data as any)?.results;
+        const formattedReservations = Array.isArray(rawArr)
+          ? rawArr.map(mapReservationDto)
           : [];
         setReservations(formattedReservations);
       } catch (err: any) {

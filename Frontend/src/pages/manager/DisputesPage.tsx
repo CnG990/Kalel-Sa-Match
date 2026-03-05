@@ -49,7 +49,7 @@ const ManagerDisputesPage: React.FC = () => {
       const params: any = {};
       if (statusFilter) params.statut = statusFilter;
 
-      const response = await apiService.get('/litiges/litiges/', { params });
+      const response = await apiService.get('/litiges/litiges/', params);
       if (response.data) {
         const data = response.data as any;
         if (data.results) {

@@ -41,12 +41,31 @@ const ReportsPage: React.FC = () => {
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      const { data, meta } = await apiService.getReports(dateRange as any);
-      if (data) {
-        setReportData(data as any);
-      } else {
-        toast.error(meta.message || "Impossible de charger les rapports.");
-      }
+      const { data } = await apiService.getReports(dateRange as any);
+      const d = (data ?? {}) as any;
+      const mapped: ReportData = {
+        reservations: d.reservations ?? {
+          total: d.reservations_mois ?? d.total_reservations ?? 0,
+          par_mois: d.reservations_par_mois ?? {},
+          par_statut: d.reservations_par_statut ?? {},
+        },
+        revenus: d.revenus ?? {
+          total: d.revenus_mois ?? d.revenus_total ?? 0,
+          par_mois: d.revenus_par_mois ?? {},
+          commissions: d.commissions ?? 0,
+        },
+        utilisateurs: d.utilisateurs ?? {
+          total: d.users_count ?? d.total_utilisateurs ?? 0,
+          nouveaux_ce_mois: d.nouveaux_utilisateurs ?? 0,
+          par_role: d.utilisateurs_par_role ?? {},
+        },
+        terrains: d.terrains ?? {
+          total: d.total_terrains ?? 0,
+          actifs: d.terrains_actifs ?? 0,
+          popularite: d.terrains_popularite ?? {},
+        },
+      };
+      setReportData(mapped);
     } catch (error) {
       toast.error("Erreur réseau lors du chargement.");
     } finally {
@@ -196,7 +215,7 @@ const ReportsPage: React.FC = () => {
                       <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
                         <div 
                           className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${(count / reportData.reservations.total) * 100}%` }}
+                          style={{ width: `${reportData.reservations.total ? (count / reportData.reservations.total) * 100 : 0}%` }}
                         ></div>
                       </div>
                       <span className="text-sm font-medium">{count}</span>
@@ -217,7 +236,7 @@ const ReportsPage: React.FC = () => {
                       <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
                         <div 
                           className="bg-green-600 h-2 rounded-full" 
-                          style={{ width: `${(count / reportData.utilisateurs.total) * 100}%` }}
+                          style={{ width: `${reportData.utilisateurs.total ? (count / reportData.utilisateurs.total) * 100 : 0}%` }}
                         ></div>
                       </div>
                       <span className="text-sm font-medium">{count}</span>
@@ -251,7 +270,7 @@ const ReportsPage: React.FC = () => {
                       <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
                         <div 
                           className="bg-orange-600 h-2 rounded-full" 
-                          style={{ width: `${(reservations / Math.max(...Object.values(reportData.terrains.popularite))) * 100}%` }}
+                          style={{ width: `${Object.values(reportData.terrains.popularite).length ? (reservations / Math.max(...Object.values(reportData.terrains.popularite), 1)) * 100 : 0}%` }}
                         ></div>
                       </div>
                       <span className="text-sm font-medium">{reservations}</span>
@@ -269,8 +288,8 @@ const ReportsPage: React.FC = () => {
               <div>
                 <h4 className="font-medium text-gray-700 mb-2">Performance</h4>
                 <ul className="space-y-1 text-sm text-gray-600">
-                  <li>• Taux de conversion: {((reportData.reservations.total / reportData.utilisateurs.total) * 100).toFixed(1)}%</li>
-                  <li>• Revenu moyen par réservation: {formatCurrency(reportData.revenus.total / reportData.reservations.total)}</li>
+                  <li>• Taux de conversion: {reportData.utilisateurs.total ? ((reportData.reservations.total / reportData.utilisateurs.total) * 100).toFixed(1) : '0.0'}%</li>
+                  <li>• Revenu moyen par réservation: {formatCurrency(reportData.reservations.total ? reportData.revenus.total / reportData.reservations.total : 0)}</li>
                   <li>• Nouveaux utilisateurs ce mois: {reportData.utilisateurs.nouveaux_ce_mois}</li>
                 </ul>
               </div>
@@ -279,13 +298,13 @@ const ReportsPage: React.FC = () => {
                 <ul className="space-y-1 text-sm text-gray-600">
                   <li>• Total terrains: {reportData.terrains.total}</li>
                   <li>• Terrains actifs: {reportData.terrains.actifs}</li>
-                  <li>• Taux d'activité: {((reportData.terrains.actifs / reportData.terrains.total) * 100).toFixed(1)}%</li>
+                  <li>• Taux d'activité: {reportData.terrains.total ? ((reportData.terrains.actifs / reportData.terrains.total) * 100).toFixed(1) : '0.0'}%</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-medium text-gray-700 mb-2">Finances</h4>
                 <ul className="space-y-1 text-sm text-gray-600">
-                  <li>• Marge de commission: {((reportData.revenus.commissions / reportData.revenus.total) * 100).toFixed(1)}%</li>
+                  <li>• Marge de commission: {reportData.revenus.total ? ((reportData.revenus.commissions / reportData.revenus.total) * 100).toFixed(1) : '0.0'}%</li>
                   <li>• Revenus nets: {formatCurrency(reportData.revenus.total - reportData.revenus.commissions)}</li>
                   <li>• Croissance mensuelle: +15.2%</li>
                 </ul>

@@ -119,7 +119,8 @@ const AbonnementsPage: React.FC = () => {
       const { data } = await apiService.getTerrains();
       console.log('🔍 Debug - Réponse API terrains (normalisée):', data);
 
-      const terrainsData = Array.isArray(data) ? data.map(mapTerrainDto) : [];
+      const raw = Array.isArray(data) ? data : (data as any)?.results;
+      const terrainsData = Array.isArray(raw) ? raw.map(mapTerrainDto) : [];
       console.log('🔍 Debug - Terrains extraits:', terrainsData);
       setTerrains(terrainsData);
 
@@ -138,7 +139,8 @@ const AbonnementsPage: React.FC = () => {
   const fetchAbonnements = async () => {
     try {
       const { data } = await apiService.getAbonnements();
-      setAbonnements(Array.isArray(data) ? data : []);
+      const abonnementsRaw = Array.isArray(data) ? data : (data as any)?.results;
+      setAbonnements(Array.isArray(abonnementsRaw) ? abonnementsRaw : []);
     } catch (error) {
       console.error('❌ Erreur fetchAbonnements:', error);
       setAbonnements([]);

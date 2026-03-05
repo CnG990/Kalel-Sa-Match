@@ -25,7 +25,7 @@ const DisputesPage: React.FC = () => {
       if (search) params.search = search;
       if (statusFilter) params.statut = statusFilter;
 
-      const response = await apiService.get('/litiges/litiges/', { params });
+      const response = await apiService.get('/litiges/litiges/', params);
       if (response.data) {
         const responseData = response.data as any;
         if (responseData.results) {

@@ -68,13 +68,7 @@ class AdminTerrainMobileViewSet(viewsets.ViewSet):
         # Champs optionnels avec defaults
         adresse = request.data.get('adresse', 'Adresse à définir')
         description = request.data.get('description', '')
-        surface_m2 = request.data.get('surface_m2')
         gestionnaire_id = request.data.get('gestionnaire_id')
-        telephone = request.data.get('telephone', '77 617 32 61')
-        type_surface = request.data.get('type_surface', 'gazon_synthetique')
-        disponible_eclairage = request.data.get('disponible_eclairage', True)
-        disponible_vestiaires = request.data.get('disponible_vestiaires', False)
-        disponible_parking = request.data.get('disponible_parking', False)
         images = request.data.get('images', [])
         
         # Récupérer gestionnaire si fourni
@@ -98,14 +92,8 @@ class AdminTerrainMobileViewSet(viewsets.ViewSet):
                 prix_heure=float(prix_heure),
                 capacite=int(capacite),
                 description=description,
-                surface_m2=float(surface_m2) if surface_m2 else None,
                 gestionnaire=gestionnaire,
-                telephone=telephone,
-                type_surface=type_surface,
-                disponible_eclairage=disponible_eclairage,
-                disponible_vestiaires=disponible_vestiaires,
-                disponible_parking=disponible_parking,
-                images=images,
+                images_supplementaires=images,
                 est_actif=True  # Actif par défaut
             )
             

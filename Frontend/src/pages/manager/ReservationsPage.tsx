@@ -27,7 +27,8 @@ const ReservationsPage: React.FC = () => {
     try {
       setLoading(true);
       const { data } = await apiService.getManagerReservations();
-      setReservations(data ?? []);
+      const raw = Array.isArray(data) ? data : (data as any)?.results ?? (data as any)?.data;
+      setReservations(Array.isArray(raw) ? raw : []);
     } catch (error: any) {
       console.error('Erreur lors du chargement:', error);
 

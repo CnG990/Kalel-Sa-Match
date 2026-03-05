@@ -78,11 +78,13 @@ const TerrainsPage: React.FC = () => {
         ...options,
       };
       const { data, meta } = await apiService.getTerrains(params);
-      const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];
+      const raw = Array.isArray(data) ? data : (data as any)?.results;
+      const normalized = Array.isArray(raw) ? raw.map(mapTerrainDtoToTerrain) : [];
       setTerrains(normalized);
-      setTotalPages(Number(meta?.last_page ?? meta?.pages ?? 1));
-      setCurrentPage(Number(meta?.current_page ?? page));
-      setTotalTerrains(Number(meta?.count ?? normalized.length ?? 0));
+      const pag = !Array.isArray(data) && data ? data as any : {};
+      setTotalPages(Number(pag.last_page ?? meta?.last_page ?? meta?.pages ?? 1));
+      setCurrentPage(Number(pag.current_page ?? meta?.current_page ?? page));
+      setTotalTerrains(Number(pag.count ?? meta?.count ?? normalized.length ?? 0));
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue.');
     } finally {
@@ -106,7 +108,8 @@ const TerrainsPage: React.FC = () => {
       const { data, meta } = await apiService.getNearbyTerrains(location.lat, location.lng, 10);
       
       if (data) {
-        const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];
+        const rawNearby = Array.isArray(data) ? data : (data as any)?.results;
+        const normalized = Array.isArray(rawNearby) ? rawNearby.map(mapTerrainDtoToTerrain) : [];
         setTerrains(normalized);
         setTotalTerrains(normalized.length);
         setTotalPages(1);
@@ -159,11 +162,13 @@ const TerrainsPage: React.FC = () => {
         sort_by: params.sort_by,
         sort_direction: params.sort_direction as 'asc' | 'desc'
       });
-      const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];
+      const rawRefresh = Array.isArray(data) ? data : (data as any)?.results;
+      const normalized = Array.isArray(rawRefresh) ? rawRefresh.map(mapTerrainDtoToTerrain) : [];
       setTerrains(normalized);
-      setTotalPages(Number(meta?.last_page ?? meta?.pages ?? 1));
-      setCurrentPage(Number(meta?.current_page ?? params.page));
-      setTotalTerrains(Number(meta?.count ?? normalized.length ?? 0));
+      const pagR = !Array.isArray(data) && data ? data as any : {};
+      setTotalPages(Number(pagR.last_page ?? meta?.last_page ?? meta?.pages ?? 1));
+      setCurrentPage(Number(pagR.current_page ?? meta?.current_page ?? params.page));
+      setTotalTerrains(Number(pagR.count ?? meta?.count ?? normalized.length ?? 0));
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue.');
     } finally {
@@ -219,7 +224,8 @@ const TerrainsPage: React.FC = () => {
       const { data, meta } = await apiService.searchTerrainsByLocation(locationName);
       
       if (data) {
-        const normalized = Array.isArray(data) ? data.map(mapTerrainDtoToTerrain) : [];
+        const rawLoc = Array.isArray(data) ? data : (data as any)?.results;
+        const normalized = Array.isArray(rawLoc) ? rawLoc.map(mapTerrainDtoToTerrain) : [];
         setTerrains(normalized);
         setTotalTerrains(normalized.length);
         setTotalPages(1);

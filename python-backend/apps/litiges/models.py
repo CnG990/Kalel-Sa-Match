@@ -12,8 +12,15 @@ class Litige(TimeStampedSoftDeleteModel):
     STATUT_CHOICES = [
         ('ouvert', 'Ouvert'),
         ('en_cours', 'En cours de traitement'),
+        ('escalade', 'Escaladé'),
         ('resolu', 'Résolu'),
         ('ferme', 'Fermé'),
+    ]
+    
+    NIVEAU_ESCALADE_CHOICES = [
+        ('client', 'Niveau client'),
+        ('gestionnaire', 'Niveau gestionnaire'),
+        ('admin', 'Niveau administration'),
     ]
     
     PRIORITE_CHOICES = [
@@ -133,6 +140,13 @@ class Litige(TimeStampedSoftDeleteModel):
         default=list,
         blank=True,
         help_text='URLs des pièces jointes (screenshots, etc.)'
+    )
+    
+    niveau_escalade = models.CharField(
+        max_length=20,
+        choices=NIVEAU_ESCALADE_CHOICES,
+        default='client',
+        help_text='Niveau actuel d\'escalade du litige'
     )
     
     notes_internes = models.TextField(

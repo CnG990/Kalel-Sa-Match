@@ -13,11 +13,11 @@ class TimeStampedSoftDeleteModel(models.Model):
 
 class TerrainSynthetiquesDakar(TimeStampedSoftDeleteModel):
     nom = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField(blank=True, default='')
     adresse = models.CharField(max_length=255)
     latitude = models.DecimalField(max_digits=10, decimal_places=8)
     longitude = models.DecimalField(max_digits=11, decimal_places=8)
-    image_principale = models.CharField(max_length=255)
+    image_principale = models.CharField(max_length=255, blank=True, default='')
     images_supplementaires = models.JSONField(default=list, blank=True)
     est_actif = models.BooleanField(default=True)
     

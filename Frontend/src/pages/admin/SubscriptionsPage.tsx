@@ -382,9 +382,10 @@ const SubscriptionsPage: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const emptyRes = { data: [], meta: { success: false } };
       const [subscriptionsRes, subscribersRes] = await Promise.all([
-        apiService.get('/admin/subscriptions'),
-        apiService.get('/admin/subscribers')
+        apiService.get('/terrains/abonnements/').catch(() => emptyRes),
+        apiService.get('/terrains/souscriptions/').catch(() => emptyRes)
       ]);
 
       const subscriptionsRaw = Array.isArray(subscriptionsRes.data)

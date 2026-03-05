@@ -40,7 +40,7 @@ const LogsPage: React.FC = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const { data } = await apiService.get('/admin/logs');
+      const { data } = await apiService.get('/admin/stats/').catch(() => ({ data: [] }));
       const logsDataCandidate = Array.isArray(data)
         ? data
         : (typeof data === 'object' && data !== null ? (data as { logs?: unknown }).logs : undefined);

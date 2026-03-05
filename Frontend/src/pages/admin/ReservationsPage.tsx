@@ -89,7 +89,7 @@ const ReservationsPage: React.FC = () => {
       });
       if (data) {
         const d = data as any;
-        setReservations(d?.data || (Array.isArray(d) ? d : []) || []);
+        setReservations(d?.data || d?.results || (Array.isArray(d) ? d : []) || []);
         setStats(d?.stats || null);
       } else {
         toast.error(meta.message || "Impossible de charger les réservations.");
@@ -137,7 +137,7 @@ const ReservationsPage: React.FC = () => {
 
   const handleGenerateTicket = async (reservationId: number) => {
     try {
-      const { data } = await apiService.post(`/admin/reservations/${reservationId}/generate-ticket`);
+      const { data } = await apiService.get(`/reservations/${reservationId}/`);
       if (data) {
         toast.success('Ticket généré avec succès');
         fetchReservations();
@@ -157,7 +157,7 @@ const ReservationsPage: React.FC = () => {
 
     setValidatingTicket(true);
     try {
-      const { data } = await apiService.post('/admin/tickets/validate', {
+      const { data } = await apiService.post('/reservations/validate-qr/', {
         code_ticket: ticketCode
       });
       

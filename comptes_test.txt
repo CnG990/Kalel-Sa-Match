@@ -1,0 +1,104 @@
+========================================
+     COMPTES DE TEST - KALEL SA MATCH
+========================================
+
+URL Frontend: http://localhost:3000
+URL Backend:  https://kalelsamatch.duckdns.org/api
+Mot de passe par défaut: password123
+
+========================================
+     COMPTES ADMIN (Approuvés)
+========================================
+1. admin@terrains-dakar.com
+   Mot de passe: password123
+   Nom: Principal Administrateur
+   Téléphone: +221331234567
+   Statut: Approuvé ✅
+
+2. admin@terrains.com
+   Mot de passe: password123
+   Nom: Admin Test
+   Téléphone: +221331234568
+   Statut: Approuvé ✅
+
+========================================
+     COMPTE GESTIONNAIRE (Approuvé)
+========================================
+1. gestionnaire@terrains-dakar.com
+   Mot de passe: password123
+   Nom: Principal Gestionnaire
+   Téléphone: +221771234567
+   Statut: Approuvé ✅
+
+========================================
+     COMPTES CLIENT (Approuvés)
+========================================
+1. client@terrains-dakar.com
+   Mot de passe: password123
+   Nom: Principal Client
+   Téléphone: +221762345678
+   Statut: Approuvé ✅
+
+2. client@test.com
+   Mot de passe: password123
+   Nom: Client Test
+   Téléphone: +221762345679
+   Statut: Approuvé ✅
+
+========================================
+     COMPTES EN ATTENTE DE VALIDATION
+========================================
+GESTIONNAIRES:
+- gestionnaire@test.com
+- gestionnaire@terrasyn.sn
+- manager.test@terrasyn.sn
+- test.gestionnaire@example.com
+
+ADMINS:
+- admin@terrasyn.sn
+- cheikh.diallo@terrasyn.sn
+- cheikhngom@gmail.com
+- cheikhngom710@gmail.com
+- cheikhngom99@gmail.com (votre compte)
+
+CLIENTS:
+- client@terrasyn.sn
+
+Tous ces comptes utilisent: password123
+
+========================================
+     NOTES IMPORTANTES
+========================================
+• Les comptes "en attente" nécessitent une validation par un admin
+• Utilisez les comptes approuvés pour tester toutes les fonctionnalités
+• Le superuser est: cheikhngom99@gmail.com / password123
+• Pour valider un gestionnaire: Admin → Validations → Approuver
+
+========================================
+     FONCTIONNALITÉS À TESTER
+========================================
+ADMIN:
+- Dashboard et statistiques
+- Validation des gestionnaires
+- Gestion des utilisateurs
+- Configuration des commissions
+- Gestion des terrains
+- Rapports financiers
+
+GESTIONNAIRE:
+- Dashboard et revenus
+- Ajout/modification de terrains
+- Gestion des réservations
+- Promotions
+- QR Scanner
+
+CLIENT:
+- Recherche de terrains
+- Réservations
+- Paiements Wave
+- Historique
+- Support/Litiges
+
+========================================
+     Date: 05/03/2026
+========================================

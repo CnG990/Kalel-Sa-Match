@@ -304,23 +304,14 @@ const NotificationsPage: React.FC = () => {
     try {
       setLoading(true);
       const [notificationsRes, templatesRes] = await Promise.all([
-        apiService.get('/admin/notifications'),
-        apiService.get('/admin/notification-templates')
+        apiService.get('/admin/notifications/'),
+        apiService.get('/admin/notification-templates/').catch(() => ({ data: [], meta: { success: false } }))
       ]);
 
-      const notificationsDataRaw = Array.isArray(notificationsRes.data)
-        ? notificationsRes.data
-        : (typeof notificationsRes.data === 'object' && notificationsRes.data !== null
-            ? (notificationsRes.data as { notifications?: unknown }).notifications
-            : undefined);
-      const templatesDataRaw = Array.isArray(templatesRes.data)
-        ? templatesRes.data
-        : (typeof templatesRes.data === 'object' && templatesRes.data !== null
-            ? (templatesRes.data as { templates?: unknown }).templates
-            : undefined);
-
-      const notificationsData = Array.isArray(notificationsDataRaw) ? notificationsDataRaw : [];
-      const templatesData = Array.isArray(templatesDataRaw) ? templatesDataRaw : [];
+      const nRaw = notificationsRes.data;
+      const notificationsData = Array.isArray(nRaw) ? nRaw : Array.isArray((nRaw as any)?.results) ? (nRaw as any).results : [];
+      const tRaw = templatesRes.data;
+      const templatesData = Array.isArray(tRaw) ? tRaw : Array.isArray((tRaw as any)?.results) ? (tRaw as any).results : [];
 
       setNotifications(notificationsData);
       setTemplates(templatesData);

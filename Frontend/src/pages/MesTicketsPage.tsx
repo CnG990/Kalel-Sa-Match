@@ -58,13 +58,12 @@ const MesTicketsPage: React.FC = () => {
   const fetchMyTickets = async () => {
     try {
       setLoading(true);
-      const { data, meta } = await apiService.get('/user/tickets');
-
-      if (Array.isArray(data)) {
-        setTickets(data as TicketWithReservation[]);
+      const { data } = await apiService.get('/terrains/tickets/');
+      const ticketsData = Array.isArray(data) ? data : (data as any)?.results;
+      if (Array.isArray(ticketsData)) {
+        setTickets(ticketsData as TicketWithReservation[]);
       } else {
         setTickets([]);
-        toast.error(meta.message || 'Erreur lors du chargement des tickets');
       }
     } catch (error) {
       console.error('Erreur lors du chargement des tickets:', error);

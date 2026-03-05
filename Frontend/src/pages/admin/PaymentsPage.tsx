@@ -45,7 +45,7 @@ const PaymentsPage: React.FC = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const { data } = await apiService.get('/admin/payments');
+      const { data } = await apiService.get('/admin/payments/');
       
       const paymentsRaw = Array.isArray(data)
         ? data

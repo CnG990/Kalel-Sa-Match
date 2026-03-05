@@ -280,9 +280,42 @@ class ManagerValidationViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=['post'])
     def validate_ticket(self, request):
+        from apps.reservations.models import Reservation
         ticket_code = request.data.get('ticket_code')
-        # Implémenter la validation de ticket
-        return Response({'data': None, 'meta': {'success': True, 'message': 'Ticket validé'}})
+        qr_token = request.data.get('qr_token')
+        
+        if not ticket_code and not qr_token:
+            return Response({'data': None, 'meta': {'success': False, 'message': 'Code ticket ou QR token requis'}}, status=400)
+        
+        try:
+            if qr_token:
+                reservation = Reservation.objects.select_related('terrain', 'user').get(qr_code_token=qr_token)
+            else:
+                reservation = Reservation.objects.select_related('terrain', 'user').get(code_ticket=ticket_code)
+            
+            if not reservation.est_valide:
+                return Response({'data': None, 'meta': {'success': False, 'message': 'Réservation non valide ou expirée'}}, status=400)
+            
+            reservation.statut = 'en_cours'
+            reservation.save()
+            
+            return Response({
+                'data': {
+                    'valid': True,
+                    'reservation': {
+                        'id': reservation.id,
+                        'terrain_nom': reservation.terrain.nom,
+                        'client_nom': f"{reservation.user.prenom} {reservation.user.nom}",
+                        'date_debut': reservation.date_debut.isoformat(),
+                        'date_fin': reservation.date_fin.isoformat() if reservation.date_fin else None,
+                        'code_ticket': reservation.code_ticket,
+                        'montant': float(reservation.montant_total) if reservation.montant_total else 0,
+                    }
+                },
+                'meta': {'success': True, 'message': 'Ticket validé avec succès'}
+            })
+        except Reservation.DoesNotExist:
+            return Response({'data': {'valid': False}, 'meta': {'success': False, 'message': 'Code ticket invalide'}}, status=404)
 
     @action(detail=False, methods=['get'])
     def validation_history(self, request):

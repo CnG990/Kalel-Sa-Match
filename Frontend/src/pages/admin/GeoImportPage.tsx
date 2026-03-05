@@ -64,8 +64,8 @@ const GeoImportPage: React.FC = () => {
   const loadTerrains = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getAllTerrains();
-      const terrainsData = Array.isArray(response) ? response : [];
+      const { data } = await apiService.getAllTerrains();
+      const terrainsData = Array.isArray(data) ? data : [];
       const normalizedTerrains: Terrain[] = terrainsData.map((terrain: any) => ({
         id: terrain.id ?? 0,
         nom: terrain.nom ?? 'Terrain sans nom',

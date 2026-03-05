@@ -31,7 +31,8 @@ const TerrainsPage: React.FC = () => {
     try {
       setLoading(true);
       const { data } = await apiService.getManagerTerrains();
-      setTerrains(data ?? []);
+      const raw = Array.isArray(data) ? data : (data as any)?.results ?? (data as any)?.data;
+      setTerrains(Array.isArray(raw) ? raw : []);
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       toast.error("Erreur lors du chargement des terrains.");

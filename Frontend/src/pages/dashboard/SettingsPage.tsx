@@ -28,7 +28,7 @@ const SettingsPage: React.FC = () => {
     }
 
     try {
-      const { data, meta } = await apiService.post('/auth/change-password', {
+      const { data, meta } = await apiService.post('/accounts/change-password/', {
         current_password: '', // À compléter avec l'ancien mot de passe
         new_password: newPassword,
         new_password_confirmation: confirmPassword
