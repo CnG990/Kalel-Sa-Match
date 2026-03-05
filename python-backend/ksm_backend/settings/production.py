@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'apps.manager',
     'apps.admin_panel',
     'apps.notifications',
+    'apps.litiges',
 ]
 
 # Ajouter whitenoise middleware
