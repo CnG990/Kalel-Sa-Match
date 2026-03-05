@@ -495,6 +495,10 @@ class ApiService {
     });
   }
 
+  logout() {
+    localStorage.removeItem('token');
+  }
+
   register(data: Record<string, unknown>) {
     return this.requestNormalized<UserDTO>(ENDPOINTS.auth.register, {
       method: 'POST',
