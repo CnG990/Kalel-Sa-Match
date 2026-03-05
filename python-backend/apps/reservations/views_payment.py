@@ -4,7 +4,7 @@ Vues pour la gestion des paiements de réservation
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from apps.core.responses import api_success, api_error
+from apps.core.utils.api_response import api_success, api_error
 from apps.payments.models import Payment
 from .models import Reservation
 import uuid
