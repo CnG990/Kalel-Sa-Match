@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 
 # Build paths
-BASE_DIR = Path(__file__).resolve().parent.parent
+# __file__ = ksm_backend/settings/production.py
+# parent.parent.parent = python-backend/ (où se trouve .env et manage.py)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Initialiser environ
 import environ
