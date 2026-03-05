@@ -54,6 +54,10 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.core',
     'apps.terrains',
+    'apps.manager',
+    'apps.admin_panel',
+    'apps.payments',
+    'apps.reservations',
 ]
 
 MIDDLEWARE = [

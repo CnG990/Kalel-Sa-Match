@@ -4,11 +4,10 @@ from .models import (
     Abonnement,
     Notification,
     Paiement,
-    Reservation,
-    ReponseTicket,
     Souscription,
     TerrainSynthetiquesDakar,
     TicketSupport,
+    ReponseTicket,
 )
 
 
@@ -18,20 +17,8 @@ class TerrainSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'nom', 'description', 'adresse', 'latitude', 'longitude',
             'image_principale', 'images_supplementaires', 'est_actif',
-            'gestionnaire_id', 'created_at', 'updated_at'
+            'prix_heure', 'capacite', 'gestionnaire_id', 'created_at', 'updated_at'
         ]
-
-
-class ReservationSerializer(serializers.ModelSerializer):
-    terrain = TerrainSerializer(read_only=True)
-    terrain_id = serializers.PrimaryKeyRelatedField(
-        source='terrain', queryset=TerrainSynthetiquesDakar.objects.all(), write_only=True
-    )
-
-    class Meta:
-        model = Reservation
-        fields = '__all__'
-        read_only_fields = ('code_ticket', 'qr_code_token')
 
 
 class AbonnementSerializer(serializers.ModelSerializer):

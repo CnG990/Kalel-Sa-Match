@@ -21,7 +21,7 @@ class TerrainSynthetiquesDakar(TimeStampedSoftDeleteModel):
     images_supplementaires = models.JSONField(default=list, blank=True)
     est_actif = models.BooleanField(default=True)
     
-    # Champs pour la tarification
+    # Champs manquants pour la tarification
     prix_heure = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='Prix par heure en FCFA')
     capacite = models.PositiveIntegerField(null=True, blank=True, help_text='Capacité maximale du terrain')
     
@@ -40,6 +40,62 @@ class TerrainSynthetiquesDakar(TimeStampedSoftDeleteModel):
 
     def __str__(self) -> str:  # pragma: no cover - repr helper
         return self.nom
+
+
+class Reservation(TimeStampedSoftDeleteModel):
+    STATUT_CHOICES = [
+        ('en_attente', 'En attente'),
+        ('confirmee', 'Confirmée'),
+        ('annulee', 'Annulée'),
+        ('terminee', 'Terminée'),
+    ]
+
+    terrain = models.ForeignKey(
+        TerrainSynthetiquesDakar,
+        on_delete=models.CASCADE,
+        related_name='reservations',
+    )
+    terrain_synthetique = models.ForeignKey(
+        TerrainSynthetiquesDakar,
+        db_column='terrain_synthetique_id',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='reservations_legacies',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reservations',
+    )
+    date_debut = models.DateTimeField()
+    date_fin = models.DateTimeField()
+    montant_total = models.DecimalField(max_digits=10, decimal_places=2)
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
+    notes = models.TextField(blank=True)
+    qr_code_path = models.CharField(max_length=255, blank=True)
+    qr_code_token = models.CharField(max_length=255, blank=True)
+    code_ticket = models.CharField(max_length=20, blank=True)
+    derniere_validation = models.DateTimeField(null=True, blank=True)
+    date_annulation = models.DateTimeField(null=True, blank=True)
+    motif_annulation = models.TextField(blank=True)
+    annule_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        db_column='annule_par',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='reservations_annulees',
+    )
+    heures_avant_annulation = models.FloatField(null=True, blank=True)
+    acompte_verse = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'reservations'
+        ordering = ('-date_debut',)
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"Reservation #{self.pk}"
 
 
 class Abonnement(TimeStampedSoftDeleteModel):
@@ -145,6 +201,7 @@ class Notification(TimeStampedSoftDeleteModel):
 
 __all__ = [
     'TerrainSynthetiquesDakar',
+    'Reservation',
     'Abonnement',
     'Souscription',
     'Paiement',

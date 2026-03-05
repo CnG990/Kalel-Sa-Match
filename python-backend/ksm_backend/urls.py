@@ -22,4 +22,8 @@ urlpatterns = [
     path('api/accounts/', include('apps.accounts.urls')),
     path('api/terrains/', include('apps.terrains.urls')),
     path('api/core/', include('apps.core.urls')),
+    path('api/manager/', include('apps.manager.urls')),
+    path('api/admin/', include('apps.admin_panel.urls')),
+    path('api/payments/', include('apps.payments.urls')),
+    path('api/reservations/', include('apps.reservations.urls')),
 ]

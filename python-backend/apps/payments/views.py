@@ -1,0 +1,162 @@
+import uuid
+from rest_framework import status, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+
+from apps.core.utils.api_response import api_success, api_error, api_paginated
+from .models import Payment, WavePayment, OrangeMoneyPayment
+from .serializers import PaymentSerializer, WavePaymentSerializer, OrangeMoneyPaymentSerializer, InitPaymentSerializer
+
+
+class PaymentPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        return api_paginated(
+            data=data,
+            pagination={
+                'count': self.page.paginator.count,
+                'current_page': self.page.number,
+                'last_page': self.page.paginator.num_pages,
+                'next': self.get_next_link(),
+                'previous': self.get_previous_link(),
+            }
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def init_payment(request):
+    """Initialiser un paiement"""
+    serializer = InitPaymentSerializer(data=request.data)
+    if not serializer.is_valid():
+        return api_error(
+            message="Données invalides",
+            errors=serializer.errors,
+            http_status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    montant = serializer.validated_data['montant']
+    methode = serializer.validated_data['methode']
+    customer_phone = serializer.validated_data['customer_phone']
+    customer_name = serializer.validated_data['customer_name']
+    
+    # Créer le paiement
+    payment = Payment.objects.create(
+        reference=str(uuid.uuid4()),
+        montant=montant,
+        methode=methode,
+        user=request.user,
+        customer_phone=customer_phone,
+        customer_name=customer_name
+    )
+    
+    # Créer le paiement spécifique selon la méthode
+    if methode == 'wave':
+        wave_payment = WavePayment.objects.create(
+            payment=payment,
+            customer_phone=customer_phone,
+            customer_name=customer_name
+        )
+        # TODO: Intégrer API Wave ici
+        wave_payment.checkout_url = f"https://pay.wave.com/m/{wave_payment.payment.reference}"
+        wave_payment.save()
+        
+        return api_success(
+            data={
+                'payment_id': payment.id,
+                'reference': payment.reference,
+                'checkout_url': wave_payment.checkout_url
+            },
+            message="Paiement Wave initialisé"
+        )
+    
+    elif methode == 'orange_money':
+        orange_payment = OrangeMoneyPayment.objects.create(
+            payment=payment,
+            customer_phone=customer_phone,
+            customer_name=customer_name
+        )
+        # TODO: Intégrer API Orange Money ici
+        orange_payment.transaction_id = f"OM_{payment.reference}"
+        orange_payment.save()
+        
+        return api_success(
+            data={
+                'payment_id': payment.id,
+                'reference': payment.reference,
+                'transaction_id': orange_payment.transaction_id
+            },
+            message="Paiement Orange Money initialisé"
+        )
+    
+    return api_success(
+        data={'payment_id': payment.id, 'reference': payment.reference},
+        message="Paiement initialisé"
+    )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])  # Webhook public
+def wave_webhook(request):
+    """Webhook pour confirmer les paiements Wave"""
+    try:
+        # TODO: Valider la signature Wave
+        data = request.data
+        
+        payment_reference = data.get('reference')
+        payment_status = data.get('status')
+        transaction_id = data.get('transaction_id')
+        
+        if not payment_reference or not payment_status:
+            return api_error("Données webhook invalides", status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            payment = Payment.objects.get(reference=payment_reference)
+        except Payment.DoesNotExist:
+            return api_error("Paiement non trouvé", status.HTTP_404_NOT_FOUND)
+        
+        # Mettre à jour le statut
+        if payment_status == 'success':
+            payment.statut = 'reussi'
+            payment.transaction_id = transaction_id
+        elif payment_status == 'failed':
+            payment.statut = 'echoue'
+        
+        payment.save()
+        
+        return api_success(message="Webhook traité avec succès")
+    
+    except Exception as e:
+        return api_error(f"Erreur webhook: {str(e)}", status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def payment_status(request, payment_id):
+    """Vérifier le statut d'un paiement"""
+    try:
+        payment = Payment.objects.get(id=payment_id, user=request.user)
+        serializer = PaymentSerializer(payment)
+        return api_success(
+            data=serializer.data,
+            message="Statut du paiement récupéré"
+        )
+    except Payment.DoesNotExist:
+        return api_error("Paiement non trouvé", status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def my_payments(request):
+    """Liste des paiements de l'utilisateur"""
+    payments = Payment.objects.filter(user=request.user).order_by('-created_at')
+    
+    paginator = PaymentPagination()
+    page = paginator.paginate_queryset(payments)
+    serializer = PaymentSerializer(page, many=True)
+    
+    return paginator.get_paginated_response(serializer.data)
