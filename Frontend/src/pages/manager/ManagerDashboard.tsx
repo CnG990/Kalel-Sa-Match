@@ -228,6 +228,35 @@ const ManagerDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Stats Acompte/Solde */}
+      <div className="bg-gradient-to-r from-orange-50 to-blue-50 rounded-lg shadow-lg p-6 border border-orange-100">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Paiements - Acomptes & Soldes</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-600 mb-1">Acomptes reçus</p>
+            <p className="text-xl font-bold text-orange-600">
+              {formatCurrency((stats as any)?.acomptes_recus || 0)}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {(stats as any)?.reservations_acompte_paye || 0} réservation(s)
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-600 mb-1">Soldes reçus</p>
+            <p className="text-xl font-bold text-green-600">
+              {formatCurrency((stats as any)?.soldes_recus || 0)}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-600 mb-1">Soldes en attente</p>
+            <p className="text-xl font-bold text-blue-600">
+              {formatCurrency((stats as any)?.soldes_en_attente || 0)}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">À recevoir</p>
+          </div>
+        </div>
+      </div>
+
       {/* Prochaines réservations */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Prochaines réservations</h2>
