@@ -125,7 +125,8 @@ const LitigeDetailsPage: React.FC = () => {
     }
 
     try {
-      const response = await apiService.post(`/litiges/${id}/escalader`);
+      // Action escalader - à implémenter côté backend si nécessaire
+      const response = await apiService.post(`/litiges/litiges/${id}/escalader/`);
       if (response.data) {
         toast.success(response.meta?.message || 'Litige escaladé avec succès');
         await chargerDetailsLitige();
@@ -144,7 +145,7 @@ const LitigeDetailsPage: React.FC = () => {
     }
 
     try {
-      const response = await apiService.post(`/litiges/${id}/fermer`);
+      const response = await apiService.post(`/litiges/litiges/${id}/fermer/`);
       if (response.data) {
         toast.success(response.meta?.message || 'Litige fermé avec succès');
         await chargerDetailsLitige();

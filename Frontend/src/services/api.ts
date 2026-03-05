@@ -165,6 +165,10 @@ export interface ReservationDTO {
   date_debut: string;
   date_fin: string;
   montant_total: number;
+  montant_acompte?: number;
+  montant_restant?: number;
+  acompte_paye?: boolean;
+  solde_paye?: boolean;
   statut: string;
   notes?: string;
   [key: string]: unknown;
