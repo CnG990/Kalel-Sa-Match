@@ -15,7 +15,7 @@ env = environ.Env(
 # Lire le fichier .env
 env_file = BASE_DIR / '.env'
 if env_file.exists():
-    environ.Env.read_env(env_file)
+    environ.Env.read_env(env_file, override=True)
 
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'
