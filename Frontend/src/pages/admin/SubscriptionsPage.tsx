@@ -601,7 +601,7 @@ const SubscriptionsPage: React.FC = () => {
       {/* Onglets */}
       <div className="bg-white rounded-lg shadow-md mb-6">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 px-6">
+          <nav className="-mb-px flex flex-wrap gap-2 sm:gap-0 sm:space-x-8 px-4 sm:px-6">
             <button
               onClick={() => setActiveTab('plans')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${

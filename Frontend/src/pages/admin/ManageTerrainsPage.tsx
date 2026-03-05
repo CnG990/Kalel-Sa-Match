@@ -53,7 +53,7 @@ const ManageTerrainsPageSimple: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Gestion des Terrains</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8">Gestion des Terrains</h1>
         
         {loading ? (
           <div className="text-center py-12">

@@ -244,7 +244,7 @@ const ManagerDisputesPage: React.FC = () => {
                     <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                       {litige.description}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-500">
                       <span>Client: {litige.client_nom || `${litige.client?.prenom || ''} ${litige.client?.nom || ''}`.trim() || 'N/A'}</span>
                       <span>Terrain: {litige.terrain_nom || litige.terrain?.nom || 'N/A'}</span>
                       <span>{new Date(litige.created_at).toLocaleDateString('fr-FR')}</span>

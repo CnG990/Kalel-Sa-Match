@@ -179,7 +179,7 @@ const SettingsPage: React.FC = () => {
       <div className="bg-white rounded-lg shadow-lg">
         {/* Tabs */}
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex flex-wrap gap-2 sm:gap-0 sm:space-x-8 px-4 sm:px-6">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (

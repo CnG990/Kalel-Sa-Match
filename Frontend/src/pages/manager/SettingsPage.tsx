@@ -698,7 +698,7 @@ const SettingsPage: React.FC = () => {
       <div className="bg-white rounded-lg shadow-lg">
         {/* Onglets */}
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <nav className="flex flex-wrap gap-2 sm:gap-0 sm:space-x-8 px-4 sm:px-6" aria-label="Tabs">
             {tabs.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}

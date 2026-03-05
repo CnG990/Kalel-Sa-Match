@@ -83,11 +83,11 @@ const FinancesPage: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Finances</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6">Finances</h1>
 
       {/* Onglets */}
       <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex flex-wrap gap-2 sm:gap-0 sm:space-x-8">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (

@@ -89,8 +89,8 @@ const DisputesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Gestion des Litiges</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestion des Litiges</h1>
         <div className="text-sm text-gray-500">
           {disputes.length} litige(s) trouvé(s)
         </div>
