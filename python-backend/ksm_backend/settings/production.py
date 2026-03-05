@@ -11,14 +11,15 @@ ALLOWED_HOSTS = [
 ]
 
 # Base de données RDS PostgreSQL
+# Accepte DB_HOST ou RDS_HOSTNAME (compatibilité .env)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('RDS_DB_NAME', 'terrains'),
-        'USER': os.environ.get('RDS_USERNAME', 'postgres'),
-        'PASSWORD': os.environ.get('RDS_PASSWORD'),
-        'HOST': os.environ.get('RDS_HOSTNAME'),
-        'PORT': os.environ.get('RDS_PORT', '5432'),
+        'NAME': os.environ.get('DB_NAME') or os.environ.get('RDS_DB_NAME', 'ksm'),
+        'USER': os.environ.get('DB_USER') or os.environ.get('RDS_USERNAME', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD') or os.environ.get('RDS_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST') or os.environ.get('RDS_HOSTNAME', 'localhost'),
+        'PORT': os.environ.get('DB_PORT') or os.environ.get('RDS_PORT', '5432'),
         'OPTIONS': {
             'sslmode': 'require',
         },
@@ -33,34 +34,31 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CORS_ALLOWED_ORIGINS = [
     'https://kalelsamatch.web.app',
     'https://kalelsamatch.duckdns.org',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
 ]
 
-# Sécurité supplémentaire
-SECURE_SSL_REDIRECT = True
+# Nginx gère le SSL - pas de redirect interne
+SECURE_SSL_REDIRECT = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
-# Logging
+# Logging robuste (crée le dossier si nécessaire)
+import logging.handlers
+LOG_DIR = '/var/log/django'
+os.makedirs(LOG_DIR, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': '/var/log/django/django.log',
-            'formatter': 'verbose',
-        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -68,28 +66,28 @@ LOGGING = {
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'apps': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
     },
 }
 
-# Email (pour production)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST')
+# Email (console par défaut si SMTP non configuré)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = 'noreply@kalelsamatch.com'
