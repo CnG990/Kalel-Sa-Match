@@ -39,20 +39,34 @@ def init_payment(request):
             http_status=status.HTTP_400_BAD_REQUEST
         )
     
-    montant = serializer.validated_data['montant']
+    payment_id = serializer.validated_data.get('payment_id')
     methode = serializer.validated_data['methode']
     customer_phone = serializer.validated_data['customer_phone']
     customer_name = serializer.validated_data['customer_name']
     
-    # Créer le paiement
-    payment = Payment.objects.create(
-        reference=str(uuid.uuid4()),
-        montant=montant,
-        methode=methode,
-        user=request.user,
-        customer_phone=customer_phone,
-        customer_name=customer_name
-    )
+    # Récupérer le paiement existant ou en créer un nouveau
+    if payment_id:
+        try:
+            payment = Payment.objects.get(id=payment_id, user=request.user)
+            # Mettre à jour la méthode et les infos client
+            payment.methode = methode
+            payment.customer_phone = customer_phone
+            payment.customer_name = customer_name
+            payment.save()
+            montant = payment.montant
+        except Payment.DoesNotExist:
+            return api_error("Paiement non trouvé", status.HTTP_404_NOT_FOUND)
+    else:
+        # Créer un nouveau paiement
+        montant = serializer.validated_data['montant']
+        payment = Payment.objects.create(
+            reference=str(uuid.uuid4()),
+            montant=montant,
+            methode=methode,
+            user=request.user,
+            customer_phone=customer_phone,
+            customer_name=customer_name
+        )
     
     # Créer le paiement spécifique selon la méthode
     if methode == 'wave':
