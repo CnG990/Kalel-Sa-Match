@@ -69,10 +69,11 @@ class CreateReservationSerializer(serializers.Serializer):
         date_fin = date_debut + timedelta(hours=duree)
         
         # Validation de la date
-        if date_debut < datetime.now():
+        from django.utils import timezone
+        if date_debut < timezone.now():
             raise serializers.ValidationError("La date de début ne peut pas être dans le passé")
         
-        if date_fin < datetime.now():
+        if date_fin < timezone.now():
             raise serializers.ValidationError("La date de fin ne peut pas être dans le passé")
         
         attrs['date_fin'] = date_fin
