@@ -195,6 +195,38 @@ const RevenuePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Détail Acomptes & Soldes */}
+      <div className="bg-gradient-to-r from-orange-50 to-green-50 rounded-lg shadow-lg p-6 border border-orange-100">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Détail Acomptes & Soldes</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-600 mb-1">Acomptes reçus</p>
+            <p className="text-xl font-bold text-orange-600">
+              {formatCurrency((revenueData as any)?.acomptes_total || 0)}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-600 mb-1">Soldes reçus</p>
+            <p className="text-xl font-bold text-green-600">
+              {formatCurrency((revenueData as any)?.soldes_total || 0)}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-600 mb-1">Soldes en attente</p>
+            <p className="text-xl font-bold text-blue-600">
+              {formatCurrency((revenueData as any)?.soldes_en_attente || 0)}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-600 mb-1">Taux conversion</p>
+            <p className="text-xl font-bold text-purple-600">
+              {((revenueData as any)?.taux_conversion || 0).toFixed(0)}%
+            </p>
+            <p className="text-xs text-gray-500">Acompte → Solde payé</p>
+          </div>
+        </div>
+      </div>
+
       {/* Revenus par terrain */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Revenus par terrain</h2>
