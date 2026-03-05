@@ -13,7 +13,14 @@ import {
   BarChart3,
   Calendar,
   Menu,
-  X
+  X,
+  CreditCard,
+  Percent,
+  AlertTriangle,
+  Bell,
+  FileText,
+  TrendingUp,
+  MapPin
 } from 'lucide-react';
 
 const AdminLayout: React.FC = () => {
@@ -27,8 +34,15 @@ const AdminLayout: React.FC = () => {
     { name: 'Terrains', path: '/admin/terrains', icon: LandPlot },
     { name: 'Réservations', path: '/admin/reservations', icon: Calendar },
     { name: 'Finances', path: '/admin/finances', icon: Banknote },
+    { name: 'Paiements', path: '/admin/payments', icon: CreditCard },
+    { name: 'Commissions', path: '/admin/commissions', icon: Percent },
+    { name: 'Litiges', path: '/admin/disputes', icon: AlertTriangle },
     { name: 'Support', path: '/admin/support', icon: LifeBuoy },
+    { name: 'Abonnements', path: '/admin/subscriptions', icon: TrendingUp },
+    { name: 'Notifications', path: '/admin/notifications', icon: Bell },
     { name: 'Rapports', path: '/admin/reports', icon: BarChart3 },
+    { name: 'Logs', path: '/admin/logs', icon: FileText },
+    { name: 'Import Géo', path: '/admin/geo-import', icon: MapPin },
     { name: 'Configuration', path: '/admin/settings', icon: Settings },
   ];
 
