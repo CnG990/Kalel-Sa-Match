@@ -84,28 +84,47 @@ def dashboard_stats(request):
     
     from django.utils import timezone
     from datetime import timedelta
-    from apps.reservations.models import Reservation
-    from apps.litiges.models import Litige
     
     # Date il y a 30 jours
     thirty_days_ago = timezone.now() - timedelta(days=30)
     
-    # Calculer les statistiques
+    # Calculer les statistiques de base
     stats = {
-        'revenue': '0 FCFA',  # TODO: Calculer les revenus réels
+        'revenue': '0 FCFA',
         'newUsers': User.objects.filter(created_at__gte=thirty_days_ago).count(),
         'pendingManagers': User.objects.filter(
             role='gestionnaire',
             statut_validation='en_attente'
         ).count(),
-        'pendingRefunds': 0,  # TODO: Compter les remboursements en attente
-        'openDisputes': Litige.objects.filter(
-            statut__in=['ouvert', 'en_cours']
-        ).count() if hasattr(Litige, 'objects') else 0,
-        'totalReservations': Reservation.objects.count() if hasattr(Reservation, 'objects') else 0,
-        'totalTerrains': 0,  # TODO: Compter les terrains
+        'pendingRefunds': 0,
+        'openDisputes': 0,
+        'totalReservations': 0,
+        'totalTerrains': 0,
         'totalUsers': User.objects.count(),
     }
+    
+    # Ajouter les stats des réservations si le modèle existe
+    try:
+        from apps.reservations.models import Reservation
+        stats['totalReservations'] = Reservation.objects.count()
+    except ImportError:
+        pass
+    
+    # Ajouter les stats des litiges si le modèle existe
+    try:
+        from apps.support.models import SupportTicket
+        stats['openDisputes'] = SupportTicket.objects.filter(
+            statut__in=['ouvert', 'en_cours']
+        ).count()
+    except (ImportError, AttributeError):
+        pass
+    
+    # Ajouter les stats des terrains si le modèle existe
+    try:
+        from apps.terrains.models import TerrainSynthetiquesDakar
+        stats['totalTerrains'] = TerrainSynthetiquesDakar.objects.count()
+    except ImportError:
+        pass
     
     return Response({
         'data': stats,
