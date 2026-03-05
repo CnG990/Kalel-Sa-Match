@@ -165,7 +165,7 @@ const MesTicketsPage: React.FC = () => {
 
         {/* Filters */}
         <div className="mb-6">
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             {[
               { key: 'all', label: 'Tous', count: tickets.length },
               { key: 'active', label: 'Actifs', count: tickets.filter(t => getTicketStatus(t).status === 'active').length },
@@ -208,8 +208,8 @@ const MesTicketsPage: React.FC = () => {
               return (
                 <div key={ticket.qr_code} className="bg-white rounded-lg shadow-md overflow-hidden">
                   <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center mb-2">
                           <h3 className="text-lg font-semibold text-gray-900 mr-3">
                             {ticket.terrain.nom}
@@ -240,7 +240,7 @@ const MesTicketsPage: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div className="text-right">
+                      <div className="text-left sm:text-right shrink-0">
                         <div className="text-xl font-bold text-green-600 mb-2">
                           {formatPrice(ticket.reservation.prix_total)} FCFA
                         </div>

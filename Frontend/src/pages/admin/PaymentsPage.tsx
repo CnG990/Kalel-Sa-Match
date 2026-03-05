@@ -9,6 +9,7 @@ interface Payment {
   methode_paiement: string;
   date_paiement: string;
   reservation_id: number;
+  type_paiement?: 'acompte' | 'solde';
   user: {
     id: number;
     nom: string;
@@ -27,6 +28,7 @@ const PaymentsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [stats, setStats] = useState({
     total: 0,
     completed: 0,
@@ -115,8 +117,9 @@ const PaymentsPage: React.FC = () => {
       payment.methode_paiement.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || payment.statut === statusFilter;
+    const matchesType = typeFilter === 'all' || payment.type_paiement === typeFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   const exportPayments = () => {
@@ -153,8 +156,8 @@ const PaymentsPage: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
           <CreditCard className="w-8 h-8 text-blue-600" />
           Gestion des Paiements
         </h1>
@@ -235,7 +238,7 @@ const PaymentsPage: React.FC = () => {
 
       {/* Filtres */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
             <div className="relative">
@@ -276,6 +279,18 @@ const PaymentsPage: React.FC = () => {
               <option value="today">Aujourd'hui</option>
               <option value="week">Cette semaine</option>
               <option value="month">Ce mois</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Tous les types</option>
+              <option value="acompte">Acompte</option>
+              <option value="solde">Solde</option>
             </select>
           </div>
         </div>

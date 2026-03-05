@@ -115,7 +115,7 @@ const MesLitigesPage: React.FC = () => {
   return (
     <div className="p-6">
       {/* En-tête */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
             <AlertTriangle className="mr-3 text-orange-500" size={28} />
@@ -127,7 +127,7 @@ const MesLitigesPage: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center shrink-0"
         >
           <Plus size={20} className="mr-2" />
           Nouveau Litige
@@ -136,10 +136,10 @@ const MesLitigesPage: React.FC = () => {
 
       {/* Filtres */}
       <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-        <div className="flex items-center space-x-4">
-          <Filter size={20} className="text-gray-500" />
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Statut:</label>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+          <Filter size={20} className="text-gray-500 hidden sm:block" />
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
+            <label className="text-sm font-medium text-gray-700 shrink-0">Statut:</label>
             <select
               value={filtreStatut}
               onChange={(e) => setFiltreStatut(e.target.value)}
@@ -153,8 +153,8 @@ const MesLitigesPage: React.FC = () => {
               <option value="escalade">Escaladé</option>
             </select>
           </div>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Priorité:</label>
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
+            <label className="text-sm font-medium text-gray-700 shrink-0">Priorité:</label>
             <select
               value={filtrePriorite}
               onChange={(e) => setFiltrePriorite(e.target.value)}
@@ -226,7 +226,7 @@ const MesLitigesPage: React.FC = () => {
                     {litige.description}
                   </p>
                   
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-500">
                     <span> {litige.terrain_nom}</span>
                     <span> {getTypeLibelle(litige.type_litige)}</span>
                     <span> {new Date(litige.created_at).toLocaleDateString('fr-FR')}</span>

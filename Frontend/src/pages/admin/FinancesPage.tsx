@@ -9,6 +9,9 @@ interface Stats {
   chiffre_affaires_total: number;
   commission_estimee_totale: number;
   a_reverser_estimatif: number;
+  acomptes_recus?: number;
+  soldes_recus?: number;
+  soldes_en_attente?: number;
 }
 
 interface Transaction {
@@ -133,6 +136,27 @@ const FinancesPage: React.FC = () => {
           color="orange"
         />
       </div>
+
+      {/* Acomptes & Soldes */}
+      {stats && (stats.acomptes_recus || stats.soldes_recus || stats.soldes_en_attente) ? (
+        <div className="bg-gradient-to-r from-orange-50 to-green-50 rounded-lg p-6 border border-orange-100 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Détail Acomptes & Soldes</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <p className="text-sm text-gray-600 mb-1">Acomptes reçus</p>
+              <p className="text-xl font-bold text-orange-600">{formatCurrency(stats.acomptes_recus || 0)}</p>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <p className="text-sm text-gray-600 mb-1">Soldes reçus</p>
+              <p className="text-xl font-bold text-green-600">{formatCurrency(stats.soldes_recus || 0)}</p>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <p className="text-sm text-gray-600 mb-1">Soldes en attente</p>
+              <p className="text-xl font-bold text-blue-600">{formatCurrency(stats.soldes_en_attente || 0)}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Transactions Table */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">

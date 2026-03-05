@@ -10,6 +10,10 @@ interface Reservation {
   date_debut: string;
   date_fin: string;
   montant_total: number;
+  montant_acompte?: number;
+  montant_restant?: number;
+  acompte_paye?: boolean;
+  solde_paye?: boolean;
   statut: 'en_attente' | 'confirmee' | 'annulee' | 'terminee';
   notes?: string;
   notes_admin?: string;
@@ -251,12 +255,12 @@ const ReservationsPage: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Gestion des Réservations</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Gestion des Réservations</h1>
           <p className="text-gray-600 mt-2">Surveillance et gestion des réservations et tickets</p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setShowTicketModal(true)}
             className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
@@ -463,8 +467,20 @@ const ReservationsPage: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                      {formatCurrency(reservation.montant_total)}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="font-semibold text-gray-900">
+                        {formatCurrency(reservation.montant_total)}
+                      </div>
+                      {reservation.montant_acompte && reservation.montant_acompte > 0 && (
+                        <div className="mt-1 space-y-0.5">
+                          <div className={`text-xs ${reservation.acompte_paye ? 'text-green-600' : 'text-orange-600'}`}>
+                            Acompte: {formatCurrency(reservation.montant_acompte)} {reservation.acompte_paye ? '✓' : '⏳'}
+                          </div>
+                          <div className={`text-xs ${reservation.solde_paye ? 'text-green-600' : 'text-blue-600'}`}>
+                            Solde: {formatCurrency(reservation.montant_restant || (reservation.montant_total - reservation.montant_acompte))} {reservation.solde_paye ? '✓' : '⏳'}
+                          </div>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(reservation.statut)}

@@ -161,7 +161,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Paramètres Système</h1>
           <p className="text-gray-600">Configuration et performance du système</p>
