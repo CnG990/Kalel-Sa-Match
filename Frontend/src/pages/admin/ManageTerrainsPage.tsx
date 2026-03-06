@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import apiService from '../../services/api';
 import toast from 'react-hot-toast';
+import { PlusCircle, RefreshCw, Power, MapPin, Users } from 'lucide-react';
+
+import apiService from '../../services/api';
+import AddTerrainOnSiteModal from './AddTerrainOnSiteModal';
+import TerrainManagerAssignment from '../../components/TerrainManagerAssignment';
 
 interface Terrain {
   id: number;
@@ -12,6 +16,13 @@ interface Terrain {
   image_principale?: string;
   images?: string[];
   est_actif: boolean;
+  gestionnaire_id?: number | null;
+  gestionnaire?: {
+    id?: number;
+    nom?: string;
+    prenom?: string;
+    email?: string;
+  };
   created_at?: string;
   updated_at?: string;
 }
@@ -19,6 +30,10 @@ interface Terrain {
 const ManageTerrainsPageSimple: React.FC = () => {
   const [terrains, setTerrains] = useState<Terrain[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedTerrain, setSelectedTerrain] = useState<Terrain | null>(null);
 
   const fetchTerrains = async () => {
     setLoading(true);
@@ -26,15 +41,28 @@ const ManageTerrainsPageSimple: React.FC = () => {
       const { data } = await apiService.getAllTerrains();
       const terrainsData = Array.isArray(data) ? data : [];
       
-      const validTerrains = terrainsData.map(terrain => ({
-        ...terrain,
-        id: terrain.id || 0,
-        nom: terrain.nom || 'Terrain sans nom',
-        adresse: terrain.adresse || '',
-        latitude: terrain.latitude ? Number(terrain.latitude) : undefined,
-        longitude: terrain.longitude ? Number(terrain.longitude) : undefined,
-        est_actif: terrain.est_actif ?? true
-      }));
+      const validTerrains = terrainsData.map((terrain) => {
+        const raw = terrain as any;
+        const manager = raw.gestionnaire || raw.manager || null;
+        return {
+          ...terrain,
+          id: raw.id || 0,
+          nom: raw.nom || 'Terrain sans nom',
+          adresse: raw.adresse || '',
+          latitude: raw.latitude ? Number(raw.latitude) : undefined,
+          longitude: raw.longitude ? Number(raw.longitude) : undefined,
+          est_actif: raw.est_actif ?? true,
+          gestionnaire_id: raw.gestionnaire_id ?? manager?.id ?? null,
+          gestionnaire: manager
+            ? {
+                id: manager.id,
+                nom: manager.nom,
+                prenom: manager.prenom,
+                email: manager.email,
+              }
+            : undefined,
+        } as Terrain;
+      });
       
       setTerrains(validTerrains);
     } catch (error) {
@@ -50,10 +78,49 @@ const ManageTerrainsPageSimple: React.FC = () => {
     fetchTerrains();
   }, []);
 
+  const toggleDisponibilite = async (terrain: Terrain) => {
+    try {
+      setTogglingId(terrain.id);
+      const { data, meta } = await apiService.toggleManagerTerrainDisponibilite(terrain.id);
+      if (!data) {
+        toast.error(meta.message || "Impossible de changer l'état du terrain");
+        return;
+      }
+
+      toast.success(meta.message || `Terrain ${data.est_actif ? 'activé' : 'désactivé'}`);
+      setTerrains((prev) => prev.map((item) => (item.id === terrain.id ? { ...item, est_actif: data.est_actif } : item)));
+    } catch (error) {
+      toast.error("Erreur lors du changement d'état");
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8">Gestion des Terrains</h1>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestion des Terrains</h1>
+            <p className="text-gray-500 mt-1">Surveillez l'état des terrains et ajoutez-en de nouveaux directement depuis le terrain.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={fetchTerrains}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              <RefreshCw className="w-4 h-4" /> Rafraîchir
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+            >
+              <PlusCircle className="w-4 h-4" /> Ajouter un terrain
+            </button>
+          </div>
+        </div>
         
         {loading ? (
           <div className="text-center py-12">
@@ -84,6 +151,9 @@ const ManageTerrainsPageSimple: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Statut
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Gestionnaire
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -96,7 +166,10 @@ const ManageTerrainsPageSimple: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{terrain.adresse}</div>
+                        <div className="text-sm text-gray-900 flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-orange-500" />
+                          <span>{terrain.adresse}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
@@ -108,13 +181,53 @@ const ManageTerrainsPageSimple: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          terrain.est_actif 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {terrain.est_actif ? 'Actif' : 'Inactif'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            terrain.est_actif 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {terrain.est_actif ? 'Actif' : 'Inactif'}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={togglingId === terrain.id}
+                            onClick={() => toggleDisponibilite(terrain)}
+                            className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border ${
+                              terrain.est_actif
+                                ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                : 'border-green-200 text-green-600 hover:bg-green-50'
+                            } disabled:opacity-50`}
+                          >
+                            <Power className="w-3 h-3" />
+                            {terrain.est_actif ? 'Désactiver' : 'Activer'}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1 text-sm text-gray-900">
+                          {terrain.gestionnaire ? (
+                            <>
+                              <span className="font-medium">
+                                {terrain.gestionnaire.prenom} {terrain.gestionnaire.nom}
+                              </span>
+                              <span className="text-gray-500 text-xs">{terrain.gestionnaire.email}</span>
+                            </>
+                          ) : (
+                            <span className="text-gray-400">Non attribué</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedTerrain(terrain);
+                              setShowAssignModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 w-fit px-3 py-1 text-xs font-semibold rounded-full border border-purple-200 text-purple-600 hover:bg-purple-50"
+                          >
+                            <Users className="w-3 h-3" />
+                            {terrain.gestionnaire ? 'Changer' : 'Attribuer'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -130,6 +243,30 @@ const ManageTerrainsPageSimple: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showAddModal && (
+        <AddTerrainOnSiteModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            setShowAddModal(false);
+            fetchTerrains();
+          }}
+        />
+      )}
+
+      {showAssignModal && selectedTerrain && (
+        <TerrainManagerAssignment
+          isOpen={showAssignModal}
+          selectedTerrain={selectedTerrain as any}
+          onClose={() => {
+            setShowAssignModal(false);
+            setSelectedTerrain(null);
+          }}
+          onSuccess={() => {
+            fetchTerrains();
+          }}
+        />
+      )}
     </div>
   );
 };

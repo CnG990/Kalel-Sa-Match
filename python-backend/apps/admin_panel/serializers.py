@@ -1,6 +1,14 @@
 from rest_framework import serializers
 from apps.accounts.models import User
-from apps.terrains.models import TerrainSynthetiquesDakar, Reservation, Paiement, TicketSupport, Notification
+from apps.terrains.models import (
+    TerrainSynthetiquesDakar,
+    Reservation,
+    Paiement,
+    TicketSupport,
+    Notification,
+    Abonnement,
+    Souscription,
+)
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
@@ -36,4 +44,16 @@ class AdminTicketSerializer(serializers.ModelSerializer):
 class AdminNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
+        fields = '__all__'
+
+
+class AdminAbonnementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Abonnement
+        fields = '__all__'
+
+
+class AdminSouscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Souscription
         fields = '__all__'

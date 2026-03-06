@@ -51,8 +51,36 @@ const FinancesPage: React.FC = () => {
         const { data, meta } = await apiService.getAdminFinances({ page });
         if (data) {
           const d = data as any;
-          setStats(d.stats as Stats || d as Stats);
-          setTransactions(d.transactions as PaginatedTransactions || null);
+          setStats((d.stats as Stats) || (d as Stats));
+
+          const txPayload = d.transactions ?? d.transactions?.data ?? d.transactions?.results
+            ? d.transactions
+            : d.transactions ?? d; // fallback to root payload if transactions absent
+
+          if (txPayload) {
+            const list = Array.isArray(txPayload.data)
+              ? txPayload.data
+              : Array.isArray(txPayload.results)
+                ? txPayload.results
+                : Array.isArray(txPayload)
+                  ? txPayload
+                  : [];
+
+            setTransactions({
+              data: list,
+              current_page: Number(txPayload.current_page ?? meta?.current_page ?? page ?? 1),
+              last_page: Number(txPayload.last_page ?? meta?.last_page ?? 1),
+              total: Number(
+                txPayload.total
+                ?? txPayload.count
+                ?? txPayload.data?.length
+                ?? txPayload.results?.length
+                ?? (Array.isArray(txPayload) ? txPayload.length : 0)
+              ),
+            });
+          } else {
+            setTransactions(null);
+          }
         } else {
           toast.error(meta.message || "Impossible de charger les données financières.");
         }
@@ -176,7 +204,7 @@ const FinancesPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {transactions && transactions.data.map((tx) => (
+              {Array.isArray(transactions?.data) && transactions.data.length > 0 ? transactions.data.map((tx) => (
                 <tr key={tx.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{tx.date}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{tx.client}</td>
@@ -190,7 +218,13 @@ const FinancesPage: React.FC = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                    Aucune transaction disponible pour le moment.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

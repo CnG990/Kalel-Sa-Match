@@ -34,6 +34,34 @@ interface Subscriber {
   montant_paye: number;
 }
 
+const SUBSCRIPTION_FALLBACK: Subscription[] = [
+  {
+    id: 1,
+    nom: 'Premium Terrains',
+    description: 'Accès prioritaire aux terrains + réductions.',
+    prix: 19990,
+    duree_jours: 30,
+    avantages: ['-10% sur les réservations', 'Support prioritaire'],
+    statut: 'active',
+    nombre_abonnes: 14,
+    revenus_totaux: 279860,
+    date_creation: new Date().toISOString(),
+    date_modification: new Date().toISOString(),
+  },
+];
+
+const SUBSCRIBERS_FALLBACK: Subscriber[] = [
+  {
+    id: 1,
+    user: { id: 1, nom: 'Client Test', email: 'client@example.com' },
+    abonnement: { id: 1, nom: 'Premium Terrains' },
+    date_debut: new Date().toISOString(),
+    date_fin: new Date(Date.now() + 30 * 86400000).toISOString(),
+    statut: 'active',
+    montant_paye: 19990,
+  },
+];
+
 interface CreateSubscriptionModalProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -374,6 +402,7 @@ const SubscriptionsPage: React.FC = () => {
     totalRevenue: 0,
     monthlyRevenue: 0
   });
+  const [isFallback, setIsFallback] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -388,23 +417,28 @@ const SubscriptionsPage: React.FC = () => {
         apiService.get('/terrains/souscriptions/').catch(() => emptyRes)
       ]);
 
-      const subscriptionsRaw = Array.isArray(subscriptionsRes.data)
-        ? subscriptionsRes.data
-        : (typeof subscriptionsRes.data === 'object' && subscriptionsRes.data !== null
-            ? (subscriptionsRes.data as { subscriptions?: unknown }).subscriptions
-            : undefined);
+      const normalizeList = (payload: unknown) => {
+        if (Array.isArray(payload)) return payload;
+        if (payload && typeof payload === 'object') {
+          const candidate = (payload as any).data || (payload as any).results || (payload as any).subscriptions || (payload as any).subscribers;
+          if (Array.isArray(candidate)) return candidate;
+        }
+        return [];
+      };
 
-      const subscribersRaw = Array.isArray(subscribersRes.data)
-        ? subscribersRes.data
-        : (typeof subscribersRes.data === 'object' && subscribersRes.data !== null
-            ? (subscribersRes.data as { subscribers?: unknown }).subscribers
-            : undefined);
+      const subsList: Subscription[] = normalizeList(subscriptionsRes.data as unknown) as Subscription[];
+      const subscrList: Subscriber[] = normalizeList(subscribersRes.data as unknown) as Subscriber[];
 
-      const subsList: Subscription[] = Array.isArray(subscriptionsRaw) ? subscriptionsRaw : [];
-      const subscrList: Subscriber[] = Array.isArray(subscribersRaw) ? subscribersRaw : [];
-
-      setSubscriptions(subsList);
-      setSubscribers(subscrList);
+      if (subsList.length === 0 && subscrList.length === 0) {
+        setSubscriptions(SUBSCRIPTION_FALLBACK);
+        setSubscribers(SUBSCRIBERS_FALLBACK);
+        setIsFallback(true);
+        toast.error("API abonnements indisponible : données de démonstration");
+      } else {
+        setSubscriptions(subsList);
+        setSubscribers(subscrList);
+        setIsFallback(false);
+      }
       
       // Calculer les statistiques
       const totalPlans = subsList.length;
@@ -422,7 +456,19 @@ const SubscriptionsPage: React.FC = () => {
         monthlyRevenue: totalRevenue // Simplifié pour l'exemple
       });
     } catch (error) {
-      // Erreur déjà gérée par toast dans le bloc try
+      console.error('Erreur abonnements admin:', error);
+      setSubscriptions(SUBSCRIPTION_FALLBACK);
+      setSubscribers(SUBSCRIBERS_FALLBACK);
+      setStats({
+        totalPlans: SUBSCRIPTION_FALLBACK.length,
+        activePlans: SUBSCRIPTION_FALLBACK.filter((s) => s.statut === 'active').length,
+        totalSubscribers: SUBSCRIBERS_FALLBACK.length,
+        activeSubscribers: SUBSCRIBERS_FALLBACK.filter((s) => s.statut === 'active').length,
+        totalRevenue: SUBSCRIBERS_FALLBACK.reduce((sum, s) => sum + s.montant_paye, 0),
+        monthlyRevenue: SUBSCRIBERS_FALLBACK.reduce((sum, s) => sum + s.montant_paye, 0),
+      });
+      setIsFallback(true);
+      toast.error("Impossible de charger les abonnements réels, affichage d'un exemple");
     } finally {
       setLoading(false);
     }
@@ -470,10 +516,15 @@ const SubscriptionsPage: React.FC = () => {
   });
 
   const filteredSubscribers = subscribers.filter(subscriber => {
+    const userNom = (subscriber.user?.nom ?? '').toLowerCase();
+    const userEmail = (subscriber.user?.email ?? '').toLowerCase();
+    const planNom = (subscriber.abonnement?.nom ?? '').toLowerCase();
+    const query = searchTerm.toLowerCase();
+
     const matchesSearch = 
-      subscriber.user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subscriber.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subscriber.abonnement.nom.toLowerCase().includes(searchTerm.toLowerCase());
+      userNom.includes(query) ||
+      userEmail.includes(query) ||
+      planNom.includes(query);
     
     const matchesStatus = statusFilter === 'all' || subscriber.statut === statusFilter;
     
@@ -503,9 +554,9 @@ const SubscriptionsPage: React.FC = () => {
         } else {
           return [
             item.id,
-            item.user.nom,
-            item.user.email,
-            item.abonnement.nom,
+            item.user?.nom ?? 'Utilisateur inconnu',
+            item.user?.email ?? '—',
+            item.abonnement?.nom ?? 'Plan inconnu',
             new Date(item.date_debut).toLocaleDateString('fr-FR'),
             new Date(item.date_fin).toLocaleDateString('fr-FR'),
             getStatusText(item.statut),
@@ -533,6 +584,11 @@ const SubscriptionsPage: React.FC = () => {
 
   return (
     <div>
+      {isFallback && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Les données d'abonnements proviennent d'un jeu d'exemples car les endpoints admin/subscriptions ne sont pas encore disponibles.
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
           <TrendingUp className="w-8 h-8 text-green-600" />
@@ -780,12 +836,12 @@ const SubscriptionsPage: React.FC = () => {
                   <tr key={subscriber.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{subscriber.user.nom}</div>
-                        <div className="text-sm text-gray-500">{subscriber.user.email}</div>
+                        <div className="text-sm font-medium text-gray-900">{subscriber.user?.nom ?? 'Utilisateur inconnu'}</div>
+                        <div className="text-sm text-gray-500">{subscriber.user?.email ?? '—'}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{subscriber.abonnement.nom}</div>
+                      <div className="text-sm text-gray-900">{subscriber.abonnement?.nom ?? 'Plan inconnu'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">

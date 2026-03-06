@@ -1,5 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import apiService, { type SupportTicketDTO } from '../../services/api';
+import toast from 'react-hot-toast';
+
+const MOCK_TICKETS: SupportTicketDTO[] = [
+  {
+    id: 1001,
+    user: { nom: 'Admin', prenom: 'Kalel', email: 'admin@kalel.com' },
+    sujet: 'Impossible de confirmer une réservation',
+    description: 'Le bouton confirme reste grisé sur Safari.',
+    priorite: 'haute',
+    statut: 'ouvert',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  } as SupportTicketDTO,
+  {
+    id: 1002,
+    user: { nom: 'Gestionnaire', prenom: 'Fatou', email: 'fatou@example.com' },
+    sujet: 'Facture Wave non reçue',
+    description: 'Le paiement est validé mais aucune facture.',
+    priorite: 'moyenne',
+    statut: 'en_cours',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date().toISOString(),
+  } as SupportTicketDTO,
+];
 
 const SupportPage: React.FC = () => {
   // const [activeTab, setActiveTab] = useState<'tickets' | 'disputes'>('tickets');
@@ -10,6 +34,7 @@ const SupportPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [isFallback, setIsFallback] = useState(false);
 
   useEffect(() => {
     fetchTickets();
@@ -27,13 +52,24 @@ const SupportPage: React.FC = () => {
       if (statusFilter) params.statut = statusFilter;
 
       const { data } = await apiService.getSupportTickets(params);
-      setTickets(Array.isArray(data?.data) ? data.data : []);
+      const rawList = Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray((data as any)?.results)
+          ? (data as any).results
+          : Array.isArray(data)
+            ? data
+            : [];
+      setTickets(rawList);
       setTotalPages(data?.last_page ?? 1);
       setError(null);
+      setIsFallback(false);
     } catch (err) {
-      console.error('Erreur support tickets:', err);
-      setError('Erreur lors du chargement des tickets');
-      setTickets([]);
+      console.warn('Erreur support tickets:', err);
+      setError('Le service des tickets admin est indisponible. Affichage des derniers tickets internes.');
+      setTickets(MOCK_TICKETS);
+      setTotalPages(1);
+      setIsFallback(true);
+      toast.error("API support indisponible : données locales affichées");
     } finally {
       setLoading(false);
     }
@@ -81,15 +117,13 @@ const SupportPage: React.FC = () => {
     );
   }
 
-  // Onglets
-  // Onglets (non utilisés pour l'instant)
-  // const tabs = [
-  //   { id: 'tickets', name: 'Tickets de Support', icon: LifeBuoy },
-  //   { id: 'disputes', name: 'Litiges', icon: ShieldAlert },
-  // ];
-
   return (
     <div className="space-y-6">
+      {isFallback && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Les tickets affichés proviennent d'un échantillon local car l'API /admin/support n'est pas encore disponible sur cet environnement.
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Support</h1>
         <div className="text-sm text-gray-500">

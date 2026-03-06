@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Search, Download, Eye, AlertTriangle, Info, XCircle, Calendar, User, Database } from 'lucide-react';
+import toast from 'react-hot-toast';
 import apiService from '../../services/api';
 
 interface Log {
   id: number;
   niveau: 'info' | 'warning' | 'error' | 'debug' | 'critical';
+
   message: string;
   contexte: string;
   utilisateur_id?: number;
@@ -15,6 +17,60 @@ interface Log {
   donnees?: any;
   trace?: string;
 }
+
+const MOCK_LOGS: Log[] = [
+  {
+    id: 1,
+    niveau: 'info',
+    message: 'Connexion administrateur réussie',
+    contexte: 'auth',
+    utilisateur_nom: 'Admin Principal',
+    ip_adresse: '102.23.45.11',
+    date_creation: new Date().toISOString(),
+    donnees: { role: 'admin' },
+  },
+  {
+    id: 2,
+    niveau: 'warning',
+    message: 'Tentative de paiement rejetée (Wave)',
+    contexte: 'payment',
+    utilisateur_nom: 'Client Test',
+    ip_adresse: '41.214.56.2',
+    date_creation: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+    donnees: { reservation_id: 4521 },
+  },
+  {
+    id: 3,
+    niveau: 'error',
+    message: 'Impossible de confirmer la réservation 2817',
+    contexte: 'reservation',
+    utilisateur_nom: 'Système',
+    ip_adresse: '127.0.0.1',
+    date_creation: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    donnees: { statut: 'annulee' },
+    trace: 'ReservationNotFound: 2817',
+  },
+  {
+    id: 4,
+    niveau: 'critical',
+    message: 'Quota de stockage presque atteint (85%)',
+    contexte: 'system',
+    utilisateur_nom: 'Monitoring',
+    ip_adresse: '10.0.0.3',
+    date_creation: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString(),
+  },
+];
+
+const computeStats = (logsData: Log[]) => {
+  const total = logsData.length;
+  const info = logsData.filter((l) => l.niveau === 'info').length;
+  const warning = logsData.filter((l) => l.niveau === 'warning').length;
+  const error = logsData.filter((l) => l.niveau === 'error').length;
+  const critical = logsData.filter((l) => l.niveau === 'critical').length;
+  const today = logsData.filter((l) => new Date(l.date_creation).toDateString() === new Date().toDateString()).length;
+
+  return { total, info, warning, error, critical, today };
+};
 
 const LogsPage: React.FC = () => {
   const [logs, setLogs] = useState<Log[]>([]);
@@ -32,6 +88,7 @@ const LogsPage: React.FC = () => {
     critical: 0,
     today: 0
   });
+  const [logsUnavailable, setLogsUnavailable] = useState(false);
 
   useEffect(() => {
     fetchLogs();
@@ -40,27 +97,25 @@ const LogsPage: React.FC = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const { data } = await apiService.get('/admin/stats/').catch(() => ({ data: [] }));
-      const logsDataCandidate = Array.isArray(data)
+      const { data } = await apiService.get('/admin/logs/');
+      const logsData = Array.isArray(data)
         ? data
-        : (typeof data === 'object' && data !== null ? (data as { logs?: unknown }).logs : undefined);
-      const logsData = Array.isArray(logsDataCandidate) ? logsDataCandidate : [];
+        : Array.isArray((data as any)?.results)
+          ? (data as any).results
+          : Array.isArray((data as any)?.data)
+            ? (data as any).data
+            : [];
+
       setLogs(logsData);
-      
-      // Calculer les statistiques
-      const total = logsData.length || 0;
-      const info = logsData.filter((l: Log) => l.niveau === 'info').length || 0;
-      const warning = logsData.filter((l: Log) => l.niveau === 'warning').length || 0;
-      const error = logsData.filter((l: Log) => l.niveau === 'error').length || 0;
-      const critical = logsData.filter((l: Log) => l.niveau === 'critical').length || 0;
-      const today = logsData.filter((l: Log) => {
-        const today = new Date().toDateString();
-        return new Date(l.date_creation).toDateString() === today;
-      }).length || 0;
-      
-      setStats({ total, info, warning, error, critical, today });
-    } catch (error) {
-      // Erreur silencieuse, les logs sont optionnels
+      setStats(computeStats(logsData as Log[]));
+      setLogsUnavailable(false);
+    } catch (error: any) {
+      console.warn('[LogsPage] Service indisponible, utilisation de données locales.', error);
+      const fallback = MOCK_LOGS.map((log, index) => ({ ...log, id: log.id ?? index + 1 }));
+      setLogs(fallback);
+      setStats(computeStats(fallback));
+      setLogsUnavailable(true);
+      toast.error("Service de logs indisponible sur le backend. Affichage des derniers événements internes.");
     } finally {
       setLoading(false);
     }
@@ -119,8 +174,26 @@ const LogsPage: React.FC = () => {
     
     const matchesLevel = levelFilter === 'all' || log.niveau === levelFilter;
     const matchesContext = contextFilter === 'all' || log.contexte === contextFilter;
+    const matchesDate = (() => {
+      if (dateFilter === 'all') return true;
+      const logDate = new Date(log.date_creation);
+      const now = new Date();
+      if (dateFilter === 'today') {
+        return logDate.toDateString() === now.toDateString();
+      }
+      if (dateFilter === 'week') {
+        const start = new Date();
+        start.setDate(now.getDate() - 7);
+        return logDate >= start;
+      }
+      if (dateFilter === 'month') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        return logDate >= start;
+      }
+      return true;
+    })();
     
-    return matchesSearch && matchesLevel && matchesContext;
+    return matchesSearch && matchesLevel && matchesContext && matchesDate;
   });
 
   const exportLogs = () => {
@@ -146,6 +219,10 @@ const LogsPage: React.FC = () => {
   };
 
   const clearLogs = async () => {
+    if (logsUnavailable) {
+      toast.error("Service de logs indisponible sur le backend.");
+      return;
+    }
     if (window.confirm('Êtes-vous sûr de vouloir supprimer tous les logs ? Cette action est irréversible.')) {
       try {
         await apiService.delete('/admin/logs');
@@ -166,6 +243,11 @@ const LogsPage: React.FC = () => {
 
   return (
     <div>
+      {logsUnavailable && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-sm">
+          Le service de logs backend n'est pas disponible sur cet environnement. Des exemples récents sont affichés à la place.
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
           <FileText className="w-8 h-8 text-gray-600" />

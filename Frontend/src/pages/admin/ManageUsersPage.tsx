@@ -14,13 +14,6 @@ interface User {
   created_at: string;
 }
 
-interface PaginatedResponse {
-  data: User[];
-  current_page: number;
-  last_page: number;
-  total: number;
-}
-
 const ManageUsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +55,7 @@ const ManageUsersPage: React.FC = () => {
   const [showManagerApprovalModal, setShowManagerApprovalModal] = useState(false);
   const [tauxCommission, setTauxCommission] = useState(10);
   const [commentairesManager, setCommentairesManager] = useState('');
+  const [managerApprovalLoading, setManagerApprovalLoading] = useState(false);
   
   // États pour la modification de commission (non utilisés pour l'instant)
   const [_showCommissionModal, setShowCommissionModal] = useState(false);
@@ -78,15 +72,53 @@ const ManageUsersPage: React.FC = () => {
         statut_validation: filters.statut_validation,
       };
       const response = await apiService.getAllUsers(params);
+      console.log('[ManageUsers] API response', response);
+
       if (response.data) {
-        const paginatedData = response.data as unknown as PaginatedResponse;
-        setUsers(paginatedData.data);
-        setLastPage(paginatedData.last_page);
+        const payload = response.data as any;
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.data)
+            ? payload.data
+            : Array.isArray(payload.results)
+              ? payload.results
+              : [];
+
+        const normalized = list.map((raw: any, index: number) => {
+          const base = raw?.user ?? raw ?? {};
+          return {
+            id: Number(base.id ?? raw.id ?? index + 1),
+            nom: base.nom ?? base.last_name ?? raw.nom ?? 'Nom inconnu',
+            prenom: base.prenom ?? base.first_name ?? raw.prenom ?? 'Prénom inconnu',
+            email: base.email ?? raw.email ?? 'Email indisponible',
+            telephone: base.telephone ?? raw.telephone ?? '',
+            role: (base.role ?? raw.role ?? 'client') as User['role'],
+            statut_validation: base.statut_validation ?? raw.statut_validation ?? 'en_attente',
+            created_at: base.created_at ?? raw.created_at ?? new Date().toISOString(),
+            taux_commission_defaut: base.taux_commission_defaut ?? raw.taux_commission_defaut,
+          } as User & { taux_commission_defaut?: number };
+        });
+
+        setUsers(normalized);
+
+        const derivedLastPage = Number(
+          payload.last_page
+          ?? payload.total_pages
+          ?? response.meta?.last_page
+          ?? response.meta?.pages
+          ?? 1
+        );
+        setLastPage(Number.isFinite(derivedLastPage) && derivedLastPage > 0 ? derivedLastPage : 1);
       } else {
         toast.error(response.meta?.message || "Impossible de charger les utilisateurs.");
+        setUsers([]);
+        setLastPage(1);
       }
     } catch (error) {
+      console.error('[ManageUsers] fetchUsers error', error);
       toast.error("Erreur réseau lors du chargement.");
+      setUsers([]);
+      setLastPage(1);
     } finally {
       setLoading(false);
     }
@@ -190,9 +222,13 @@ const ManageUsersPage: React.FC = () => {
   // };
 
   const handleApproveManager = async () => {
-    if (!selectedUser) return;
-    
+    if (!selectedUser) {
+      toast.error('Aucun gestionnaire sélectionné');
+      return;
+    }
+
     try {
+      setManagerApprovalLoading(true);
       const { data, meta } = await apiService.approveManager(selectedUser.id, tauxCommission, commentairesManager);
       if (data) {
         toast.success('Gestionnaire approuvé avec succès');
@@ -204,7 +240,11 @@ const ManageUsersPage: React.FC = () => {
         toast.error(meta.message || 'Erreur lors de l\'approbation');
       }
     } catch (error) {
-      toast.error('Erreur lors de l\'approbation');
+      const message = error instanceof Error ? error.message : "Erreur lors de l'approbation";
+      toast.error(message.includes('validate_user') ? "API d'approbation indisponible" : message);
+      console.error('[ManageUsers] approveManager error', error);
+    } finally {
+      setManagerApprovalLoading(false);
     }
   };
 
@@ -374,6 +414,8 @@ const ManageUsersPage: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr><td colSpan={6} className="text-center py-4">Chargement...</td></tr>
+            ) : !Array.isArray(users) || users.length === 0 ? (
+              <tr><td colSpan={6} className="text-center py-4 text-gray-500">Aucun utilisateur trouvé.</td></tr>
             ) : users.map((user, idx) => (
               <tr key={user.id} className={idx % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-gray-50 hover:bg-gray-100"}>
                 <td className="px-6 py-4 min-w-[160px] max-w-xs font-semibold text-black text-base">
@@ -394,7 +436,9 @@ const ManageUsersPage: React.FC = () => {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-sm">
-                  {new Date(user.created_at).toLocaleString('fr-FR', { year: 'numeric', month: 'long', day: '2-digit' })}
+                  {user.created_at
+                    ? new Date(user.created_at).toLocaleString('fr-FR', { year: 'numeric', month: 'long', day: '2-digit' })
+                    : '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex justify-end space-x-2">
@@ -771,9 +815,10 @@ const ManageUsersPage: React.FC = () => {
               </button>
               <button
                 onClick={handleApproveManager}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                disabled={managerApprovalLoading}
+                className={`px-4 py-2 rounded-md text-white ${managerApprovalLoading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
               >
-                Approuver
+                {managerApprovalLoading ? 'Approbation...' : 'Approuver'}
               </button>
             </div>
           </div>

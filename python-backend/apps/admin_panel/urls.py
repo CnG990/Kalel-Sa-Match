@@ -7,6 +7,8 @@ from .views import (
     AdminPaymentViewSet,
     AdminTicketViewSet,
     AdminNotificationViewSet,
+    AdminAbonnementViewSet,
+    AdminSouscriptionViewSet,
     AdminStatsViewSet,
 )
 from .views_payment_config import AdminPaymentConfigViewSet, AdminPaymentStatsViewSet
@@ -22,6 +24,8 @@ router.register(r'payment-config', AdminPaymentConfigViewSet, basename='admin-pa
 router.register(r'payment-stats', AdminPaymentStatsViewSet, basename='admin-payment-stats')
 router.register(r'support/tickets', AdminTicketViewSet, basename='admin-support-tickets')
 router.register(r'notifications', AdminNotificationViewSet, basename='admin-notifications')
+router.register(r'subscriptions', AdminAbonnementViewSet, basename='admin-subscriptions')
+router.register(r'subscribers', AdminSouscriptionViewSet, basename='admin-souscriptions')
 router.register(r'stats', AdminStatsViewSet, basename='admin-stats')
 
 urlpatterns = [

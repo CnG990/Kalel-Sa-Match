@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
-from apps.terrains.models import TerrainSynthetiquesDakar, TicketSupport, Notification
+from apps.terrains.models import TerrainSynthetiquesDakar, TicketSupport, Notification, Abonnement, Souscription
 from apps.terrains.serializers import (
     TerrainSerializer, 
     TicketSupportSerializer, 
@@ -14,6 +14,10 @@ from apps.accounts.models import User
 from apps.accounts.serializers import UserSerializer
 from apps.payments.models import Payment
 from apps.payments.serializers import PaymentSerializer
+from .serializers import (
+    AdminAbonnementSerializer,
+    AdminSouscriptionSerializer,
+)
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -214,6 +218,24 @@ class AdminNotificationViewSet(BaseViewSet):
         Notification.objects.bulk_create(notifications)
         
         return Response({'data': None, 'meta': {'success': True, 'message': 'Notification envoyée à tous les utilisateurs'}})
+
+
+class AdminAbonnementViewSet(BaseViewSet):
+    serializer_class = AdminAbonnementSerializer
+
+    def get_queryset(self):
+        if self.request.user.role == 'admin':
+            return Abonnement.objects.select_related('user', 'terrain').all()
+        return Abonnement.objects.none()
+
+
+class AdminSouscriptionViewSet(BaseViewSet):
+    serializer_class = AdminSouscriptionSerializer
+
+    def get_queryset(self):
+        if self.request.user.role == 'admin':
+            return Souscription.objects.select_related('user', 'abonnement', 'abonnement__terrain').all()
+        return Souscription.objects.none()
 
 
 class AdminStatsViewSet(viewsets.GenericViewSet):

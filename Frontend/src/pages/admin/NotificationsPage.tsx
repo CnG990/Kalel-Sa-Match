@@ -31,6 +31,25 @@ interface CreateNotificationModalProps {
   onSuccess: () => void;
 }
 
+const TEMPLATE_FALLBACK: NotificationTemplate[] = [
+  {
+    id: 1,
+    nom: 'Maintenance Programmée',
+    titre: 'Intervention prévue sur vos terrains',
+    message: 'Une maintenance aura lieu ce soir entre 22h et 23h.',
+    type: 'warning',
+    variables: ['date', 'impact']
+  },
+  {
+    id: 2,
+    nom: 'Promo Week-end',
+    titre: 'Réduction exceptionnelle',
+    message: 'Profitez de -20% sur les réservations avant dimanche.',
+    type: 'info',
+    variables: ['reduction', 'code']
+  }
+];
+
 const CreateNotificationModal: React.FC<CreateNotificationModalProps> = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     titre: '',
@@ -295,6 +314,7 @@ const NotificationsPage: React.FC = () => {
     averageOpenRate: 0,
     totalTemplates: 0
   });
+  const [templatesUnavailable, setTemplatesUnavailable] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -305,13 +325,19 @@ const NotificationsPage: React.FC = () => {
       setLoading(true);
       const [notificationsRes, templatesRes] = await Promise.all([
         apiService.get('/admin/notifications/'),
-        apiService.get('/admin/notification-templates/').catch(() => ({ data: [], meta: { success: false } }))
+        apiService.get('/admin/notification-templates/').catch(() => ({ data: null, meta: { success: false } }))
       ]);
 
       const nRaw = notificationsRes.data;
       const notificationsData = Array.isArray(nRaw) ? nRaw : Array.isArray((nRaw as any)?.results) ? (nRaw as any).results : [];
       const tRaw = templatesRes.data;
-      const templatesData = Array.isArray(tRaw) ? tRaw : Array.isArray((tRaw as any)?.results) ? (tRaw as any).results : [];
+      let templatesData = Array.isArray(tRaw) ? tRaw : Array.isArray((tRaw as any)?.results) ? (tRaw as any).results : [];
+      if (!Array.isArray(templatesData) || templatesData.length === 0) {
+        templatesData = TEMPLATE_FALLBACK;
+        setTemplatesUnavailable(true);
+      } else {
+        setTemplatesUnavailable(false);
+      }
 
       setNotifications(notificationsData);
       setTemplates(templatesData);
@@ -342,13 +368,14 @@ const NotificationsPage: React.FC = () => {
       // Erreur déjà gérée par toast dans le bloc try
       // Fallback avec données vides en cas d'erreur
       setNotifications([]);
-      setTemplates([]);
+      setTemplates(TEMPLATE_FALLBACK);
+      setTemplatesUnavailable(true);
       setStats({
         totalNotifications: 0,
         sentToday: 0,
         totalRecipients: 0,
         averageOpenRate: 0,
-        totalTemplates: 0
+        totalTemplates: TEMPLATE_FALLBACK.length
       });
     } finally {
       setLoading(false);
@@ -462,6 +489,11 @@ const NotificationsPage: React.FC = () => {
 
   return (
     <div>
+      {templatesUnavailable && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-sm">
+          Les modèles de notification ne sont pas disponibles sur l'API. Une bibliothèque d'exemples est affichée pour référence.
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
           <Bell className="w-8 h-8 text-blue-600" />
@@ -770,11 +802,13 @@ const NotificationsPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
-                        {template.variables.map((variable, index) => (
+                        {Array.isArray(template.variables) && template.variables.length > 0 ? template.variables.map((variable, index) => (
                           <span key={index} className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
                             {variable}
                           </span>
-                        ))}
+                        )) : (
+                          <span className="text-xs text-gray-400">Aucune variable</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

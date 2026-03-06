@@ -89,7 +89,32 @@ const ReservationsPage: React.FC = () => {
       });
       if (data) {
         const d = data as any;
-        setReservations(d?.data || d?.results || (Array.isArray(d) ? d : []) || []);
+        const rawList = d?.data || d?.results || (Array.isArray(d) ? d : []) || [];
+        const normalized = rawList.map((raw: any, index: number) => {
+          const baseUser = raw?.user || raw?.client || {};
+          const baseTerrain = raw?.terrain || raw?.terrain_synthetique || {};
+          const terrainSynthetic = raw?.terrain?.terrain_synthetique || raw?.terrain_synthetique || {};
+
+          return {
+            ...raw,
+            id: raw?.id ?? index,
+            user: {
+              nom: baseUser?.nom ?? baseUser?.last_name ?? 'Nom inconnu',
+              prenom: baseUser?.prenom ?? baseUser?.first_name ?? 'Client',
+              email: baseUser?.email ?? 'Email indisponible',
+              telephone: baseUser?.telephone ?? baseUser?.phone ?? '',
+            },
+            terrain: {
+              ...baseTerrain,
+              terrain_synthetique: {
+                nom: terrainSynthetic?.nom ?? baseTerrain?.nom ?? 'Terrain',
+                adresse: terrainSynthetic?.adresse ?? baseTerrain?.adresse ?? 'Adresse inconnue',
+              },
+            },
+          } as Reservation;
+        });
+
+        setReservations(normalized);
         setStats(d?.stats || null);
       } else {
         toast.error(meta.message || "Impossible de charger les réservations.");
@@ -439,10 +464,10 @@ const ReservationsPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {reservation.user.prenom} {reservation.user.nom}
+                          {reservation.user?.prenom} {reservation.user?.nom}
                         </div>
-                        <div className="text-sm text-gray-500">{reservation.user.email}</div>
-                        {reservation.user.telephone && (
+                        <div className="text-sm text-gray-500">{reservation.user?.email}</div>
+                        {reservation.user?.telephone && (
                           <div className="text-sm text-gray-500">{reservation.user.telephone}</div>
                         )}
                       </div>
@@ -450,10 +475,10 @@ const ReservationsPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {reservation.terrain.terrain_synthetique.nom}
+                          {reservation.terrain?.terrain_synthetique?.nom}
                         </div>
-                        <div className="text-sm text-gray-500">{reservation.terrain.nom}</div>
-                        <div className="text-sm text-gray-500">{reservation.terrain.terrain_synthetique.adresse}</div>
+                        <div className="text-sm text-gray-500">{reservation.terrain?.nom}</div>
+                        <div className="text-sm text-gray-500">{reservation.terrain?.terrain_synthetique?.adresse}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -606,7 +631,7 @@ const ReservationsPage: React.FC = () => {
               Ajouter des notes administrateur
             </h3>
             <p className="text-gray-600 mb-4">
-              Réservation de {selectedReservation.user.prenom} {selectedReservation.user.nom}
+              Réservation de {selectedReservation.user?.prenom} {selectedReservation.user?.nom}
             </p>
             <textarea
               value={adminNotes}
