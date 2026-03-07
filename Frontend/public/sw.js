@@ -1,6 +1,6 @@
-const CACHE_NAME = 'terrains-synthetiques-v1.0.0';
-const STATIC_CACHE = 'static-v1.0.0';
-const DYNAMIC_CACHE = 'dynamic-v1.0.0';
+const CACHE_NAME = 'terrains-synthetiques-v1.1.0';
+const STATIC_CACHE = 'static-v1.1.0';
+const DYNAMIC_CACHE = 'dynamic-v1.1.0';
 
 // Ressources à mettre en cache immédiatement
 const STATIC_ASSETS = [
@@ -18,6 +18,9 @@ const API_CACHE_PATTERNS = [
   /\/api\/user\/profile/,
   /\/api\/reservations\/my-reservations/
 ];
+
+// Ne jamais intercepter les assets fingerprintés générés par Vite (nouveau hash à chaque build)
+const HASHED_ASSET_REGEX = /\/assets\/.*\.[a-f0-9]{8}\.(js|css)$/;
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
@@ -72,6 +75,12 @@ self.addEventListener('fetch', (event) => {
 
   // Ignorer les requêtes vers d'autres domaines (CDN, APIs externes)
   if (url.origin !== self.location.origin && !url.pathname.startsWith('/api')) return;
+
+  // Laisser le réseau gérer les assets fingerprintés pour éviter les caches obsolètes
+  if (HASHED_ASSET_REGEX.test(url.pathname)) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Stratégie Cache First pour les assets statiques
   if (isStaticAsset(request)) {

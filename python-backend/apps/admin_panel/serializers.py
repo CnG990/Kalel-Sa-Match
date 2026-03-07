@@ -2,13 +2,13 @@ from rest_framework import serializers
 from apps.accounts.models import User
 from apps.terrains.models import (
     TerrainSynthetiquesDakar,
-    Reservation,
-    Paiement,
     TicketSupport,
     Notification,
     Abonnement,
     Souscription,
 )
+from apps.reservations.models import Reservation
+from apps.payments.models import Paiement
 
 
 class AdminUserSerializer(serializers.ModelSerializer):

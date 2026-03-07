@@ -409,54 +409,45 @@ const SubscriptionsPage: React.FC = () => {
   }, []);
 
   const fetchData = async () => {
-    try {
-      setLoading(true);
-      const emptyRes = { data: [], meta: { success: false } };
-      const [subscriptionsRes, subscribersRes] = await Promise.all([
-        apiService.get('/terrains/abonnements/').catch(() => emptyRes),
-        apiService.get('/terrains/souscriptions/').catch(() => emptyRes)
-      ]);
+    setLoading(true);
 
-      const normalizeList = (payload: unknown) => {
-        if (Array.isArray(payload)) return payload;
-        if (payload && typeof payload === 'object') {
-          const candidate = (payload as any).data || (payload as any).results || (payload as any).subscriptions || (payload as any).subscribers;
-          if (Array.isArray(candidate)) return candidate;
-        }
-        return [];
-      };
-
-      const subsList: Subscription[] = normalizeList(subscriptionsRes.data as unknown) as Subscription[];
-      const subscrList: Subscriber[] = normalizeList(subscribersRes.data as unknown) as Subscriber[];
-
-      if (subsList.length === 0 && subscrList.length === 0) {
-        setSubscriptions(SUBSCRIPTION_FALLBACK);
-        setSubscribers(SUBSCRIBERS_FALLBACK);
-        setIsFallback(true);
-        toast.error("API abonnements indisponible : données de démonstration");
-      } else {
-        setSubscriptions(subsList);
-        setSubscribers(subscrList);
-        setIsFallback(false);
+    const toList = (payload: unknown) => {
+      if (Array.isArray(payload)) return payload;
+      if (payload && typeof payload === 'object') {
+        const candidate = (payload as Record<string, unknown>).data
+          || (payload as Record<string, unknown>).results
+          || (payload as Record<string, unknown>).subscriptions
+          || (payload as Record<string, unknown>).subscribers;
+        if (Array.isArray(candidate)) return candidate;
       }
-      
-      // Calculer les statistiques
-      const totalPlans = subsList.length;
-      const activePlans = subsList.filter((s: Subscription) => s.statut === 'active').length;
-      const totalSubscribers = subscrList.length;
-      const activeSubscribers = subscrList.filter((s: Subscriber) => s.statut === 'active').length;
-      const totalRevenue = subscrList.reduce((sum: number, s: Subscriber) => sum + (s.montant_paye || 0), 0);
-      
-      setStats({ 
-        totalPlans, 
-        activePlans, 
-        totalSubscribers, 
-        activeSubscribers, 
-        totalRevenue,
-        monthlyRevenue: totalRevenue // Simplifié pour l'exemple
-      });
-    } catch (error) {
-      console.error('Erreur abonnements admin:', error);
+      return [];
+    };
+
+    let subsList: Subscription[] = [];
+    let subscrList: Subscriber[] = [];
+    let hadError = false;
+
+    const loadCollections = async () => {
+      try {
+        const response = await apiService.get<Subscription[]>('/admin/subscriptions/');
+        subsList = toList(response.data ?? []) as Subscription[];
+      } catch (error) {
+        hadError = true;
+        console.error('Erreur chargement abonnements admin:', error);
+      }
+
+      try {
+        const response = await apiService.get<Subscriber[]>('/admin/subscribers/');
+        subscrList = toList(response.data ?? []) as Subscriber[];
+      } catch (error) {
+        hadError = true;
+        console.error('Erreur chargement souscriptions admin:', error);
+      }
+    };
+
+    await loadCollections();
+
+    if (hadError && subsList.length === 0 && subscrList.length === 0) {
       setSubscriptions(SUBSCRIPTION_FALLBACK);
       setSubscribers(SUBSCRIBERS_FALLBACK);
       setStats({
@@ -469,9 +460,30 @@ const SubscriptionsPage: React.FC = () => {
       });
       setIsFallback(true);
       toast.error("Impossible de charger les abonnements réels, affichage d'un exemple");
-    } finally {
       setLoading(false);
+      return;
     }
+
+    setSubscriptions(subsList);
+    setSubscribers(subscrList);
+    setIsFallback(false);
+
+    const totalPlans = subsList.length;
+    const activePlans = subsList.filter((s) => s.statut === 'active').length;
+    const totalSubscribers = subscrList.length;
+    const activeSubscribers = subscrList.filter((s) => s.statut === 'active').length;
+    const totalRevenue = subscrList.reduce((sum, s) => sum + (s.montant_paye || 0), 0);
+
+    setStats({
+      totalPlans,
+      activePlans,
+      totalSubscribers,
+      activeSubscribers,
+      totalRevenue,
+      monthlyRevenue: totalRevenue,
+    });
+
+    setLoading(false);
   };
 
   const getStatusBadge = (status: string) => {
@@ -586,7 +598,7 @@ const SubscriptionsPage: React.FC = () => {
     <div>
       {isFallback && (
         <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Les données d'abonnements proviennent d'un jeu d'exemples car les endpoints admin/subscriptions ne sont pas encore disponibles.
+          Les données affichées sont temporaires (API abonnements momentanément indisponible).
         </div>
       )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
