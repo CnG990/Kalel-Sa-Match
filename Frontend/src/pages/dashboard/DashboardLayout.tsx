@@ -3,9 +3,6 @@ import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-do
 import { useAuth } from '../../context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import {
-  LayoutDashboard,
-  User,
-  Calendar,
   Map,
   Settings,
   LogOut,
@@ -72,9 +69,6 @@ const DashboardLayout: React.FC = () => {
   };
 
   const sidebarLinks = [
-    { to: "/dashboard", icon: <LayoutDashboard size={20} />, text: "Aperçu" },
-    { to: "/dashboard/profile", icon: <User size={20} />, text: "Mon Profil" },
-    { to: "/dashboard/reservations", icon: <Calendar size={20} />, text: "Réservations" },
     { to: "/dashboard/map", icon: <Map size={20} />, text: "Carte" },
     { to: "/dashboard/settings", icon: <Settings size={20} />, text: "Paramètres" },
   ];

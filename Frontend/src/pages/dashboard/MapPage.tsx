@@ -26,6 +26,9 @@ interface Terrain {
   distance?: number;
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'https://kalelsamatch.duckdns.org').replace(/\/$/, '');
+const MAP_ENDPOINT = `${API_BASE_URL}/api/terrains/all-for-map`;
+
 const MapPage: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
@@ -465,13 +468,13 @@ const MapPage: React.FC = () => {
         addDebugInfo('🌐 Tentative connexion API...');
         const startTime = Date.now();
         
-                 const response = await fetch('http://127.0.0.1:8000/api/terrains/all-for-map', {
-           method: 'GET',
-           headers: {
-             'Accept': 'application/json',
-             'Content-Type': 'application/json'
-           }
-         });
+        const response = await fetch(MAP_ENDPOINT, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
 
         const responseTime = Date.now() - startTime;
         addDebugInfo(`🌐 Réponse API reçue en ${responseTime}ms - Status: ${response.status}`);

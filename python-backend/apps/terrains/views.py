@@ -70,7 +70,12 @@ class TerrainViewSet(BaseViewSet):
         serializer = self.get_serializer(terrain)
         return Response({'data': serializer.data, 'meta': {'success': True}})
 
-    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[permissions.AllowAny],
+        url_path='all-for-map'
+    )
     def all_for_map(self, request):
         """Endpoint pour la carte - retourne tous les terrains actifs avec coordonnées"""
         from apps.reservations.models import Reservation
