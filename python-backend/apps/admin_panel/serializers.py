@@ -8,7 +8,7 @@ from apps.terrains.models import (
     Souscription,
 )
 from apps.reservations.models import Reservation
-from apps.payments.models import Paiement
+from apps.payments.models import Payment
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
@@ -31,7 +31,7 @@ class AdminReservationSerializer(serializers.ModelSerializer):
 
 class AdminPaiementSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Paiement
+        model = Payment
         fields = '__all__'
 
 
