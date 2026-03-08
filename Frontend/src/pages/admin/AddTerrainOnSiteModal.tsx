@@ -84,8 +84,20 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
     nom: '',
     description: '',
     adresse: '',
+    ville: '',
+    quartier: '',
     prix_heure: '',
     capacite: '',
+    telephone: '',
+    type_surface: 'gazon_synthetique',
+    nombre_joueurs: '5v5',
+    longueur: '',
+    largeur: '',
+    eclairage: false,
+    vestiaires: false,
+    parking: false,
+    douches: false,
+    buvette: false,
   });
 
   const hasGeometry = polygonCoords.length >= 3;
@@ -242,9 +254,14 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
     drawPolygon([]);
   };
 
-  const handleFormChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const handleFormChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const target = event.target;
+    const { name } = target;
+    if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+      setForm((prev) => ({ ...prev, [name]: target.checked }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: target.value }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -275,8 +292,20 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
         nom: form.nom,
         description: form.description,
         adresse: form.adresse,
+        ville: form.ville,
+        quartier: form.quartier,
         prix_heure: numericPrice,
         capacite: numericCapacity,
+        telephone: form.telephone,
+        type_surface: form.type_surface,
+        nombre_joueurs: form.nombre_joueurs,
+        longueur: form.longueur ? parseFloat(form.longueur) : undefined,
+        largeur: form.largeur ? parseFloat(form.largeur) : undefined,
+        eclairage: form.eclairage,
+        vestiaires: form.vestiaires,
+        parking: form.parking,
+        douches: form.douches,
+        buvette: form.buvette,
         latitude: point.lat,
         longitude: point.lng,
         geometry: polygon ? { type: 'Polygon', coordinates: [polygon] } : undefined,
@@ -359,68 +388,97 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
             <div>
               <label className="block text-sm font-medium text-gray-700">Nom du terrain *</label>
-              <input
-                name="nom"
-                value={form.nom}
-                onChange={handleFormChange}
-                className="w-full mt-1 rounded-lg border-gray-300 focus:ring-green-600 focus:border-green-600"
-                placeholder="Ex: Terrain Cité Keur Gorgui"
-              />
+              <input name="nom" value={form.nom} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" placeholder="Ex: Terrain Cité Keur Gorgui" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Ville</label>
+                <input name="ville" value={form.ville} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" placeholder="Dakar" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Quartier</label>
+                <input name="quartier" value={form.quartier} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" placeholder="Keur Gorgui" />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Adresse *</label>
-              <input
-                name="adresse"
-                value={form.adresse}
-                onChange={handleFormChange}
-                className="w-full mt-1 rounded-lg border-gray-300 focus:ring-green-600 focus:border-green-600"
-                placeholder="Commune, repère, ville"
-              />
+              <input name="adresse" value={form.adresse} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" placeholder="Commune, repère" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Téléphone contact</label>
+              <input name="telephone" value={form.telephone} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" placeholder="77 123 45 67" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleFormChange}
-                rows={3}
-                className="w-full mt-1 rounded-lg border-gray-300 focus:ring-green-600 focus:border-green-600"
-                placeholder="Équipements, type de pelouse, remarques..."
-              />
+              <textarea name="description" value={form.description} onChange={handleFormChange} rows={2} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" placeholder="Remarques, particularités..." />
+            </div>
+
+            <h4 className="font-semibold text-gray-800 border-b pb-1">Caractéristiques</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Type de surface</label>
+                <select name="type_surface" value={form.type_surface} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600">
+                  <option value="gazon_synthetique">Gazon synthétique</option>
+                  <option value="gazon_naturel">Gazon naturel</option>
+                  <option value="terre_battue">Terre battue</option>
+                  <option value="beton">Béton</option>
+                  <option value="sable">Sable</option>
+                  <option value="autre">Autre</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Format de jeu</label>
+                <select name="nombre_joueurs" value={form.nombre_joueurs} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600">
+                  <option value="5v5">5 contre 5</option>
+                  <option value="7v7">7 contre 7</option>
+                  <option value="9v9">9 contre 9</option>
+                  <option value="11v11">11 contre 11</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Longueur (m)</label>
+                <input name="longueur" value={form.longueur} onChange={handleFormChange} type="number" min="0" step="0.5" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Largeur (m)</label>
+                <input name="largeur" value={form.largeur} onChange={handleFormChange} type="number" min="0" step="0.5" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Prix / heure (FCFA) *</label>
-                <input
-                  name="prix_heure"
-                  value={form.prix_heure}
-                  onChange={handleFormChange}
-                  type="number"
-                  min="0"
-                  className="w-full mt-1 rounded-lg border-gray-300 focus:ring-green-600 focus:border-green-600"
-                />
+                <input name="prix_heure" value={form.prix_heure} onChange={handleFormChange} type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Capacité joueurs *</label>
-                <input
-                  name="capacite"
-                  value={form.capacite}
-                  onChange={handleFormChange}
-                  type="number"
-                  min="1"
-                  className="w-full mt-1 rounded-lg border-gray-300 focus:ring-green-600 focus:border-green-600"
-                />
+                <input name="capacite" value={form.capacite} onChange={handleFormChange} type="number" min="1" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600" />
               </div>
             </div>
+
+            <h4 className="font-semibold text-gray-800 border-b pb-1">Équipements</h4>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { name: 'eclairage', label: 'Éclairage nocturne', emoji: '💡' },
+                { name: 'vestiaires', label: 'Vestiaires', emoji: '🚪' },
+                { name: 'parking', label: 'Parking', emoji: '🅿️' },
+                { name: 'douches', label: 'Douches', emoji: '🚿' },
+                { name: 'buvette', label: 'Buvette', emoji: '🥤' },
+              ].map((item) => (
+                <label key={item.name} className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" name={item.name} checked={(form as any)[item.name]} onChange={handleFormChange} className="rounded text-green-600 focus:ring-green-500" />
+                  <span className="text-sm">{item.emoji} {item.label}</span>
+                </label>
+              ))}
+            </div>
+
             <div className="rounded-lg border border-dashed border-green-200 bg-green-50 p-4 text-sm text-green-800">
               <p className="font-medium">Astuce terrain</p>
-              <p>
-                Cliquez sur « Ma position » pour enregistrer vos coordonnées GPS. Ensuite, ajoutez au moins
-                trois points sur la carte pour dessiner le contour exact du terrain.
-              </p>
+              <p>Cliquez sur « Ma position » pour enregistrer vos coordonnées GPS. Ajoutez au moins 3 points sur la carte pour dessiner le contour.</p>
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <button

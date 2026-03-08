@@ -216,6 +216,20 @@ const TerrainsPage: React.FC = () => {
                         </h3>
                         <p className="text-gray-600 mt-1 text-sm">{terrain.adresse}</p>
                         
+                        <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                          <span className="inline-block px-2 py-0.5 rounded bg-green-50 text-green-700 text-xs font-medium">
+                            {((terrain as any).type_surface || 'gazon_synthetique').replace(/_/g, ' ')}
+                          </span>
+                          <span className="inline-block px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium">
+                            {(terrain as any).nombre_joueurs || '5v5'}
+                          </span>
+                          {(terrain as any).eclairage && <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700">💡 Éclairage</span>}
+                          {(terrain as any).vestiaires && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">🚪 Vestiaires</span>}
+                          {(terrain as any).parking && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">🅿️ Parking</span>}
+                          {(terrain as any).douches && <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700">🚿 Douches</span>}
+                          {(terrain as any).buvette && <span className="text-xs px-1.5 py-0.5 rounded bg-orange-50 text-orange-700">🥤 Buvette</span>}
+                        </div>
+
                         <div className={`${isMobile ? 'grid grid-cols-2 gap-2 mt-3' : 'flex items-center space-x-4 mt-2'}`}>
                           <div className="flex items-center space-x-2">
                             <Users className="w-4 h-4 text-gray-500 flex-shrink-0" />
@@ -227,7 +241,9 @@ const TerrainsPage: React.FC = () => {
                           <div className="flex items-center space-x-2">
                             <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
                             <span className={`text-gray-600 ${isMobile ? 'text-sm' : 'text-sm'}`}>
-                              {terrain.surface ?? 0} m²
+                              {(terrain as any).longueur && (terrain as any).largeur
+                                ? `${(terrain as any).longueur}×${(terrain as any).largeur}m`
+                                : `${terrain.surface ?? 0} m²`}
                             </span>
                           </div>
                           

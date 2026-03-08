@@ -62,6 +62,50 @@ class TerrainSynthetiquesDakar(TimeStampedSoftDeleteModel):
         help_text='Numéro Orange Money du gestionnaire'
     )
     
+    # Caractéristiques du terrain
+    TYPE_SURFACE_CHOICES = [
+        ('gazon_synthetique', 'Gazon synthétique'),
+        ('gazon_naturel', 'Gazon naturel'),
+        ('terre_battue', 'Terre battue'),
+        ('beton', 'Béton'),
+        ('sable', 'Sable'),
+        ('autre', 'Autre'),
+    ]
+    type_surface = models.CharField(
+        max_length=30,
+        choices=TYPE_SURFACE_CHOICES,
+        default='gazon_synthetique',
+        help_text='Type de surface du terrain'
+    )
+    longueur = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True,
+        help_text='Longueur du terrain en mètres'
+    )
+    largeur = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True,
+        help_text='Largeur du terrain en mètres'
+    )
+    NOMBRE_JOUEURS_CHOICES = [
+        ('5v5', '5 contre 5'),
+        ('7v7', '7 contre 7'),
+        ('9v9', '9 contre 9'),
+        ('11v11', '11 contre 11'),
+    ]
+    nombre_joueurs = models.CharField(
+        max_length=10,
+        choices=NOMBRE_JOUEURS_CHOICES,
+        default='5v5',
+        help_text='Format de jeu'
+    )
+    eclairage = models.BooleanField(default=False, help_text='Éclairage nocturne disponible')
+    vestiaires = models.BooleanField(default=False, help_text='Vestiaires disponibles')
+    parking = models.BooleanField(default=False, help_text='Parking disponible')
+    douches = models.BooleanField(default=False, help_text='Douches disponibles')
+    buvette = models.BooleanField(default=False, help_text='Buvette / espace détente')
+    telephone = models.CharField(max_length=20, blank=True, default='', help_text='Téléphone de contact')
+    ville = models.CharField(max_length=100, blank=True, default='', help_text='Ville')
+    quartier = models.CharField(max_length=100, blank=True, default='', help_text='Quartier')
+    
     # Horaires et équipements (optionnel)
     horaires_ouverture = models.JSONField(
         default=dict,

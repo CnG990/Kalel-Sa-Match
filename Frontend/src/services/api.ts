@@ -148,6 +148,23 @@ export interface TerrainDTO {
   capacite?: number | null;
   est_disponible?: boolean;
   est_actif?: boolean;
+  type_surface?: string;
+  longueur?: number | null;
+  largeur?: number | null;
+  nombre_joueurs?: string;
+  eclairage?: boolean;
+  vestiaires?: boolean;
+  parking?: boolean;
+  douches?: boolean;
+  buvette?: boolean;
+  telephone?: string;
+  ville?: string;
+  quartier?: string;
+  horaires_ouverture?: Record<string, unknown>;
+  type_acompte?: string;
+  pourcentage_acompte?: number;
+  montant_acompte_fixe?: number | null;
+  gestionnaire_id?: number | null;
 }
 
 export interface ReservationPayload {

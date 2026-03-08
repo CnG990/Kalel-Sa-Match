@@ -127,32 +127,90 @@ const TerrainDetailPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Colonne gauche: Informations détaillées */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-8 rounded-xl shadow-lg">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Informations détaillées</h2>
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-gray-700">Adresse</h3>
                 <p className="text-gray-600">{terrain.adresse}</p>
+                {((terrain as any).ville || (terrain as any).quartier) && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    {(terrain as any).quartier}{(terrain as any).quartier && (terrain as any).ville ? ', ' : ''}{(terrain as any).ville}
+                  </p>
+                )}
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-700">Description</h3>
-                <p className="text-gray-600">{terrain.description}</p>
-              </div>
-              {terrain.equipements && terrain.equipements.length > 0 && (
+              {terrain.description && (
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Équipements</h3>
-                  <ul className="grid grid-cols-1 gap-2">
-                    {terrain.equipements.map((item, index) => (
-                      <li key={index} className="text-gray-600 flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+                  <h3 className="font-semibold text-gray-700">Description</h3>
+                  <p className="text-gray-600">{terrain.description}</p>
+                </div>
+              )}
+              {(terrain as any).telephone && (
+                <div>
+                  <h3 className="font-semibold text-gray-700">Contact</h3>
+                  <a href={`tel:${(terrain as any).telephone}`} className="text-orange-600 hover:underline">{(terrain as any).telephone}</a>
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-xl shadow-lg">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Caractéristiques</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-green-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500 mb-1">Surface</p>
+                <p className="font-semibold text-green-800 text-sm">{((terrain as any).type_surface || 'gazon_synthetique').replace(/_/g, ' ')}</p>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500 mb-1">Format</p>
+                <p className="font-semibold text-blue-800 text-sm">{(terrain as any).nombre_joueurs || '5v5'}</p>
+              </div>
+              {(terrain as any).longueur && (terrain as any).largeur && (
+                <div className="bg-purple-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500 mb-1">Dimensions</p>
+                  <p className="font-semibold text-purple-800 text-sm">{(terrain as any).longueur} x {(terrain as any).largeur} m</p>
+                </div>
+              )}
+              {terrain.capacite && (
+                <div className="bg-orange-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500 mb-1">Capacité</p>
+                  <p className="font-semibold text-orange-800 text-sm">{terrain.capacite} joueurs</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-xl shadow-lg">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Équipements & Services</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { key: 'eclairage', label: 'Éclairage nocturne', icon: '💡' },
+                { key: 'vestiaires', label: 'Vestiaires', icon: '🚪' },
+                { key: 'parking', label: 'Parking', icon: '🅿️' },
+                { key: 'douches', label: 'Douches', icon: '🚿' },
+                { key: 'buvette', label: 'Buvette', icon: '🥤' },
+              ].map((item) => (
+                <div key={item.key} className={`flex items-center gap-2 p-2 rounded-lg text-sm ${(terrain as any)[item.key] ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-400'}`}>
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                  {(terrain as any)[item.key] ? <span className="ml-auto text-green-600 font-bold">✓</span> : <span className="ml-auto">✗</span>}
+                </div>
+              ))}
+            </div>
+            {terrain.equipements && terrain.equipements.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <h3 className="font-semibold text-gray-700 mb-2">Autres équipements</h3>
+                <ul className="grid grid-cols-1 gap-1">
+                  {terrain.equipements.map((item, index) => (
+                    <li key={index} className="text-gray-600 text-sm flex items-center">
+                      <span className="text-green-500 mr-2">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
 

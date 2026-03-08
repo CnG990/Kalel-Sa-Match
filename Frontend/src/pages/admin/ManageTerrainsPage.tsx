@@ -4,6 +4,7 @@ import { PlusCircle, RefreshCw, Power, MapPin, Users } from 'lucide-react';
 
 import apiService from '../../services/api';
 import AddTerrainOnSiteModal from './AddTerrainOnSiteModal';
+import AddTerrainRemoteModal from './AddTerrainRemoteModal';
 import TerrainManagerAssignment from '../../components/TerrainManagerAssignment';
 
 interface Terrain {
@@ -23,6 +24,20 @@ interface Terrain {
     prenom?: string;
     email?: string;
   };
+  type_surface?: string;
+  nombre_joueurs?: string;
+  longueur?: number | null;
+  largeur?: number | null;
+  eclairage?: boolean;
+  vestiaires?: boolean;
+  parking?: boolean;
+  douches?: boolean;
+  buvette?: boolean;
+  telephone?: string;
+  ville?: string;
+  quartier?: string;
+  prix_heure?: number | null;
+  capacite?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -31,6 +46,7 @@ const ManageTerrainsPageSimple: React.FC = () => {
   const [terrains, setTerrains] = useState<Terrain[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showRemoteModal, setShowRemoteModal] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedTerrain, setSelectedTerrain] = useState<Terrain | null>(null);
@@ -117,7 +133,14 @@ const ManageTerrainsPageSimple: React.FC = () => {
               onClick={() => setShowAddModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
             >
-              <PlusCircle className="w-4 h-4" /> Ajouter un terrain
+              <PlusCircle className="w-4 h-4" /> Sur les lieux
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowRemoteModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <MapPin className="w-4 h-4" /> À distance
             </button>
           </div>
         </div>
@@ -146,7 +169,10 @@ const ManageTerrainsPageSimple: React.FC = () => {
                       Adresse
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Coordonnées
+                      Surface / Format
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Équipements
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Statut
@@ -173,10 +199,24 @@ const ManageTerrainsPageSimple: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {terrain.latitude && terrain.longitude ? (
-                            `${terrain.latitude}, ${terrain.longitude}`
-                          ) : (
-                            <span className="text-gray-400">Non défini</span>
+                          <span className="inline-block px-2 py-0.5 rounded bg-green-50 text-green-700 text-xs font-medium">
+                            {(terrain.type_surface || 'gazon_synthetique').replace(/_/g, ' ')}
+                          </span>
+                          <span className="ml-2 text-xs text-gray-500">{terrain.nombre_joueurs || '5v5'}</span>
+                          {terrain.longueur && terrain.largeur && (
+                            <span className="block text-xs text-gray-400 mt-0.5">{terrain.longueur}×{terrain.largeur}m</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-wrap gap-1">
+                          {terrain.eclairage && <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700">💡</span>}
+                          {terrain.vestiaires && <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">🚪</span>}
+                          {terrain.parking && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">🅿️</span>}
+                          {terrain.douches && <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700">🚿</span>}
+                          {terrain.buvette && <span className="text-xs px-1.5 py-0.5 rounded bg-orange-50 text-orange-700">🥤</span>}
+                          {!terrain.eclairage && !terrain.vestiaires && !terrain.parking && !terrain.douches && !terrain.buvette && (
+                            <span className="text-xs text-gray-400">—</span>
                           )}
                         </div>
                       </td>
@@ -249,6 +289,16 @@ const ManageTerrainsPageSimple: React.FC = () => {
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
             setShowAddModal(false);
+            fetchTerrains();
+          }}
+        />
+      )}
+
+      {showRemoteModal && (
+        <AddTerrainRemoteModal
+          onClose={() => setShowRemoteModal(false)}
+          onSuccess={() => {
+            setShowRemoteModal(false);
             fetchTerrains();
           }}
         />

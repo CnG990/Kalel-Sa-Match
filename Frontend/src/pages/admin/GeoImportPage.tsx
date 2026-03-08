@@ -25,7 +25,7 @@ interface Terrain {
 
 const GeoImportPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [importType, setImportType] = useState<'kobocollect' | 'kml' | 'shapefile' | 'geojson'>('kobocollect');
+  const [importType, setImportType] = useState<'csv' | 'kml' | 'shapefile' | 'geojson'>('csv');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<ImportResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -34,9 +34,9 @@ const GeoImportPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supportedFormats = {
-    kobocollect: {
-      label: 'KoboCollect CSV',
-      description: 'Données collectées via KoboToolbox avec coordonnées GPS',
+    csv: {
+      label: 'CSV',
+      description: 'Fichier CSV avec colonnes nom, latitude, longitude, adresse',
       extensions: '.csv',
       icon: <FileText className="w-8 h-8 text-blue-500" />
     },
@@ -208,7 +208,7 @@ const GeoImportPage: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold text-black mb-4">Import de Données Géospatiales</h1>
         <p className="text-gray-600">
-          Importez des terrains depuis KoboCollect, fichiers KML, Shapefiles ou autres sources de données géographiques.
+          Importez des terrains depuis un fichier CSV, KML, Shapefile ou GeoJSON.
         </p>
       </div>
 
@@ -500,7 +500,7 @@ const GeoImportPage: React.FC = () => {
         <h2 className="text-xl font-semibold text-blue-800 mb-3">Instructions d'import</h2>
         <div className="space-y-3 text-blue-700">
           <div>
-            <h3 className="font-semibold">KoboCollect CSV:</h3>
+            <h3 className="font-semibold">CSV:</h3>
             <p className="text-sm">Le fichier doit contenir les colonnes: nom, latitude, longitude, adresse, description (optionnel)</p>
           </div>
           <div>

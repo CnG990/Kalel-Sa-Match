@@ -16,7 +16,13 @@ class TerrainSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'nom', 'description', 'adresse', 'latitude', 'longitude',
             'image_principale', 'images_supplementaires', 'est_actif',
-            'prix_heure', 'capacite', 'gestionnaire_id', 'created_at', 'updated_at'
+            'prix_heure', 'capacite', 'gestionnaire_id',
+            'type_surface', 'longueur', 'largeur', 'nombre_joueurs',
+            'eclairage', 'vestiaires', 'parking', 'douches', 'buvette',
+            'telephone', 'ville', 'quartier',
+            'horaires_ouverture', 'equipements',
+            'type_acompte', 'pourcentage_acompte', 'montant_acompte_fixe',
+            'created_at', 'updated_at',
         ]
 
 
