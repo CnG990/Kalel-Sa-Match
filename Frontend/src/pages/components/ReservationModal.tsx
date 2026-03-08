@@ -6,6 +6,7 @@ import { fr } from 'date-fns/locale'; // Locale française
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api';
+import toast from 'react-hot-toast';
 
 import type { TerrainUI } from '../../types/terrain.ts';
 
@@ -44,9 +45,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
         setLoadingSlots(true);
         setError(null);
         try {
-          // Note: La durée est en dur (1h), à rendre dynamique plus tard
-          const { data } = await apiService.checkAvailability(terrain.id, format(selectedDate, 'yyyy-MM-dd'), 1);
-          setAvailableSlots(Array.isArray(data) ? data : []);
+          const availability = await apiService.checkAvailability(terrain.id, format(selectedDate, 'yyyy-MM-dd'));
+          setAvailableSlots(Array.isArray(availability.data) ? availability.data : []);
 
         } catch (error: any) {
           console.error("Erreur lors de la vérification des disponibilités:", error);
@@ -103,6 +103,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
       const { data } = await apiService.createReservation(reservationData);
 
       if (data) {
+        toast.success('Réservation enregistrée. Le gestionnaire doit valider avant paiement.');
         navigate('/payment', { 
           state: { 
             reservationDetails: {
@@ -110,7 +111,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
               terrainName: terrain.nom,
               date: format(selectedDate, 'dd/MM/yyyy', { locale: fr }),
               time: selectedSlot,
-              price: data.montant_total,
+              price: data.montant_acompte ?? data.montant_total,
+              totalAmount: data.montant_total,
+              montant_acompte: data.montant_acompte,
+              payment_type: 'acompte',
+              status: data.statut,
             }
           } 
         });
@@ -136,9 +141,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
             setLoadingSlots(true);
             setError(null);
             try {
-              const { data } = await apiService.checkAvailability(terrain.id, format(selectedDate, 'yyyy-MM-dd'), 1);
-              setAvailableSlots(Array.isArray(data) ? data : []);
-
+              const availability = await apiService.checkAvailability(terrain.id, format(selectedDate, 'yyyy-MM-dd'));
+              setAvailableSlots(Array.isArray(availability.data) ? availability.data : []);
             } catch (error: any) {
               setAvailableSlots([]);
             } finally {

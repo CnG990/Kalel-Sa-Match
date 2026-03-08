@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from apps.core.utils.api_response import api_success, api_error, api_paginated
+from apps.reservations.models import Reservation
 from .models import Payment, WavePayment, OrangeMoneyPayment
 from .serializers import PaymentSerializer, WavePaymentSerializer, OrangeMoneyPaymentSerializer, InitPaymentSerializer
 
@@ -40,10 +41,45 @@ def init_payment(request):
         )
     
     payment_id = serializer.validated_data.get('payment_id')
+    reservation_id = serializer.validated_data.get('reservation_id')
     methode = serializer.validated_data['methode']
     customer_phone = serializer.validated_data['customer_phone']
     customer_name = serializer.validated_data['customer_name']
-    
+    reservation = None
+
+    # Récupérer la réservation liée si fournie (ou via payment_id)
+    if reservation_id:
+        try:
+            reservation = Reservation.objects.select_related('terrain', 'terrain__gestionnaire', 'user').get(
+                id=reservation_id,
+                deleted_at__isnull=True
+            )
+        except Reservation.DoesNotExist:
+            return api_error("Réservation non trouvée", status.HTTP_404_NOT_FOUND)
+
+        if reservation.user != request.user and request.user.role not in ['admin', 'gestionnaire']:
+            return api_error("Vous ne pouvez pas initier ce paiement", status.HTTP_403_FORBIDDEN)
+
+    elif payment_id:
+        reservation = (
+            Reservation.objects.filter(paiement_acompte_id=payment_id, deleted_at__isnull=True).first()
+            or Reservation.objects.filter(paiement_solde_id=payment_id, deleted_at__isnull=True).first()
+            or Reservation.objects.filter(paiement_id=payment_id, deleted_at__isnull=True).first()
+        )
+        if reservation and reservation.user != request.user and request.user.role not in ['admin', 'gestionnaire']:
+            return api_error("Vous ne pouvez pas initier ce paiement", status.HTTP_403_FORBIDDEN)
+
+    if reservation:
+        if reservation.statut == 'en_attente_validation':
+            return api_error(
+                "Cette réservation est encore en attente de validation du gestionnaire",
+                status.HTTP_400_BAD_REQUEST
+            )
+        if reservation.statut == 'refusee':
+            return api_error("Cette réservation a été refusée", status.HTTP_400_BAD_REQUEST)
+        if reservation.statut == 'annulee':
+            return api_error("Cette réservation est annulée", status.HTTP_400_BAD_REQUEST)
+
     # Récupérer le paiement existant ou en créer un nouveau
     if payment_id:
         try:

@@ -1,15 +1,22 @@
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.http import HttpResponse
+from django.utils import timezone
 
 from apps.terrains.models import TerrainSynthetiquesDakar
 from apps.terrains.serializers import TerrainSerializer
 from apps.payments.models import Payment
 from apps.payments.serializers import PaymentSerializer
 from apps.accounts.models import User
+from apps.reservations.models import Reservation
+from apps.notifications.firebase_service import (
+    notify_reservation_validation_client,
+    notify_reservation_refused_client,
+)
 from .exports import generate_reservations_excel_response, generate_statistiques_pdf_response, ManagerExports
+from .serializers import ManagerReservationSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -277,6 +284,68 @@ class ManagerStatsViewSet(viewsets.GenericViewSet):
 
 class ManagerValidationViewSet(viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ManagerReservationSerializer
+
+    def get_queryset(self):
+        base_qs = Reservation.objects.select_related('terrain', 'terrain__gestionnaire', 'user').filter(deleted_at__isnull=True)
+        user = self.request.user
+        if user.role == 'gestionnaire':
+            return base_qs.filter(terrain__gestionnaire=user)
+        if user.role in ['admin', 'superuser']:
+            return base_qs
+        return base_qs.none()
+
+    def _get_reservation(self, pk):
+        try:
+            return self.get_queryset().get(pk=pk)
+        except Reservation.DoesNotExist:
+            return None
+
+    @action(detail=False, methods=['get'])
+    def pending(self, request):
+        queryset = self.get_queryset().filter(statut='en_attente_validation').order_by('date_debut')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'data': serializer.data, 'meta': {'success': True}})
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        reservation = self._get_reservation(pk)
+        if reservation is None:
+            return Response({'data': None, 'meta': {'success': False, 'message': 'Réservation introuvable'}}, status=status.HTTP_404_NOT_FOUND)
+
+        if reservation.statut != 'en_attente_validation':
+            return Response({'data': None, 'meta': {'success': False, 'message': 'Cette réservation a déjà été traitée'}}, status=status.HTTP_400_BAD_REQUEST)
+
+        notes = request.data.get('notes', '').strip()
+        reservation.statut = 'en_attente'
+        reservation.valide_par = request.user
+        reservation.date_validation = timezone.now()
+        reservation.validation_notes = notes
+        reservation.save()
+
+        notify_reservation_validation_client(reservation.user, reservation)
+        serializer = self.get_serializer(reservation)
+        return Response({'data': serializer.data, 'meta': {'success': True, 'message': 'Réservation approuvée - acompte autorisé'}})
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        reservation = self._get_reservation(pk)
+        if reservation is None:
+            return Response({'data': None, 'meta': {'success': False, 'message': 'Réservation introuvable'}}, status=status.HTTP_404_NOT_FOUND)
+
+        if reservation.statut not in ['en_attente_validation', 'en_attente']:
+            return Response({'data': None, 'meta': {'success': False, 'message': 'Cette réservation ne peut pas être refusée'}}, status=status.HTTP_400_BAD_REQUEST)
+
+        motif = request.data.get('motif', '').strip() or 'Réservation refusée par le gestionnaire'
+        reservation.statut = 'refusee'
+        reservation.valide_par = request.user
+        reservation.date_validation = timezone.now()
+        reservation.validation_notes = motif
+        reservation.save()
+
+        notify_reservation_refused_client(reservation.user, reservation, motif=motif)
+        serializer = self.get_serializer(reservation)
+        return Response({'data': serializer.data, 'meta': {'success': True, 'message': 'Réservation refusée'}})
 
     @action(detail=False, methods=['post'])
     def validate_ticket(self, request):

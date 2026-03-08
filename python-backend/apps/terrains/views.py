@@ -53,13 +53,29 @@ class BaseViewSet(viewsets.ModelViewSet):
 
 
 class TerrainViewSet(BaseViewSet):
-    queryset = TerrainSynthetiquesDakar.objects.filter(est_actif=True)
+    queryset = TerrainSynthetiquesDakar.objects.all()
     serializer_class = TerrainSerializer
+
+    def get_queryset(self):
+        base_qs = TerrainSynthetiquesDakar.objects.all()
+        request = getattr(self, 'request', None)
+        include_param = None
+        user = None
+
+        if request is not None:
+            include_param = request.query_params.get('include_inactive')
+            user = request.user if hasattr(request, 'user') else None
+
+        include_inactive = str(include_param).lower() in ['1', 'true', 'yes']
+        if include_inactive and user and user.is_authenticated and getattr(user, 'role', None) in ['admin', 'gestionnaire']:
+            return base_qs
+
+        return base_qs.filter(est_actif=True)
 
     @action(detail=False, methods=['get'])
     def all(self, request):
         """Endpoint pour obtenir tous les terrains sans pagination"""
-        terrains = self.queryset
+        terrains = self.get_queryset()
         serializer = self.get_serializer(terrains, many=True)
         return Response({'data': serializer.data, 'meta': {'success': True}})
 
@@ -82,7 +98,7 @@ class TerrainViewSet(BaseViewSet):
         from django.utils import timezone
         from django.db.models import Q
         
-        terrains = self.queryset.select_related('gestionnaire')
+        terrains = self.get_queryset().select_related('gestionnaire')
         terrain_data = []
         
         now = timezone.now()
@@ -145,7 +161,7 @@ class TerrainViewSet(BaseViewSet):
             c = 2 * asin(sqrt(a))
             return R * c
         
-        terrains = self.queryset.filter(
+        terrains = self.get_queryset().filter(
             latitude__isnull=False,
             longitude__isnull=False
         )
@@ -183,7 +199,7 @@ class TerrainViewSet(BaseViewSet):
                 'meta': {'success': False, 'message': 'Paramètre q requis'}
             }, status=400)
         
-        terrains = self.queryset.filter(
+        terrains = self.get_queryset().filter(
             Q(adresse__icontains=query) |
             Q(nom__icontains=query)
         )

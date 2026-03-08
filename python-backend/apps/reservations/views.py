@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from apps.core.utils.api_response import api_success, api_error, api_paginated
+from apps.notifications.firebase_service import notify_new_reservation_manager
 from apps.terrains.models import TerrainSynthetiquesDakar
 from .models import Reservation, Disponibilite, CreneauReservation
 from .serializers import (
@@ -91,7 +92,7 @@ def create_reservation(request):
         montant_restant=montant_restant,  # Toujours défini pour nouvelles réservations
         telephone=telephone,
         notes=notes,
-        statut='en_attente'  # En attente de paiement acompte
+        statut='en_attente_validation'
     )
     
     # Générer le QR code token et code ticket
@@ -100,6 +101,8 @@ def create_reservation(request):
     import string
     reservation.code_ticket = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
     reservation.save()
+    if terrain.gestionnaire:
+        notify_new_reservation_manager(terrain.gestionnaire, reservation)
     
     # Créer le paiement pour l'ACOMPTE uniquement
     from apps.payments.models import Payment
@@ -128,7 +131,7 @@ def create_reservation(request):
             'montant_restant': float(montant_restant),
             'pourcentage_acompte': float(terrain.pourcentage_acompte or 30)
         },
-        message="Réservation créée - Veuillez payer l'acompte",
+        message="Réservation créée - En attente de validation du gestionnaire",
         http_status=status.HTTP_201_CREATED
     )
 

@@ -197,6 +197,41 @@ def notify_new_reservation_manager(gestionnaire, reservation):
     )
 
 
+def notify_reservation_validation_client(user, reservation):
+    """Notifier le client que le gestionnaire a validé sa réservation"""
+    if not hasattr(user, 'fcm_token') or not user.fcm_token:
+        return
+
+    FirebaseNotificationService.send_notification(
+        token=user.fcm_token,
+        title="🔓 Réservation validée",
+        body=f"{reservation.terrain.nom} est approuvé. Vous pouvez payer l'acompte.",
+        data={
+            'type': 'reservation_validated',
+            'reservation_id': str(reservation.id),
+            'terrain_id': str(reservation.terrain.id),
+        }
+    )
+
+
+def notify_reservation_refused_client(user, reservation, motif=""):
+    """Notifier le client que sa réservation a été refusée"""
+    if not hasattr(user, 'fcm_token') or not user.fcm_token:
+        return
+
+    reason = motif or "Votre demande a été refusée par le gestionnaire."
+    FirebaseNotificationService.send_notification(
+        token=user.fcm_token,
+        title="❌ Réservation refusée",
+        body=reason,
+        data={
+            'type': 'reservation_refused',
+            'reservation_id': str(reservation.id),
+            'terrain_id': str(reservation.terrain.id),
+        }
+    )
+
+
 def notify_loyalty_points_earned(user, points, raison):
     """Notifier client qu'il a gagné des points"""
     if not hasattr(user, 'fcm_token') or not user.fcm_token:

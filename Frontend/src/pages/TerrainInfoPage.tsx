@@ -84,47 +84,41 @@ const TerrainInfoPage: React.FC = () => {
   const loadCreneaux = async () => {
     if (!terrain || !id) return;
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/terrains/check-availability?terrain_id=${id}&date=${selectedDate}&duree_heures=1`);
-      const data = await response.json();
-      if (data.success) {
-        // Obtenir l'heure actuelle
-        const now = new Date();
-        const currentHour = now.getHours();
-        const currentDate = now.toISOString().split('T')[0];
-        
-        // Toutes les heures possibles - 24h/24
-        const toutesHeures = [
-          '00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 
-          '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 
-          '20', '21', '22', '23'
-        ];
-        
-        // Filtrer les heures selon la date et l'heure actuelle
-        let heuresDisponibles = toutesHeures;
-        
-        // Si c'est aujourd'hui, filtrer les heures passées
-        if (selectedDate === currentDate) {
-          heuresDisponibles = toutesHeures.filter(heure => {
-            const heureInt = parseInt(heure);
-            // Pour les heures 00-05 (minuit à 5h du matin), considérer comme le lendemain
-            if (heureInt <= 5) {
-              return true; // Toujours disponible (c'est pour le lendemain)
-            }
-            // Pour les heures normales (6h à 23h)
-            return heureInt > currentHour;
-          });
-        }
-        
-        setCreneaux(
-          heuresDisponibles.map((h) => ({
-            heure: `${h}:00`,
-            disponible: Boolean(data.data?.creneaux_disponibles?.includes(h)),
-            prix: terrain.prix_heure ?? 0,
-          })),
-        );
-      } else toast.error(data.message || 'Erreur chargement créneaux');
-    } catch {
+      const availability = await apiService.checkAvailability(Number(id), selectedDate, 1);
+      const availableHours = Array.isArray(availability.data) ? availability.data : [];
+
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentDate = now.toISOString().split('T')[0];
+      const toutesHeures = [
+        '00', '01', '02', '03', '04', '05', '06', '07', '08', '09',
+        '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
+        '20', '21', '22', '23'
+      ];
+
+      let heuresDisponibles = toutesHeures;
+      if (selectedDate === currentDate) {
+        heuresDisponibles = toutesHeures.filter((heure) => {
+          const heureInt = parseInt(heure, 10);
+          // Laisser les créneaux nocturnes accessibles si on planifie pour plus tard dans la nuit
+          if (heureInt <= 5 && currentHour >= 18) {
+            return true;
+          }
+          return heureInt > currentHour;
+        });
+      }
+
+      setCreneaux(
+        heuresDisponibles.map((h) => ({
+          heure: `${h}:00`,
+          disponible: availableHours.includes(h),
+          prix: terrain.prix_heure ?? 0,
+        })),
+      );
+    } catch (error) {
+      console.error('Erreur chargement créneaux:', error);
       toast.error('Impossible de charger les créneaux');
+      setCreneaux([]);
     }
   };
 

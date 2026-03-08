@@ -598,8 +598,17 @@ class ApiService {
     });
   }
 
-  getAllTerrains() {
-    return this.requestNormalized<TerrainDTO[]>(`${ENDPOINTS.terrains}all/`, {
+  getAllTerrains(params?: QueryParams) {
+    const url = `${ENDPOINTS.terrains}all/${buildQueryString(params)}`;
+    return this.requestNormalized<TerrainDTO[]>(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  getReservationDetail(reservationId: number) {
+    const url = `${ENDPOINTS.reservations}${reservationId}/`;
+    return this.requestNormalized<ReservationDTO>(url, {
       method: 'GET',
       headers: this.headers(),
     });
@@ -643,12 +652,38 @@ class ApiService {
     });
   }
 
-  checkAvailability(terrainId: number | string, date: string, duree_heures = 1) {
-    const url = `${ENDPOINTS.availability}${buildQueryString({ terrain_id: terrainId, date, duree_heures })}`;
-    return this.requestNormalized<string[]>(url, {
+  async checkAvailability(terrainId: number | string, date: string, duree_heures = 1): Promise<NormalizedResponse<string[]>> {
+    const startOfDay = `${date}T00:00:00`;
+    const endOfDay = `${date}T23:59:59`;
+    const url = `${ENDPOINTS.reservations}${terrainId}/disponibilites/${buildQueryString({ date_debut: startOfDay, date_fin: endOfDay })}`;
+
+    const response = await this.requestNormalized<{
+      terrain?: string;
+      creneaux_occupes?: { date_debut: string; date_fin: string; duree_heures?: number }[];
+      prix_heure?: number;
+    }>(url, {
       method: 'GET',
       headers: this.headers(),
     });
+
+    const occupiedRanges = (response.data?.creneaux_occupes ?? []).map((slot) => ({
+      start: new Date(slot.date_debut),
+      end: new Date(slot.date_fin)
+    }));
+
+    const padHour = (hour: number) => String(hour).padStart(2, '0');
+
+    const availableSlots = Array.from({ length: 24 }, (_, index) => padHour(index)).filter((hour) => {
+      const slotStart = new Date(`${date}T${hour}:00:00`);
+      const slotEnd = new Date(slotStart.getTime() + duree_heures * 60 * 60 * 1000);
+      const overlaps = occupiedRanges.some(({ start, end }) => slotStart < end && slotEnd > start);
+      return !overlaps;
+    });
+
+    return {
+      data: availableSlots,
+      meta: response.meta,
+    };
   }
 
   getMyReservations(params?: QueryParams) {

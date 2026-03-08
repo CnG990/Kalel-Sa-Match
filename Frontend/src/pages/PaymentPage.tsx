@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { paymentService } from '../services/paymentService';
 import type { PaymentDetails } from '../services/paymentService';
 import { toast } from 'react-hot-toast';
+import apiService from '../services/api';
 
 const PaymentPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [processing, setProcessing] = useState(false);
   const { reservationDetails, subscriptionDetails } = location.state || {};
+  const [reservationStatus, setReservationStatus] = useState<string | undefined>(reservationDetails?.status);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   // Déterminer le type de paiement (réservation ou abonnement)
   const paymentDetails: PaymentDetails = reservationDetails || subscriptionDetails;
@@ -28,12 +31,49 @@ const PaymentPage: React.FC = () => {
     return null;
   }
 
+  const reservationId = paymentDetails.reservationId;
+  const paymentType = paymentDetails.payment_type ?? 'total';
+  const isRefused = reservationStatus === 'refusee';
+
+  const canProceed =
+    !reservationId ||
+    isRefused === false &&
+      ((paymentType === 'acompte' && reservationStatus === 'en_attente') ||
+        (paymentType !== 'acompte'));
+
+  const fetchReservationStatus = async () => {
+    if (!reservationId) return;
+    setStatusLoading(true);
+    try {
+      const { data } = await apiService.getReservationDetail(reservationId);
+      if (data) {
+        setReservationStatus(data.statut);
+      }
+    } catch (error) {
+      toast.error('Impossible de vérifier le statut de la réservation');
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (reservationId) {
+      fetchReservationStatus();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservationId]);
+
   const handlePayment = async (method: 'orange_money' | 'wave') => {
     if (processing) return;
-    
+
+    if (!canProceed) {
+      toast.error(isRefused ? 'Réservation refusée par le gestionnaire' : 'Validation gestionnaire en attente');
+      return;
+    }
+
     setProcessing(true);
     const amount = paymentDetails.price || paymentDetails.totalAmount;
-    
+
     try {
       let result;
       
@@ -142,6 +182,35 @@ const PaymentPage: React.FC = () => {
             </p>
           )}
         </div>
+
+        {reservationId && (
+          <div className={`mb-6 p-4 rounded-lg flex items-center justify-between text-sm font-medium ${
+            reservationStatus === 'en_attente_validation'
+              ? 'bg-yellow-100 text-yellow-900'
+              : reservationStatus === 'refusee'
+              ? 'bg-red-100 text-red-900'
+              : reservationStatus === 'annulee'
+              ? 'bg-gray-100 text-gray-800'
+              : reservationStatus === 'en_attente'
+              ? 'bg-blue-100 text-blue-900'
+              : 'bg-green-100 text-green-900'
+          }`}>
+            <div>
+              Statut de la réservation : <strong>{reservationStatus?.replace(/_/g, ' ') ?? 'inconnu'}</strong>
+              {reservationStatus === 'en_attente_validation' && ' — Le gestionnaire doit valider avant paiement.'}
+              {reservationStatus === 'refusee' && ' — Contactez le support pour plus d’informations.'}
+              {reservationStatus === 'annulee' && ' — Réservation annulée, paiement impossible.'}
+            </div>
+            <button
+              type="button"
+              onClick={fetchReservationStatus}
+              disabled={statusLoading}
+              className="ml-4 px-3 py-1 rounded border text-xs font-semibold disabled:opacity-50"
+            >
+              {statusLoading ? 'Actualisation…' : 'Actualiser'}
+            </button>
+          </div>
+        )}
 
         <div>
           <h2 className="text-xl font-bold mb-4">Choisissez votre méthode de paiement</h2>

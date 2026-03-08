@@ -38,7 +38,7 @@ const ManageTerrainsPageSimple: React.FC = () => {
   const fetchTerrains = async () => {
     setLoading(true);
     try {
-      const { data } = await apiService.getAllTerrains();
+      const { data } = await apiService.getAllTerrains({ include_inactive: true });
       const terrainsData = Array.isArray(data) ? data : [];
       
       const validTerrains = terrainsData.map((terrain) => {

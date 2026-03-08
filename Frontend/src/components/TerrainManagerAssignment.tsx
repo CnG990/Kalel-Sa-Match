@@ -76,8 +76,8 @@ const TerrainManagerAssignment: React.FC<Props> = ({ isOpen, onClose, onSuccess,
 
   const loadTerrains = async () => {
     try {
-      const response = await apiService.getAllTerrains();
-      const terrainsData = Array.isArray(response) ? response : [];
+      const { data } = await apiService.getAllTerrains({ include_inactive: true });
+      const terrainsData = Array.isArray(data) ? data : [];
       setTerrains(terrainsData);
     } catch (error) {
       console.error('Erreur lors du chargement des terrains:', error);

@@ -10,6 +10,8 @@ from apps.accounts.models import User
 class Reservation(TimeStampedSoftDeleteModel):
     """Modèle de réservation de terrain"""
     STATUT_CHOICES = [
+        ('en_attente_validation', 'En attente validation gestionnaire'),
+        ('refusee', 'Refusée par le gestionnaire'),
         ('en_attente', 'En attente de paiement'),
         ('acompte_paye', 'Acompte payé - Solde à payer'),
         ('confirmee', 'Confirmée (entièrement payée)'),
@@ -63,9 +65,9 @@ class Reservation(TimeStampedSoftDeleteModel):
     )
     
     statut = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=STATUT_CHOICES,
-        default='en_attente'
+        default='en_attente_validation'
     )
     
     # Informations de contact
@@ -86,6 +88,7 @@ class Reservation(TimeStampedSoftDeleteModel):
         related_name='reservations_valides'
     )
     date_validation = models.DateTimeField(null=True, blank=True)
+    validation_notes = models.TextField(blank=True)
     
     # Annulation
     date_annulation = models.DateTimeField(null=True, blank=True)
