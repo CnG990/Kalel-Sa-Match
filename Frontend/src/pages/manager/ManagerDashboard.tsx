@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import apiService, { type ManagerDashboardStatsDTO } from '../../services/api';
 import { 
   Calendar, 
@@ -17,7 +16,6 @@ import toast from 'react-hot-toast';
 import AddTerrainModal from '../../components/AddTerrainModal';
 
 const ManagerDashboard: React.FC = () => {
-  const { } = useAuth();
   const [stats, setStats] = useState<ManagerDashboardStatsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -131,12 +129,32 @@ const ManagerDashboard: React.FC = () => {
     );
   }
 
+  const pendingCount = (stats as any)?.reservations_en_attente_validation || 0;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Tableau de bord</h1>
         <p className="text-gray-600">Vue d'ensemble de votre activité</p>
       </div>
+
+      {/* Alerte réservations en attente */}
+      {pendingCount > 0 && (
+        <a href="/manager/reservations" className="block bg-orange-50 border border-orange-200 rounded-lg p-4 hover:bg-orange-100 transition-colors">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="p-2 bg-orange-100 rounded-full mr-3">
+                <Clock className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-orange-800">{pendingCount} réservation{pendingCount > 1 ? 's' : ''} en attente de validation</p>
+                <p className="text-sm text-orange-600">Cliquez pour approuver ou refuser</p>
+              </div>
+            </div>
+            <span className="bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded-full">{pendingCount}</span>
+          </div>
+        </a>
+      )}
 
       {/* Statistiques principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

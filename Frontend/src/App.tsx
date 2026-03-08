@@ -30,6 +30,9 @@ import ReservationsPage from './pages/dashboard/ReservationsPage';
 import MapPage from './pages/dashboard/MapPage';
 import DashboardOverview from './pages/dashboard/DashboardOverview';
 import SettingsPage from './pages/dashboard/SettingsPage';
+import MesTicketsPage from './pages/MesTicketsPage';
+import MesLitigesPage from './pages/MesLitigesPage';
+import LitigeDetailsPage from './pages/LitigeDetailsPage';
 
 // Manager Pages (Gestionnaire)
 import ManagerLayout from './pages/manager/ManagerLayout';
@@ -136,6 +139,9 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="reservations" element={<ReservationsPage />} />
             <Route path="map" element={<MapPage />} />
+            <Route path="tickets" element={<MesTicketsPage />} />
+            <Route path="litiges" element={<MesLitigesPage />} />
+            <Route path="litiges/:id" element={<LitigeDetailsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
 

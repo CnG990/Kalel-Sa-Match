@@ -200,12 +200,20 @@ class ManagerStatsViewSet(viewsets.GenericViewSet):
             'montant': float(r.montant_total)
         } for r in prochaines]
         
+        # Réservations en attente de validation
+        reservations_en_attente = Reservation.objects.filter(
+            terrain__in=terrains,
+            statut='en_attente_validation',
+            deleted_at__isnull=True
+        ).count()
+        
         stats = {
             'total_terrains': terrains_count,
             'terrains_actifs': terrains_actifs,
             'reservations_mois': reservations_mois,
             'revenus_mois': float(revenus_mensuel),
             'clients_count': clients_count,
+            'reservations_en_attente_validation': reservations_en_attente,
             'prochaines_reservations': prochaines_data,
         }
         return Response({'data': stats, 'meta': {'success': True}})

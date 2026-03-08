@@ -44,9 +44,10 @@ const DashboardOverview: React.FC = () => {
     const fetchData = async () => {
       try {
         const { data } = await apiService.getMyReservations();
-        const normalized = Array.isArray(data) ? data.map(mapReservationDtoToReservation) : [];
+        const rawList = Array.isArray(data) ? data : (data as any)?.results ?? [];
+        const normalized = Array.isArray(rawList) ? rawList.map(mapReservationDtoToReservation) : [];
         const upcoming = normalized
-          .filter((r) => new Date(r.date_debut) >= new Date() && r.statut !== 'annulée')
+          .filter((r) => new Date(r.date_debut) >= new Date() && r.statut !== 'annulee' && r.statut !== 'refusee')
           .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
 
         setNextReservation(upcoming[0] || null);

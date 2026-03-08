@@ -9,6 +9,11 @@ import {
   Home,
   Menu,
   X,
+  LayoutDashboard,
+  Calendar,
+  User,
+  Ticket,
+  AlertTriangle,
 } from 'lucide-react';
 
 const SidebarLink: React.FC<{ 
@@ -16,10 +21,12 @@ const SidebarLink: React.FC<{
   icon: React.ReactNode; 
   text: string; 
   isMobile?: boolean; 
+  end?: boolean;
   onClick?: () => void;
-}> = ({ to, icon, text, isMobile, onClick }) => (
+}> = ({ to, icon, text, isMobile, end, onClick }) => (
   <NavLink
     to={to}
+    end={end}
     onClick={onClick}
     className={({ isActive }) =>
       `flex items-center text-gray-200 dark:text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200 ${
@@ -69,7 +76,12 @@ const DashboardLayout: React.FC = () => {
   };
 
   const sidebarLinks = [
+    { to: "/dashboard", icon: <LayoutDashboard size={20} />, text: "Tableau de bord", end: true },
+    { to: "/dashboard/reservations", icon: <Calendar size={20} />, text: "Mes Réservations" },
+    { to: "/dashboard/tickets", icon: <Ticket size={20} />, text: "Mes Tickets" },
     { to: "/dashboard/map", icon: <Map size={20} />, text: "Carte" },
+    { to: "/dashboard/litiges", icon: <AlertTriangle size={20} />, text: "Mes Litiges" },
+    { to: "/dashboard/profile", icon: <User size={20} />, text: "Mon Profil" },
     { to: "/dashboard/settings", icon: <Settings size={20} />, text: "Paramètres" },
   ];
 
@@ -118,6 +130,7 @@ const DashboardLayout: React.FC = () => {
               to={link.to} 
               icon={link.icon} 
               text={link.text}
+              end={(link as any).end}
               isMobile={isMobile}
               onClick={isMobile ? () => setSidebarOpen(false) : undefined}
             />

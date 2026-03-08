@@ -104,8 +104,9 @@ const ReservationsPage: React.FC = () => {
       try {
         setLoading(true);
         const { data } = await apiService.getMyReservations();
-        if (data && Array.isArray(data)) {
-          setReservations(data as any);
+        if (data) {
+          const list = Array.isArray(data) ? data : (data as any)?.results;
+          setReservations(Array.isArray(list) ? list : []);
         } else {
           setError('Impossible de charger vos réservations.');
         }
