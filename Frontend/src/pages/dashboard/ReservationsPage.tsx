@@ -7,7 +7,7 @@ interface Reservation {
   id: number;
   date_debut: string;
   date_fin: string;
-  statut: 'en_attente' | 'confirmee' | 'acompte_paye' | 'annulee' | 'terminee' | 'en_cours';
+  statut: 'en_attente_validation' | 'refusee' | 'en_attente' | 'confirmee' | 'acompte_paye' | 'annulee' | 'terminee' | 'en_cours';
   montant_total: number;
   montant_acompte?: number;
   montant_restant?: number;
@@ -32,6 +32,8 @@ const ReservationCard = ({ reservation, onCancel }: ReservationCardProps) => {
 
   const getStatusBadge = (status: string) => {
     const styles: { [key: string]: string } = {
+      en_attente_validation: "text-orange-800 bg-orange-100",
+      refusee: "text-red-800 bg-red-100",
       confirmee: "text-green-800 bg-green-100",
       acompte_paye: "text-blue-800 bg-blue-100",
       en_attente: "text-yellow-800 bg-yellow-100",
@@ -40,8 +42,10 @@ const ReservationCard = ({ reservation, onCancel }: ReservationCardProps) => {
       en_cours: "text-purple-800 bg-purple-100",
     };
     const labels: { [key: string]: string } = {
+      en_attente_validation: "En attente de validation",
+      refusee: "Refusée",
       acompte_paye: "Acompte payé",
-      en_attente: "En attente",
+      en_attente: "En attente de paiement",
       confirmee: "Confirmée",
       annulee: "Annulée",
       terminee: "Terminée",

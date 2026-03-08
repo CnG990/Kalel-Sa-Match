@@ -22,7 +22,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [] = useState(false);
   const navigate = useNavigate();
 
   // Vérifier l'authentification au chargement
@@ -91,34 +90,38 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
     try {
       const startDate = new Date(selectedDate);
       startDate.setHours(Number(selectedSlot), 0, 0, 0);
-      const endDate = new Date(startDate);
-      endDate.setHours(endDate.getHours() + 1);
 
       const reservationData = {
-        terrain: terrain.id,
+        terrain_id: terrain.id,
         date_debut: startDate.toISOString(),
-        date_fin: endDate.toISOString(),
+        duree_heures: 1,
       };
 
       const { data } = await apiService.createReservation(reservationData);
 
       if (data) {
-        toast.success('Réservation enregistrée. Le gestionnaire doit valider avant paiement.');
-        navigate('/payment', { 
-          state: { 
-            reservationDetails: {
-              reservationId: data.id,
-              terrainName: terrain.nom,
-              date: format(selectedDate, 'dd/MM/yyyy', { locale: fr }),
-              time: selectedSlot,
-              price: data.montant_acompte ?? data.montant_total,
-              totalAmount: data.montant_total,
-              montant_acompte: data.montant_acompte,
-              payment_type: 'acompte',
-              status: data.statut,
-            }
-          } 
-        });
+        if (data.statut === 'en_attente_validation') {
+          toast.success('Réservation enregistrée ! Le gestionnaire doit valider avant que vous puissiez payer.');
+          onClose();
+          navigate('/dashboard/reservations');
+        } else {
+          toast.success('Réservation créée. Procédez au paiement de l\'acompte.');
+          navigate('/payment', { 
+            state: { 
+              reservationDetails: {
+                reservationId: data.id,
+                terrainName: terrain.nom,
+                date: format(selectedDate, 'dd/MM/yyyy', { locale: fr }),
+                time: selectedSlot,
+                price: data.montant_acompte ?? data.montant_total,
+                totalAmount: data.montant_total,
+                montant_acompte: data.montant_acompte,
+                payment_type: 'acompte',
+                status: data.statut,
+              }
+            } 
+          });
+        }
       } else {
         setError("La création de la réservation a échoué.");
       }

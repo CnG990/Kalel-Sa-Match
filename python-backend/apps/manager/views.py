@@ -301,6 +301,41 @@ class ManagerValidationViewSet(viewsets.GenericViewSet):
         except Reservation.DoesNotExist:
             return None
 
+    def partial_update(self, request, pk=None):
+        """Update reservation status (confirm / cancel) via PATCH"""
+        reservation = self._get_reservation(pk)
+        if reservation is None:
+            return Response({'data': None, 'meta': {'success': False, 'message': 'Réservation introuvable'}}, status=status.HTTP_404_NOT_FOUND)
+
+        new_statut = request.data.get('statut')
+        notes = request.data.get('notes', '')
+
+        allowed_transitions = {
+            'en_attente': ['confirmee', 'annulee', 'annulée'],
+            'acompte_paye': ['confirmee', 'annulee'],
+            'confirmee': ['terminee', 'annulee'],
+        }
+        allowed = allowed_transitions.get(reservation.statut, [])
+        if new_statut not in allowed:
+            return Response({'data': None, 'meta': {'success': False, 'message': f'Transition {reservation.statut} → {new_statut} non autorisée'}}, status=status.HTTP_400_BAD_REQUEST)
+
+        reservation.statut = 'annulee' if new_statut == 'annulée' else new_statut
+        if notes:
+            reservation.validation_notes = notes
+        reservation.save()
+
+        serializer = self.get_serializer(reservation)
+        return Response({'data': serializer.data, 'meta': {'success': True, 'message': f'Réservation {new_statut}'}})
+
+    def list(self, request):
+        """All reservations for the manager's terrains"""
+        queryset = self.get_queryset().order_by('-date_debut')
+        statut = request.query_params.get('statut')
+        if statut:
+            queryset = queryset.filter(statut=statut)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'data': serializer.data, 'meta': {'success': True}})
+
     @action(detail=False, methods=['get'])
     def pending(self, request):
         queryset = self.get_queryset().filter(statut='en_attente_validation').order_by('date_debut')

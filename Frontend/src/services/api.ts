@@ -151,9 +151,10 @@ export interface TerrainDTO {
 }
 
 export interface ReservationPayload {
-  terrain: number;
+  terrain_id: number;
   date_debut: string;
-  date_fin: string;
+  duree_heures: number;
+  telephone?: string;
   notes?: string;
 }
 
@@ -696,7 +697,7 @@ class ApiService {
   }
 
   getManagerReservations(params?: QueryParams) {
-    const url = `${API_ROOT}/admin/payments/${buildQueryString(params)}`;
+    const url = `${API_ROOT}/manager/validation/${buildQueryString(params)}`;
     return this.requestNormalized<ManagerReservationDTO[]>(url, {
       method: 'GET',
       headers: this.headers(),
@@ -766,7 +767,7 @@ class ApiService {
   }
 
   updateManagerReservationStatus(reservationId: number, statut: string, notes?: string) {
-    const url = `${API_ROOT}/admin/payments/${reservationId}/`;
+    const url = `${API_ROOT}/manager/validation/${reservationId}/`;
     const payload = { statut, ...(notes ? { notes } : {}) };
     return this.requestNormalized<ManagerReservationStatusDTO>(url, {
       method: 'PATCH',

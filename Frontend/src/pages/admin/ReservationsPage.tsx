@@ -14,7 +14,7 @@ interface Reservation {
   montant_restant?: number;
   acompte_paye?: boolean;
   solde_paye?: boolean;
-  statut: 'en_attente' | 'confirmee' | 'annulee' | 'terminee';
+  statut: 'en_attente_validation' | 'refusee' | 'en_attente' | 'confirmee' | 'acompte_paye' | 'annulee' | 'terminee' | 'en_cours';
   notes?: string;
   notes_admin?: string;
   code_ticket?: string;
@@ -237,10 +237,14 @@ const ReservationsPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'en_attente': { color: 'bg-yellow-100 text-yellow-800', label: 'En attente' },
+      'en_attente_validation': { color: 'bg-orange-100 text-orange-800', label: 'Validation gestionnaire' },
+      'refusee': { color: 'bg-red-100 text-red-800', label: 'Refusée' },
+      'en_attente': { color: 'bg-yellow-100 text-yellow-800', label: 'En attente paiement' },
+      'acompte_paye': { color: 'bg-blue-100 text-blue-800', label: 'Acompte payé' },
       'confirmee': { color: 'bg-green-100 text-green-800', label: 'Confirmée' },
       'annulee': { color: 'bg-red-100 text-red-800', label: 'Annulée' },
-      'terminee': { color: 'bg-gray-100 text-gray-800', label: 'Terminée' }
+      'terminee': { color: 'bg-gray-100 text-gray-800', label: 'Terminée' },
+      'en_cours': { color: 'bg-purple-100 text-purple-800', label: 'En cours' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || { color: 'bg-gray-100 text-gray-800', label: status };
