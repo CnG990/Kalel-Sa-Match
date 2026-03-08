@@ -74,11 +74,40 @@ const ReservationsPage: React.FC = () => {
     setShowRefundModal(false);
   };
 
+  const approveReservation = async (reservationId: number) => {
+    try {
+      const { meta } = await apiService.approveReservation(reservationId);
+      setReservations(prev =>
+        prev.map(r => (r.id === reservationId ? { ...r, statut: 'en_attente' } : r)),
+      );
+      toast.success(meta.message || 'Réservation approuvée — le client peut maintenant payer.');
+    } catch (error) {
+      console.error('Erreur approbation:', error);
+      toast.error('Erreur lors de l\'approbation.');
+    }
+  };
+
+  const rejectReservation = async (reservationId: number) => {
+    const motif = window.prompt('Motif du refus (optionnel) :') ?? '';
+    try {
+      const { meta } = await apiService.rejectReservation(reservationId, motif);
+      setReservations(prev =>
+        prev.map(r => (r.id === reservationId ? { ...r, statut: 'refusee' } : r)),
+      );
+      toast.success(meta.message || 'Réservation refusée.');
+    } catch (error) {
+      console.error('Erreur refus:', error);
+      toast.error('Erreur lors du refus.');
+    }
+  };
+
   const getStatusColor = (statut: string) => {
     switch (statut) {
       case 'confirmee': return 'text-green-600 bg-green-100 border-green-200';
       case 'en_attente': return 'text-yellow-600 bg-yellow-100 border-yellow-200';
-      case 'annulée': return 'text-red-600 bg-red-100 border-red-200';
+      case 'en_attente_validation': return 'text-orange-600 bg-orange-100 border-orange-200';
+      case 'refusee': return 'text-red-600 bg-red-100 border-red-200';
+      case 'annulee': case 'annulée': return 'text-red-600 bg-red-100 border-red-200';
       case 'terminee': return 'text-gray-600 bg-gray-100 border-gray-200';
       default: return 'text-gray-600 bg-gray-100 border-gray-200';
     }
@@ -88,7 +117,9 @@ const ReservationsPage: React.FC = () => {
     switch (statut) {
       case 'confirmee': return <CheckCircle className="w-4 h-4" />;
       case 'en_attente': return <AlertCircle className="w-4 h-4" />;
-      case 'annulée': return <XCircle className="w-4 h-4" />;
+      case 'en_attente_validation': return <Clock className="w-4 h-4" />;
+      case 'refusee': return <XCircle className="w-4 h-4" />;
+      case 'annulee': case 'annulée': return <XCircle className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
   };
@@ -126,7 +157,7 @@ const ReservationsPage: React.FC = () => {
           <p className="text-gray-600">Gérez les réservations sur vos terrains</p>
         </div>
         <div className="flex space-x-2">
-          {['toutes', 'en_attente', 'confirmee', 'terminee'].map(status => (
+          {['toutes', 'en_attente_validation', 'en_attente', 'confirmee', 'terminee'].map(status => (
             <button
               key={status}
               onClick={() => setFilter(status)}
@@ -214,6 +245,22 @@ const ReservationsPage: React.FC = () => {
 
                 {/* Actions */}
                 <div className="ml-6 flex space-x-2">
+                  {reservation.statut === 'en_attente_validation' && (
+                    <>
+                      <button
+                        onClick={() => approveReservation(reservation.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        Approuver
+                      </button>
+                      <button
+                        onClick={() => rejectReservation(reservation.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        Refuser
+                      </button>
+                    </>
+                  )}
                   {reservation.statut === 'en_attente' && (
                     <>
                       <button
@@ -226,7 +273,7 @@ const ReservationsPage: React.FC = () => {
                         onClick={() => updateReservationStatus(reservation.id, 'annulée')}
                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
                       >
-                        Refuser
+                        Annuler
                       </button>
                     </>
                   )}

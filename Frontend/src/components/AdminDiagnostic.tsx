@@ -27,7 +27,7 @@ const AdminDiagnostic: React.FC = () => {
 
     try {
       // 1. Diagnostic des Terrains
-      const { data: terrainsData } = await apiService.getAllTerrains();
+      const { data: terrainsData } = await apiService.getAllTerrains({ include_inactive: true });
       const terrains = Array.isArray(terrainsData) ? terrainsData : [];
       
       const terrainsWithSurface = terrains.filter((t: any) => t.surface_postgis || t.surface);

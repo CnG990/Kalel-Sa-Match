@@ -16,7 +16,7 @@ export default function TerrainsList() {
     const loadTerrains = async () => {
       setLoading(true);
       try {
-        const { data } = await apiService.getAllTerrains();
+        const { data } = await apiService.getAllTerrains({ include_inactive: true });
         const terrainsData = Array.isArray(data) ? data : [];
         setTerrains(terrainsData.map(t => ({ ...t, est_actif: t.est_actif ?? true })));
       } catch (error) {

@@ -488,6 +488,26 @@ const MapPage: React.FC = () => {
                             </div>
                             </div>
                           </div>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = `/users/terrain/${terrain.id}`;
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-colors"
+                            >
+                              📋 Créneaux
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`https://www.google.com/maps/dir/?api=1&destination=${Number(terrain.latitude)},${Number(terrain.longitude)}`, '_blank');
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-semibold transition-colors"
+                            >
+                              🗺️ Itinéraire
+                            </button>
+                          </div>
                         </div>
               ))}
 

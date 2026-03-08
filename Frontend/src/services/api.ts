@@ -386,6 +386,7 @@ const ENDPOINTS = {
     revenue: `${API_ROOT}/manager/stats/revenue/`,
     validateTicket: `${API_ROOT}/manager/validation/validate_ticket/`,
     validationHistory: `${API_ROOT}/manager/validation/validation_history/`,
+    pendingReservations: `${API_ROOT}/manager/validation/pending/`,
   },
   reservationActions: `${API_ROOT}/reservations/`,
   admin: {
@@ -885,7 +886,34 @@ class ApiService {
     });
   }
 
-  // Manager - Validation & Exports ------------------------
+  // Manager - Reservation Validation ----------------------
+  getManagerPendingReservations() {
+    const url = ENDPOINTS.manager.pendingReservations;
+    return this.requestNormalized<ManagerReservationDTO[]>(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  approveReservation(reservationId: number, notes?: string) {
+    const url = `${API_ROOT}/manager/validation/${reservationId}/approve/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ notes: notes || '' }),
+    });
+  }
+
+  rejectReservation(reservationId: number, motif?: string) {
+    const url = `${API_ROOT}/manager/validation/${reservationId}/reject/`;
+    return this.requestNormalized(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ motif: motif || '' }),
+    });
+  }
+
+  // Manager - Ticket Validation & Exports -----------------
   validateReservation(reservationId: number, qrCode?: string) {
     const url = `${API_ROOT}/manager/validation/validate/`;
     return this.requestNormalized(url, {
