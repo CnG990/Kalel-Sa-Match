@@ -98,7 +98,7 @@ class AbonnementConditionsService {
    */
   async getConditionsTerrain(terrainId: number): Promise<TerrainConditions> {
     try {
-      const { data, meta } = await apiService.get<TerrainConditions>(`/abonnements/conditions/${terrainId}`);
+      const { data, meta } = await apiService.get<TerrainConditions>(`/terrains/abonnements/conditions/${terrainId}/`);
       if (data) {
         return data;
       }
@@ -114,7 +114,7 @@ class AbonnementConditionsService {
    */
   async getHistoriqueReservations(terrainId: number): Promise<HistoriqueData> {
     try {
-      const { data, meta } = await apiService.get<HistoriqueData>(`/abonnements/historique/${terrainId}`);
+      const { data, meta } = await apiService.get<HistoriqueData>(`/terrains/abonnements/historique/${terrainId}/`);
       if (data) {
         return data;
       }
@@ -130,7 +130,7 @@ class AbonnementConditionsService {
    */
   async verifierDisponibilite(request: DisponibiliteRequest): Promise<DisponibiliteResponse> {
     try {
-      const { data, meta } = await apiService.post<DisponibiliteResponse>('/abonnements/verifier-disponibilite', request);
+      const { data, meta } = await apiService.post<DisponibiliteResponse>('/terrains/abonnements/verifier-disponibilite/', request);
       if (data) {
         return data;
       }
@@ -153,7 +153,7 @@ class AbonnementConditionsService {
   }): Promise<DisponibiliteAbonnementResponse> {
     try {
       const { data, meta } = await apiService.post<DisponibiliteAbonnementResponse>(
-        '/abonnements/verifier-disponibilite-abonnement',
+        '/terrains/abonnements/verifier-disponibilite-abonnement/',
         request,
       );
       if (data) {
@@ -171,7 +171,7 @@ class AbonnementConditionsService {
    */
   async calculerPrixAbonnement(request: CalculPrixRequest): Promise<CalculPrixResponse> {
     try {
-      const { data, meta } = await apiService.post<CalculPrixResponse>('/abonnements/calculer-prix', request);
+      const { data, meta } = await apiService.post<CalculPrixResponse>('/terrains/abonnements/calculer-prix/', request);
       if (data) {
         return data;
       }

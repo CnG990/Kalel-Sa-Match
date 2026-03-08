@@ -103,6 +103,14 @@ const ManagerLayout: React.FC = () => {
       description: 'Gérer les réclamations clients'
     },
     { 
+      name: 'Abonnements', 
+      path: '/manager/abonnements', 
+      icon: Ticket, 
+      emoji: '🎫',
+      color: 'from-purple-400 to-purple-600',
+      description: 'Voir les abonnés de vos terrains'
+    },
+    { 
       name: 'Mon Profil', 
       path: '/manager/profile', 
       icon: User, 

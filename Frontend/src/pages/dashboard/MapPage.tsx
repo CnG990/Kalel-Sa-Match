@@ -71,6 +71,7 @@ const MapPage: React.FC = () => {
   const mapRef = useRef<L.Map | null>(null);
   const baseLayerRef = useRef<L.Layer | null>(null);
   const markersRef = useRef<L.Layer[]>([]);
+  const userMarkerRef = useRef<L.Layer[]>([]);
   
   const [terrains, setTerrains] = useState<Terrain[]>([]);
   const [loading, setLoading] = useState(true);
@@ -263,23 +264,62 @@ const MapPage: React.FC = () => {
     }
   };
 
+  const addUserMarker = (coords: [number, number]) => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Supprimer ancien marqueur utilisateur
+    userMarkerRef.current.forEach(m => map.removeLayer(m));
+    userMarkerRef.current = [];
+
+    // Halo pulsant
+    const pulse = L.circleMarker(coords, {
+      radius: 18,
+      color: '#3b82f6',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.15,
+      weight: 1,
+      className: 'user-pulse'
+    });
+    pulse.addTo(map);
+
+    // Point central
+    const dot = L.circleMarker(coords, {
+      radius: 7,
+      color: '#ffffff',
+      fillColor: '#2563eb',
+      fillOpacity: 1,
+      weight: 3
+    });
+    dot.bindPopup('<div style="text-align:center;font-weight:600;font-size:13px;">📍 Vous êtes ici</div>');
+    dot.addTo(map);
+
+    userMarkerRef.current = [pulse, dot];
+  };
+
   const getUserLocation = () => {
     if (!navigator.geolocation) {
       toast.error('Géolocalisation non supportée par votre navigateur');
       return;
     }
 
+    toast.loading('Recherche de votre position...', { id: 'geo' });
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        toast.dismiss('geo');
+        // Utiliser uniquement latitude et longitude (PAS altitude)
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const coords: [number, number] = [lat, lng];
         setUserLocation(coords);
 
-        // recalc distances si on a déjà les terrains
+        // Recalculer distances et trier par proximité
         if (terrains.length > 0) {
           const updated = terrains
             .map(t => ({
               ...t,
-              distance: calculateDistanceKm(coords[0], coords[1], Number(t.latitude), Number(t.longitude))
+              distance: calculateDistanceKm(lat, lng, Number(t.latitude), Number(t.longitude))
             }))
             .sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999));
           setTerrains(updated);
@@ -288,19 +328,14 @@ const MapPage: React.FC = () => {
 
         if (mapRef.current) {
           mapRef.current.setView(coords, 13);
-          const userMarker = L.circleMarker(coords, {
-            radius: 6,
-            color: '#2563eb',
-            fillColor: '#3b82f6',
-            fillOpacity: 0.9
-          });
-          userMarker.addTo(mapRef.current);
+          addUserMarker(coords);
         }
 
-        toast.success('Position obtenue');
-            },
-            () => {
-        toast.error('Impossible d’obtenir votre position');
+        toast.success('Position obtenue — terrains triés par proximité');
+      },
+      () => {
+        toast.dismiss('geo');
+        toast.error('Impossible d\'obtenir votre position');
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 }
     );

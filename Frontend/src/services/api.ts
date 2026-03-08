@@ -775,7 +775,7 @@ class ApiService {
   }
 
   souscrireAbonnement(abonnementId: number, payload: Record<string, unknown>) {
-    const url = `${ENDPOINTS.abonnements}${abonnementId}/`; // assumes REST detail endpoint
+    const url = `${ENDPOINTS.abonnements}${abonnementId}/souscrire/`;
     return this.requestNormalized<SubscriptionResponseDTO>(url, {
       method: 'POST',
       headers: this.headers(),
@@ -1244,7 +1244,7 @@ class ApiService {
 
   // Admin - Subscriptions -------------------------------------
   createSubscription(subData: Record<string, unknown>) {
-    const url = `${API_ROOT}/admin/notifications/`;
+    const url = `${API_ROOT}/admin/subscriptions/`;
     return this.requestNormalized(url, {
       method: 'POST',
       headers: this.headers(),

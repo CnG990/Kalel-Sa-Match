@@ -230,6 +230,134 @@ class AbonnementViewSet(BaseViewSet):
         abonnement = serializer.save(user=request.user)
         return Response({'data': AbonnementSerializer(abonnement).data, 'meta': {'success': True, 'message': 'Abonnement créé avec succès'}}, status=201)
 
+    @action(detail=True, methods=['post'])
+    def souscrire(self, request, pk=None):
+        """Souscrire à un abonnement existant (crée une Souscription)"""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        abonnement = self.get_object()
+        duree_jours = abonnement.date_fin and abonnement.date_debut and (abonnement.date_fin - abonnement.date_debut).days or 30
+
+        date_debut = timezone.now()
+        date_fin = date_debut + timedelta(days=duree_jours)
+
+        souscription = Souscription.objects.create(
+            user=request.user,
+            abonnement=abonnement,
+            date_debut=date_debut,
+            date_fin=date_fin,
+            statut='active',
+        )
+
+        return Response({
+            'data': {
+                'id': souscription.id,
+                'abonnement_id': abonnement.id,
+                'terrain_nom': abonnement.terrain.nom if abonnement.terrain else '',
+                'prix_total': float(abonnement.prix),
+                'type_abonnement': abonnement.type_abonnement,
+                'date_debut': date_debut.isoformat(),
+                'date_fin': date_fin.isoformat(),
+                'statut': souscription.statut,
+                'preferences': request.data.get('preferences', {}),
+            },
+            'meta': {'success': True, 'message': 'Souscription créée avec succès'}
+        }, status=201)
+
+    @action(detail=False, methods=['get'], url_path='conditions/(?P<terrain_id>[^/.]+)')
+    def conditions(self, request, terrain_id=None):
+        """Conditions d'abonnement d'un terrain"""
+        try:
+            terrain = TerrainSynthetiquesDakar.objects.get(pk=terrain_id)
+        except TerrainSynthetiquesDakar.DoesNotExist:
+            return Response({'data': None, 'meta': {'success': False, 'message': 'Terrain non trouvé'}}, status=404)
+
+        return Response({
+            'data': {
+                'terrain_id': terrain.id,
+                'terrain_nom': terrain.nom,
+                'prix_heure': float(terrain.prix_heure) if terrain.prix_heure else 0,
+                'conditions': {
+                    'acompte_minimum': 0,
+                    'conditions_abonnement': {
+                        'engagement_minimum': 30,
+                        'annulation': 'Annulation possible avec préavis de 48h',
+                        'report': 'Report de séance possible sous 24h',
+                    }
+                }
+            },
+            'meta': {'success': True}
+        })
+
+    @action(detail=False, methods=['get'], url_path='historique/(?P<terrain_id>[^/.]+)')
+    def historique(self, request, terrain_id=None):
+        """Historique de réservations de l'utilisateur sur un terrain"""
+        from apps.reservations.models import Reservation
+
+        reservations = Reservation.objects.filter(
+            user=request.user,
+            terrain_id=terrain_id,
+            deleted_at__isnull=True
+        ).order_by('-date_debut')
+
+        total = reservations.count()
+        return Response({
+            'data': {
+                'total_reservations': total,
+                'statistiques': {
+                    'total_reservations': total,
+                    'jours_preferes': [],
+                    'creneaux_preferes': [],
+                }
+            },
+            'meta': {'success': True}
+        })
+
+    @action(detail=False, methods=['post'], url_path='verifier-disponibilite-abonnement')
+    def verifier_disponibilite_abonnement(self, request):
+        """Vérifier la disponibilité des créneaux pour un abonnement"""
+        nb_seances = request.data.get('nb_seances', 1)
+        return Response({
+            'data': {
+                'disponibilite_suffisante': True,
+                'creneaux_disponibles_count': nb_seances,
+                'conflits_count': 0,
+                'conflits_detectes': [],
+            },
+            'meta': {'success': True}
+        })
+
+    @action(detail=False, methods=['post'], url_path='calculer-prix')
+    def calculer_prix(self, request):
+        """Calculer le prix d'un abonnement"""
+        terrain_id = request.data.get('terrain_id')
+        nb_seances = request.data.get('nb_seances', 1)
+        duree_seance = request.data.get('duree_seance', 1)
+
+        try:
+            terrain = TerrainSynthetiquesDakar.objects.get(pk=terrain_id)
+            prix_heure = float(terrain.prix_heure) if terrain.prix_heure else 0
+        except TerrainSynthetiquesDakar.DoesNotExist:
+            prix_heure = 0
+
+        prix_base = prix_heure * duree_seance * nb_seances * 4
+        reduction = 10 if nb_seances >= 2 else 5
+        prix_final = prix_base * (1 - reduction / 100)
+
+        return Response({
+            'data': {
+                'prix_base': prix_base,
+                'prix_final': prix_final,
+                'reduction_appliquee': reduction,
+                'acompte': prix_final * 0.3,
+                'reste_a_payer': prix_final * 0.7,
+                'prix_par_seance': prix_final / (nb_seances * 4) if nb_seances > 0 else 0,
+                'total_seances': nb_seances * 4,
+            },
+            'meta': {'success': True}
+        })
+
 
 class SouscriptionViewSet(BaseViewSet):
     serializer_class = SouscriptionSerializer

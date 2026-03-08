@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/api';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Reservation {
@@ -18,6 +18,8 @@ interface Reservation {
     nom: string;
     image_principale: string;
     adresse: string;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
   };
 }
 
@@ -79,16 +81,41 @@ const ReservationCard = ({ reservation, onCancel }: ReservationCardProps) => {
           )}
         </div>
         
-        {isCancellable && (
-          <div className="mt-4 pt-4 border-t">
+        <div className="mt-4 pt-4 border-t flex flex-wrap gap-2">
+          {/* Bouton Partager */}
+          <button
+            onClick={() => {
+              const lat = Number(reservation.terrain.latitude);
+              const lng = Number(reservation.terrain.longitude);
+              const mapsUrl = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0
+                ? `https://www.google.com/maps?q=${lat},${lng}`
+                : `https://www.google.com/maps/search/${encodeURIComponent(reservation.terrain.adresse)}`;
+              const dateStr = formatDate(reservation.date_debut);
+              const timeStr = `${formatTime(reservation.date_debut)} - ${formatTime(reservation.date_fin)}`;
+              const text = `\u26bd Match pr\u00e9vu !\n\n\ud83c\udfdf\ufe0f ${reservation.terrain.nom}\n\ud83d\udccd ${reservation.terrain.adresse}\n\ud83d\udcc5 ${dateStr}\n\u23f0 ${timeStr}\n\ud83d\udcb0 ${reservation.montant_total.toLocaleString('fr-FR')} FCFA\n\n\ud83d\uddfa\ufe0f Localisation : ${mapsUrl}`;
+
+              if (navigator.share) {
+                navigator.share({ title: `Match - ${reservation.terrain.nom}`, text }).catch(() => {});
+              } else {
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                window.open(waUrl, '_blank');
+              }
+            }}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-lg hover:bg-green-200"
+          >
+            <Share2 className="w-4 h-4" />
+            Partager le match
+          </button>
+
+          {isCancellable && (
             <button 
               onClick={() => onCancel(reservation.id)}
-              className="w-full text-center px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200"
+              className="flex-1 text-center px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200"
             >
-              Annuler et demander un remboursement
+              Annuler
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
