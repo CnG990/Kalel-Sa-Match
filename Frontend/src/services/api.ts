@@ -381,7 +381,22 @@ export interface NotificationDTO {
   created_at: string;
 }
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'https://kalelsamatch.duckdns.org').replace(/\/$/, '');
+const resolveBaseUrl = () => {
+  const rawEnvUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim();
+  const sanitizedEnvUrl = rawEnvUrl.replace(/\/$/, '');
+  const isLocalEnv = /localhost|127\.0\.0\.1/i.test(sanitizedEnvUrl);
+  const isDev = import.meta.env.DEV;
+
+  if (sanitizedEnvUrl) {
+    if (!isLocalEnv || isDev) {
+      return sanitizedEnvUrl;
+    }
+  }
+
+  return 'https://kalelsamatch.duckdns.org';
+};
+
+const BASE_URL = resolveBaseUrl();
 const API_ROOT = `${BASE_URL}/api`;
 
 const ENDPOINTS = {

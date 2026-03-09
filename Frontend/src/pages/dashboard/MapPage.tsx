@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Search, Loader2, RefreshCw, MapPin, Crosshair } from 'lucide-react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Search, Loader2, RefreshCw, MapPin, Crosshair, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
-import * as EsriLeaflet from 'esri-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Fix des icônes Leaflet en mode bundler
@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
 });
 
-type BaseLayerKey = 'osm' | 'satellite' | 'city';
+type BaseLayerKey = 'street' | 'satellite' | 'voyager' | 'topo' | 'dark';
 
 interface Terrain {
   id: number;
@@ -28,24 +28,55 @@ interface Terrain {
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'https://kalelsamatch.duckdns.org').replace(/\/$/, '');
-const MAP_ENDPOINT = `${API_BASE_URL}/api/terrains/terrains/all-for-map`;
+const MAP_ENDPOINT = `${API_BASE_URL}/api/terrains/terrains/all-for-map/`;
 
-const BASE_LAYERS: Record<BaseLayerKey, { label: string; create: () => L.Layer }> = {
-  osm: {
-    label: 'Plan classique',
+const BASE_LAYERS: Record<BaseLayerKey, { label: string; emoji: string; create: () => L.TileLayer }> = {
+  street: {
+    label: 'Street',
+    emoji: '🛣️',
     create: () =>
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
       })
   },
   satellite: {
-    label: 'Vue satellite',
-    create: () => EsriLeaflet.basemapLayer('Imagery')
+    label: 'Satellite',
+    emoji: '🛰️',
+    create: () =>
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+        maxZoom: 19
+      })
   },
-  city: {
-    label: 'Plan urbain',
-    create: () => EsriLeaflet.basemapLayer('Streets')
+  voyager: {
+    label: 'Voyager',
+    emoji: '🗺️',
+    create: () =>
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+      })
+  },
+  topo: {
+    label: 'Topographie',
+    emoji: '⛰️',
+    create: () =>
+      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data: &copy; OpenStreetMap, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+        maxZoom: 17
+      })
+  },
+  dark: {
+    label: 'Sombre',
+    emoji: '🌙',
+    create: () =>
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+      })
   }
 };
 
@@ -67,6 +98,7 @@ const calculateDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: num
 };
 
 const MapPage: React.FC = () => {
+  const navigate = useNavigate();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const baseLayerRef = useRef<L.Layer | null>(null);
@@ -75,10 +107,11 @@ const MapPage: React.FC = () => {
   
   const [terrains, setTerrains] = useState<Terrain[]>([]);
   const [loading, setLoading] = useState(true);
+  const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnlyOpen, setShowOnlyOpen] = useState(false);
-  const [baseLayer, setBaseLayer] = useState<BaseLayerKey>('osm');
+  const [baseLayer, setBaseLayer] = useState<BaseLayerKey>('street');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const autoLocateRef = useRef(false);
 
@@ -94,12 +127,18 @@ const MapPage: React.FC = () => {
 
     mapRef.current = map;
 
-    // Couche de base par défaut
-    const initialLayer = BASE_LAYERS.osm.create();
+    // Couche de base par défaut (Street)
+    const initialLayer = BASE_LAYERS.street.create();
     initialLayer.addTo(map);
     baseLayerRef.current = initialLayer;
 
     void loadTerrains();
+
+    // Géolocalisation automatique dès l'init de la carte
+    if (!autoLocateRef.current) {
+      autoLocateRef.current = true;
+      requestUserLocation();
+    }
 
     return () => {
       if (mapRef.current) {
@@ -181,7 +220,7 @@ const MapPage: React.FC = () => {
             <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}','_blank')" style="flex:1;padding:8px 0;border:none;border-radius:8px;background:#16a34a;color:white;font-size:12px;font-weight:600;cursor:pointer;">
               🗺️ Itinéraire
             </button>
-            <button onclick="window.open('${slotsUrl}','_blank')" style="flex:1;padding:8px 0;border:none;border-radius:8px;background:#f97316;color:white;font-size:12px;font-weight:600;cursor:pointer;">
+            <button onclick="window.location.href='${slotsUrl}'" style="flex:1;padding:8px 0;border:none;border-radius:8px;background:#f97316;color:white;font-size:12px;font-weight:600;cursor:pointer;">
               📋 Créneaux
             </button>
           </div>
@@ -297,18 +336,53 @@ const MapPage: React.FC = () => {
     userMarkerRef.current = [pulse, dot];
   };
 
+  // Fonction de géolocalisation automatique (appelée à l'init)
+  const requestUserLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocating(false);
+      return;
+    }
+
+    setLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const coords: [number, number] = [lat, lng];
+        setUserLocation(coords);
+        setLocating(false);
+
+        // Auto-centrer immédiatement sur la position utilisateur
+        if (mapRef.current) {
+          mapRef.current.setView(coords, 15, { animate: true });
+          addUserMarker(coords);
+        }
+
+        toast.success('📍 Position obtenue');
+      },
+      () => {
+        setLocating(false);
+        toast('📍 Position non disponible — affichage par défaut', { icon: 'ℹ️' });
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const getUserLocation = () => {
     if (!navigator.geolocation) {
       toast.error('Géolocalisation non supportée par votre navigateur');
       return;
     }
 
+    setLocating(true);
     toast.loading('Recherche de votre position...', { id: 'geo' });
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         toast.dismiss('geo');
-        // Utiliser uniquement latitude et longitude (PAS altitude)
+        setLocating(false);
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         const coords: [number, number] = [lat, lng];
@@ -327,7 +401,7 @@ const MapPage: React.FC = () => {
         }
 
         if (mapRef.current) {
-          mapRef.current.setView(coords, 13);
+          mapRef.current.setView(coords, 15, { animate: true });
           addUserMarker(coords);
         }
 
@@ -336,16 +410,26 @@ const MapPage: React.FC = () => {
       () => {
         toast.dismiss('geo');
         toast.error('Impossible d\'obtenir votre position');
+        setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 }
     );
   };
 
+  // Recalculer les distances quand la position utilisateur change
   useEffect(() => {
-    if (autoLocateRef.current) return;
-    autoLocateRef.current = true;
-    getUserLocation();
-  }, []);
+    if (!userLocation || terrains.length === 0) return;
+    const [uLat, uLng] = userLocation;
+    const updated = terrains
+      .map(t => ({
+        ...t,
+        distance: calculateDistanceKm(uLat, uLng, Number(t.latitude), Number(t.longitude))
+      }))
+      .sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999));
+    setTerrains(updated);
+    addMarkers(updated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation]);
 
   const filteredTerrains = terrains.filter((t) => {
     const term = searchTerm.toLowerCase();
@@ -406,30 +490,41 @@ const MapPage: React.FC = () => {
         
         {/* Contrôles carte */}
         <div className="absolute top-3 left-3 space-y-2 z-30">
-          <div className="bg-white rounded shadow-md p-2 border text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-600">Fond :</span>
-                <select 
-                value={baseLayer}
-                onChange={(e) => applyBaseLayer(e.target.value as BaseLayerKey)}
-                className="text-xs border rounded px-1 py-0.5"
-              >
-                <option value="osm">Plan classique</option>
-                <option value="city">Plan urbain</option>
-                <option value="satellite">Vue satellite</option>
-                </select>
-                </div>
-              </div>
-
-              <button
-                onClick={getUserLocation}
-                disabled={loading}
-            className="flex items-center gap-1 bg-white rounded shadow-md px-2 py-1 border text-xs hover:bg-blue-50"
-          >
-            <Crosshair className="w-3 h-3" />
-            Ma position
-              </button>
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-3 border border-gray-200">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Fond de carte</div>
+            <div className="flex flex-wrap gap-1">
+              {(Object.keys(BASE_LAYERS) as BaseLayerKey[]).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => applyBaseLayer(key)}
+                  className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    baseLayer === key
+                      ? 'bg-blue-600 text-white shadow-md scale-105'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <span>{BASE_LAYERS[key].emoji}</span>
+                  <span>{BASE_LAYERS[key].label}</span>
+                </button>
+              ))}
+            </div>
           </div>
+
+          <button
+            onClick={getUserLocation}
+            disabled={loading || locating}
+            className={`flex items-center gap-1.5 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg px-3 py-2 border border-gray-200 text-xs font-medium transition-colors ${
+              locating ? 'opacity-70 cursor-wait' : 'hover:bg-blue-50'
+            }`}
+          >
+            {locating ? (
+              <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+            ) : (
+              <Crosshair className="w-3.5 h-3.5 text-blue-600" />
+            )}
+            {locating ? 'Recherche...' : 'Ma position'}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -485,18 +580,12 @@ const MapPage: React.FC = () => {
               {sortedTerrains.map((terrain) => (
                     <div
                       key={terrain.id}
-                  className="p-3 border rounded-lg bg-white hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-colors"
-                      onClick={() => {
-                    const lat = Number(terrain.latitude);
-                    const lng = Number(terrain.longitude);
-                    if (mapRef.current && Number.isFinite(lat) && Number.isFinite(lng)) {
-                      mapRef.current.setView([lat, lng], 15, { animate: true });
-                    }
-                  }}
+                  className="p-3 border rounded-lg bg-white hover:bg-orange-50 hover:border-orange-300 cursor-pointer transition-all duration-200 hover:shadow-md group"
+                      onClick={() => navigate(`/users/terrain/${terrain.id}`)}
                 >
                   <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                      <div className="font-semibold text-sm text-gray-800">
+                      <div className="font-semibold text-sm text-gray-800 group-hover:text-orange-700 transition-colors">
                         {terrain.nom}
                           </div>
                       <div className="text-xs text-gray-600 mt-1 flex items-center">
@@ -504,8 +593,8 @@ const MapPage: React.FC = () => {
                             {terrain.adresse}
                           </div>
                       {terrain.distance !== undefined && (
-                        <div className="text-xs text-green-700 mt-1">
-                          📏 {terrain.distance} km
+                        <div className="text-xs text-blue-600 font-semibold mt-1">
+                          📏 {terrain.distance} km de vous
                             </div>
                           )}
                           </div>
@@ -518,8 +607,8 @@ const MapPage: React.FC = () => {
                           <div className="text-gray-500">FCFA/h</div>
                         </>
                       )}
-                      <div className="px-2 py-1 rounded-full bg-green-100 text-green-800 font-medium">
-                        {terrain.est_actif ? 'Ouvert' : 'Fermé'}
+                      <div className={`px-2 py-1 rounded-full font-medium ${terrain.est_actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
+                        {terrain.est_actif ? '✅ Ouvert' : '❌ Fermé'}
                             </div>
                             </div>
                           </div>
@@ -527,11 +616,11 @@ const MapPage: React.FC = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.location.href = `/users/terrain/${terrain.id}`;
+                                navigate(`/users/terrain/${terrain.id}`);
                               }}
                               className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-colors"
                             >
-                              📋 Créneaux
+                              📋 Voir Créneaux
                             </button>
                             <button
                               onClick={(e) => {
@@ -542,6 +631,12 @@ const MapPage: React.FC = () => {
                             >
                               🗺️ Itinéraire
                             </button>
+                          </div>
+                          <div className="mt-1.5 text-center">
+                            <span className="text-[10px] text-gray-400 group-hover:text-orange-500 flex items-center justify-center gap-1 transition-colors">
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              Cliquez pour voir les créneaux disponibles
+                            </span>
                           </div>
                         </div>
               ))}

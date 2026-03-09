@@ -16,7 +16,7 @@ interface Terrain {
   id: number;
   nom: string;
   adresse: string;
-  gestionnaire_id?: number;
+  gestionnaire_id?: number | null;
   gestionnaire?: {
     nom: string;
     prenom: string;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { PlusCircle, RefreshCw, Power, MapPin, Users } from 'lucide-react';
+import { PlusCircle, RefreshCw, Power, MapPin, Users, Trash2 } from 'lucide-react';
 
 import apiService from '../../services/api';
 import AddTerrainOnSiteModal from './AddTerrainOnSiteModal';
@@ -48,6 +48,7 @@ const ManageTerrainsPageSimple: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRemoteModal, setShowRemoteModal] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedTerrain, setSelectedTerrain] = useState<Terrain | null>(null);
 
@@ -109,6 +110,24 @@ const ManageTerrainsPageSimple: React.FC = () => {
       toast.error("Erreur lors du changement d'état");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const deleteTerrain = async (terrain: Terrain) => {
+    const confirmed = window.confirm(
+      `⚠️ Supprimer définitivement "${terrain.nom}" ?\n\nCette action est irréversible. Toutes les réservations associées seront perdues.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(terrain.id);
+    try {
+      await apiService.delete(`/terrains/terrains/${terrain.id}/`);
+      toast.success(`Terrain "${terrain.nom}" supprimé.`);
+      setTerrains((prev) => prev.filter((t) => t.id !== terrain.id));
+    } catch (error) {
+      toast.error('Erreur lors de la suppression du terrain.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -179,6 +198,9 @@ const ManageTerrainsPageSimple: React.FC = () => {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Gestionnaire
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -268,6 +290,22 @@ const ManageTerrainsPageSimple: React.FC = () => {
                             {terrain.gestionnaire ? 'Changer' : 'Attribuer'}
                           </button>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          type="button"
+                          disabled={deletingId === terrain.id}
+                          onClick={() => deleteTerrain(terrain)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                          title="Supprimer ce terrain définitivement"
+                        >
+                          {deletingId === terrain.id ? (
+                            <span className="animate-spin">⏳</span>
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                          Supprimer
+                        </button>
                       </td>
                     </tr>
                   ))}

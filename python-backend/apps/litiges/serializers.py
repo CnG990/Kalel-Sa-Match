@@ -87,8 +87,10 @@ class LitigeDetailSerializer(serializers.ModelSerializer):
         if obj.reservation:
             return {
                 'id': obj.reservation.id,
-                'date_heure': obj.reservation.date_heure.isoformat() if hasattr(obj.reservation, 'date_heure') else None,
-                'statut': obj.reservation.statut if hasattr(obj.reservation, 'statut') else None,
+                'date_debut': obj.reservation.date_debut.isoformat() if obj.reservation.date_debut else None,
+                'date_fin': obj.reservation.date_fin.isoformat() if obj.reservation.date_fin else None,
+                'statut': obj.reservation.statut,
+                'montant_total': str(obj.reservation.montant_total),
             }
         return None
 

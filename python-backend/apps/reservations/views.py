@@ -276,44 +276,56 @@ def terrain_disponibilites(request, terrain_id):
         terrain = TerrainSynthetiquesDakar.objects.get(id=terrain_id, est_actif=True)
     except TerrainSynthetiquesDakar.DoesNotExist:
         return api_error("Terrain non trouvé", status.HTTP_404_NOT_FOUND)
-    
-    date_debut = request.GET.get('date_debut')
-    date_fin = request.GET.get('date_fin')
-    
-    if not date_debut or not date_fin:
+
+    date_debut_str = request.GET.get('date_debut')
+    date_fin_str = request.GET.get('date_fin')
+
+    if not date_debut_str or not date_fin_str:
         return api_error("date_debut et date_fin sont requis", status.HTTP_400_BAD_REQUEST)
-    
+
     try:
-        date_debut = datetime.fromisoformat(date_debut)
-        date_fin = datetime.fromisoformat(date_fin)
-    except ValueError:
-        return api_error("Format de date invalide", status.HTTP_400_BAD_REQUEST)
-    
-    # Récupérer les réservations existantes
-    reservations = Reservation.objects.filter(
-        terrain=terrain,
-        statut='confirmee',
-        date_debut__lt=date_fin,
-        date_fin__gt=date_debut
-    )
-    
-    # Créer une liste des créneaux occupés
-    creneaux_occupes = []
-    for reservation in reservations:
-        creneaux_occupes.append({
-            'date_debut': reservation.date_debut.isoformat(),
-            'date_fin': reservation.date_fin.isoformat(),
-            'duree_heures': reservation.duree_heures
-        })
-    
-    return api_success(
-        data={
-            'terrain': terrain.nom,
-            'creneaux_occupes': creneaux_occupes,
-            'prix_heure': terrain.prix_heure
-        },
-        message="Disponibilités récupérées"
-    )
+        date_debut_naive = datetime.fromisoformat(date_debut_str)
+        date_fin_naive = datetime.fromisoformat(date_fin_str)
+        # Rendre les datetimes timezone-aware (UTC)
+        date_debut = timezone.make_aware(date_debut_naive) if timezone.is_naive(date_debut_naive) else date_debut_naive
+        date_fin = timezone.make_aware(date_fin_naive) if timezone.is_naive(date_fin_naive) else date_fin_naive
+    except (ValueError, TypeError):
+        return api_error("Format de date invalide (attendu: ISO 8601)", status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Récupérer les réservations existantes (exclu les soft-deleted)
+        reservations = Reservation.objects.filter(
+            terrain=terrain,
+            statut__in=['confirmee', 'en_cours', 'en_attente_validation', 'acompte_paye'],
+            date_debut__lt=date_fin,
+            date_fin__gt=date_debut,
+            deleted_at__isnull=True
+        ).values('date_debut', 'date_fin', 'duree_heures', 'statut')
+
+        creneaux_occupes = [
+            {
+                'date_debut': r['date_debut'].isoformat(),
+                'date_fin': r['date_fin'].isoformat(),
+                'duree_heures': r['duree_heures'],
+                'statut': r['statut']
+            }
+            for r in reservations
+        ]
+
+        return api_success(
+            data={
+                'terrain_id': terrain.id,
+                'terrain': terrain.nom,
+                'creneaux_occupes': creneaux_occupes,
+                'prix_heure': float(terrain.prix_heure) if terrain.prix_heure else None,
+                'total_occupe': len(creneaux_occupes)
+            },
+            message="Disponibilités récupérées"
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"terrain_disponibilites error: {e}", exc_info=True)
+        return api_error("Erreur interne lors du calcul des disponibilités", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def _check_disponibilite(terrain, date_debut, date_fin):

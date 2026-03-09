@@ -11,7 +11,6 @@ import {
   X,
   LayoutDashboard,
   Calendar,
-  User,
   Ticket,
   AlertTriangle,
 } from 'lucide-react';
@@ -76,12 +75,11 @@ const DashboardLayout: React.FC = () => {
   };
 
   const sidebarLinks = [
-    { to: "/dashboard", icon: <LayoutDashboard size={20} />, text: "Tableau de bord", end: true },
+    { to: "/dashboard/map", icon: <Map size={20} />, text: "Carte" },
+    { to: "/dashboard", icon: <LayoutDashboard size={20} />, text: "Aperçu", end: true },
     { to: "/dashboard/reservations", icon: <Calendar size={20} />, text: "Mes Réservations" },
     { to: "/dashboard/tickets", icon: <Ticket size={20} />, text: "Mes Tickets" },
-    { to: "/dashboard/map", icon: <Map size={20} />, text: "Carte" },
     { to: "/dashboard/litiges", icon: <AlertTriangle size={20} />, text: "Mes Litiges" },
-    { to: "/dashboard/profile", icon: <User size={20} />, text: "Mon Profil" },
     { to: "/dashboard/settings", icon: <Settings size={20} />, text: "Paramètres" },
   ];
 

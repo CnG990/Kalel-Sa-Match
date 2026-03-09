@@ -23,13 +23,13 @@ const mapReservationDtoToReservation = (dto: ReservationDTO): Reservation => ({
 });
 
 const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string | number; color: string }> = ({ icon, label, value, color }) => (
-  <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
+  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center border border-gray-100 dark:border-gray-700">
     <div className={`mr-4 p-3 rounded-full ${color}`}>
       {icon}
     </div>
     <div>
-      <p className="text-gray-600 text-sm font-medium">{label}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{label}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
     </div>
   </div>
 );
@@ -66,11 +66,11 @@ const DashboardOverview: React.FC = () => {
   }
 
   return (
-    <div>
-      <h1 className="text-4xl font-bold text-gray-800 mb-2">
+    <div className="text-gray-900 dark:text-gray-100">
+      <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
         Bienvenue, {user.prenom} !
       </h1>
-      <p className="text-lg text-gray-600 mb-8">
+      <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
         Voici un résumé de votre activité sur Kalèl Sa Match.
       </p>
 
@@ -99,27 +99,27 @@ const DashboardOverview: React.FC = () => {
       {/* Next Reservation & Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Prochaine réservation</h2>
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Prochaine réservation</h2>
           {nextReservation ? (
-            <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-orange-500">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border-l-4 border-orange-500 border-t border-r border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center mb-4">
                 <Calendar size={28} className="text-orange-500 mr-4" />
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">{nextReservation.terrain.name}</h3>
-                  <p className="text-gray-600">{new Date(nextReservation.date_debut).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{nextReservation.terrain.name}</h3>
+                  <p className="text-gray-600 dark:text-gray-400">{new Date(nextReservation.date_debut).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })}</p>
                 </div>
               </div>
-              <p className="text-gray-700">Adresse : {nextReservation.terrain.adresse}</p>
+              <p className="text-gray-700 dark:text-gray-300">Adresse : {nextReservation.terrain.adresse}</p>
               <div className="mt-4 text-right">
-                <Link to="/dashboard/reservations" className="text-sm font-medium text-orange-600 hover:text-orange-700">
+                <Link to="/dashboard/reservations" className="text-sm font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300">
                   Voir mes réservations &rarr;
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="bg-white p-8 rounded-lg shadow-md text-center">
-              <h3 className="text-xl font-semibold text-gray-700">Aucune réservation à venir</h3>
-              <p className="text-gray-500 mt-2 mb-4">Le moment idéal pour organiser votre prochain match !</p>
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md text-center border border-gray-100 dark:border-gray-700">
+              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200">Aucune réservation à venir</h3>
+              <p className="text-gray-500 dark:text-gray-400 mt-2 mb-4">Le moment idéal pour organiser votre prochain match !</p>
               <Link
                 to="/dashboard/map"
                 className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-green-600 to-orange-500 hover:from-green-700 hover:to-orange-600"
@@ -131,15 +131,15 @@ const DashboardOverview: React.FC = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Actions rapides</h2>
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Actions rapides</h2>
           <div className="space-y-4">
-            <Link to="/dashboard/map" className="w-full flex items-center bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-              <PlusCircle className="mr-4 text-green-600" size={24} />
-              <span className="font-medium text-gray-800">Réserver un terrain proche</span>
+            <Link to="/dashboard/map" className="w-full flex items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100 dark:border-gray-700">
+              <PlusCircle className="mr-4 text-green-600 dark:text-green-500" size={24} />
+              <span className="font-medium text-gray-800 dark:text-gray-200">Réserver un terrain proche</span>
             </Link>
-            <Link to="/dashboard/profile" className="w-full flex items-center bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-              <User className="mr-4 text-blue-600" size={24} />
-              <span className="font-medium text-gray-800">Modifier mon Profil</span>
+            <Link to="/dashboard/profile" className="w-full flex items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100 dark:border-gray-700">
+              <User className="mr-4 text-blue-600 dark:text-blue-500" size={24} />
+              <span className="font-medium text-gray-800 dark:text-gray-200">Modifier mon Profil</span>
             </Link>
           </div>
         </div>
