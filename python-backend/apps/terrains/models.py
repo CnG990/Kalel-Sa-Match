@@ -87,15 +87,16 @@ class TerrainSynthetiquesDakar(TimeStampedSoftDeleteModel):
     )
     NOMBRE_JOUEURS_CHOICES = [
         ('5v5', '5 contre 5'),
+        ('6v6', '6 contre 6'),
         ('7v7', '7 contre 7'),
+        ('8v8', '8 contre 8'),
         ('9v9', '9 contre 9'),
         ('11v11', '11 contre 11'),
     ]
     nombre_joueurs = models.CharField(
-        max_length=10,
-        choices=NOMBRE_JOUEURS_CHOICES,
+        max_length=100,
         default='5v5',
-        help_text='Format de jeu'
+        help_text='Format(s) de jeu, ex: "5v5, 7v7"'
     )
     eclairage = models.BooleanField(default=False, help_text='Éclairage nocturne disponible')
     vestiaires = models.BooleanField(default=False, help_text='Vestiaires disponibles')
@@ -146,6 +147,69 @@ class Abonnement(TimeStampedSoftDeleteModel):
 
     class Meta:
         db_table = 'abonnements'
+
+
+class PlanAbonnement(TimeStampedSoftDeleteModel):
+    TYPE_CHOICES = [
+        ('mensuel', 'Mensuel'),
+        ('trimestriel', 'Trimestriel'),
+        ('annuel', 'Annuel'),
+    ]
+
+    terrain = models.ForeignKey(
+        TerrainSynthetiquesDakar,
+        on_delete=models.CASCADE,
+        related_name='plans_abonnement'
+    )
+    nom = models.CharField(max_length=255)
+    description = models.TextField(blank=True, default='')
+    type_abonnement = models.CharField(max_length=20, choices=TYPE_CHOICES, default='mensuel')
+    duree_jours = models.PositiveIntegerField(default=30)
+    prix = models.DecimalField(max_digits=10, decimal_places=2)
+    avantages = models.JSONField(default=list, blank=True)
+    actif = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'plan_abonnements'
+        ordering = ['terrain', 'type_abonnement', 'prix']
+
+    def __str__(self) -> str:  # pragma: no cover - repr helper
+        return f"{self.nom} - {self.terrain.nom}"
+
+
+class DemandeAbonnement(TimeStampedSoftDeleteModel):
+    STATUT_CHOICES = [
+        ('pending_manager', 'En attente gestionnaire'),
+        ('pending_payment', 'En attente paiement'),
+        ('active', 'Active'),
+        ('refused', 'Refusée'),
+        ('cancelled', 'Annulée'),
+    ]
+    MODE_PAIEMENT_CHOICES = [
+        ('integral', 'Paiement intégral'),
+        ('differe', 'Paiement différé'),
+        ('par_seance', 'Paiement par séance'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='demandes_abonnement')
+    terrain = models.ForeignKey(TerrainSynthetiquesDakar, on_delete=models.CASCADE, related_name='demandes_abonnement')
+    plan = models.ForeignKey(PlanAbonnement, on_delete=models.CASCADE, related_name='demandes')
+    mode_paiement = models.CharField(max_length=20, choices=MODE_PAIEMENT_CHOICES, default='integral')
+    nb_seances = models.PositiveIntegerField(default=1)
+    duree_seance = models.PositiveIntegerField(default=1)
+    jours_preferes = models.JSONField(default=list, blank=True)
+    creneaux_preferes = models.JSONField(default=list, blank=True)
+    prix_calcule = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='pending_manager')
+    disponibilite_confirmee = models.BooleanField(default=False)
+    notes_manager = models.TextField(blank=True, default='')
+
+    class Meta:
+        db_table = 'demandes_abonnement'
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:  # pragma: no cover - repr helper
+        return f"Demande {self.id} - {self.user} - {self.plan}"
 
 
 class Souscription(TimeStampedSoftDeleteModel):
@@ -218,6 +282,8 @@ class Notification(TimeStampedSoftDeleteModel):
 __all__ = [
     'TerrainSynthetiquesDakar',
     'Abonnement',
+    'PlanAbonnement',
+    'DemandeAbonnement',
     'Souscription',
     'TicketSupport',
     'ReponseTicket',

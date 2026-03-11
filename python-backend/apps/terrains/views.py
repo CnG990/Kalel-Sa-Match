@@ -5,7 +5,9 @@ from rest_framework.pagination import PageNumberPagination
 
 from .models import (
     Abonnement,
+    DemandeAbonnement,
     Notification,
+    PlanAbonnement,
     Souscription,
     TerrainSynthetiquesDakar,
     TicketSupport,
@@ -13,7 +15,9 @@ from .models import (
 )
 from .serializers import (
     AbonnementSerializer,
+    DemandeAbonnementSerializer,
     NotificationSerializer,
+    PlanAbonnementSerializer,
     SouscriptionSerializer,
     TerrainSerializer,
     TicketSupportSerializer,
@@ -214,6 +218,101 @@ class TerrainViewSet(BaseViewSet):
                 'query': query
             }
         })
+
+
+class PlanAbonnementViewSet(BaseViewSet):
+    serializer_class = PlanAbonnementSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = PlanAbonnement.objects.select_related('terrain')
+        terrain_id = self.request.query_params.get('terrain_id')
+        if terrain_id:
+            queryset = queryset.filter(terrain_id=terrain_id)
+
+        user = getattr(self.request, 'user', None)
+        user_role = getattr(user, 'role', None) if user and user.is_authenticated else None
+        if user_role not in ['admin', 'gestionnaire']:
+            queryset = queryset.filter(actif=True, terrain__est_actif=True)
+        return queryset
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny], url_path='public')
+    def public_plans(self, request):
+        queryset = PlanAbonnement.objects.select_related('terrain').filter(actif=True, terrain__est_actif=True)
+        terrain_id = request.query_params.get('terrain_id')
+        if terrain_id:
+            queryset = queryset.filter(terrain_id=terrain_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'data': serializer.data, 'meta': {'success': True, 'count': len(serializer.data)}})
+
+
+class DemandeAbonnementViewSet(BaseViewSet):
+    serializer_class = DemandeAbonnementSerializer
+
+    def get_queryset(self):
+        queryset = DemandeAbonnement.objects.select_related('terrain', 'plan', 'user', 'terrain__gestionnaire')
+        user = getattr(self.request, 'user', None)
+        if not user or not user.is_authenticated:
+            return DemandeAbonnement.objects.none()
+
+        role = getattr(user, 'role', None)
+        if role == 'client':
+            return queryset.filter(user=user)
+        if role == 'gestionnaire':
+            return queryset.filter(terrain__gestionnaire=user)
+        return queryset
+
+    def perform_create(self, serializer):
+        plan = serializer.validated_data['plan']
+        nb_seances = serializer.validated_data.get('nb_seances') or 1
+        prix_calcule = plan.prix * nb_seances
+        serializer.save(user=self.request.user, terrain=plan.terrain, prix_calcule=prix_calcule)
+
+    def _user_can_manage(self, user):
+        return bool(user and user.is_authenticated and getattr(user, 'role', None) in ['admin', 'gestionnaire'])
+
+    @action(detail=True, methods=['post'])
+    def confirmer_disponibilite(self, request, pk=None):
+        demande = self.get_object()
+        if not self._user_can_manage(request.user):
+            return Response({'meta': {'success': False, 'message': 'Accès refusé'}}, status=403)
+
+        disponibilite = request.data.get('disponibilite_confirmee', True)
+        notes = request.data.get('notes_manager')
+        demande.disponibilite_confirmee = bool(disponibilite)
+        if notes is not None:
+            demande.notes_manager = notes
+        if demande.disponibilite_confirmee and demande.statut == 'pending_manager':
+            demande.statut = 'pending_payment'
+        demande.save(update_fields=['disponibilite_confirmee', 'notes_manager', 'statut', 'updated_at'])
+        return Response({'data': DemandeAbonnementSerializer(demande).data, 'meta': {'success': True}})
+
+    @action(detail=True, methods=['post'], url_path='changer-statut')
+    def changer_statut(self, request, pk=None):
+        if not self._user_can_manage(request.user):
+            return Response({'meta': {'success': False, 'message': 'Accès refusé'}}, status=403)
+
+        nouveau_statut = request.data.get('statut')
+        choix_valides = dict(DemandeAbonnement.STATUT_CHOICES).keys()
+        if nouveau_statut not in dict(DemandeAbonnement.STATUT_CHOICES):
+            return Response({'meta': {'success': False, 'message': 'Statut invalide'}}, status=400)
+
+        demande = self.get_object()
+        demande.statut = nouveau_statut
+        notes = request.data.get('notes_manager')
+        if notes is not None:
+            demande.notes_manager = notes
+        demande.save(update_fields=['statut', 'notes_manager', 'updated_at'])
+        return Response({'data': DemandeAbonnementSerializer(demande).data, 'meta': {'success': True}})
+
+    @action(detail=True, methods=['post'])
+    def annuler(self, request, pk=None):
+        demande = self.get_object()
+        if demande.user != request.user:
+            return Response({'meta': {'success': False, 'message': 'Vous ne pouvez pas annuler cette demande'}}, status=403)
+        demande.statut = 'cancelled'
+        demande.save(update_fields=['statut', 'updated_at'])
+        return Response({'data': DemandeAbonnementSerializer(demande).data, 'meta': {'success': True}})
 
 
 class AbonnementViewSet(BaseViewSet):

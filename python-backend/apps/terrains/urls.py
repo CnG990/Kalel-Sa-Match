@@ -4,6 +4,8 @@ from .views import (
     TerrainViewSet,
     TicketSupportViewSet,
     AbonnementViewSet,
+    PlanAbonnementViewSet,
+    DemandeAbonnementViewSet,
     SouscriptionViewSet,
     PaiementViewSet,
     NotificationViewSet,
@@ -13,6 +15,8 @@ router = DefaultRouter()
 router.register(r'terrains', TerrainViewSet, basename='terrain')
 router.register(r'tickets', TicketSupportViewSet, basename='ticket')
 router.register(r'abonnements', AbonnementViewSet, basename='abonnement')
+router.register(r'plans', PlanAbonnementViewSet, basename='plan-abonnement')
+router.register(r'demandes-abonnement', DemandeAbonnementViewSet, basename='demande-abonnement')
 router.register(r'souscriptions', SouscriptionViewSet, basename='souscription')
 router.register(r'paiements', PaiementViewSet, basename='paiement')
 router.register(r'notifications', NotificationViewSet, basename='notification')
