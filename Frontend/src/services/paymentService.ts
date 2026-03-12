@@ -21,11 +21,10 @@ export interface PaymentDetails {
 
 // Service de paiement
 export const paymentService = {
-  // Traiter un paiement d'abonnement (init Wave/OM)
+  // Traiter un paiement d'abonnement (init Wave)
   async processSubscriptionPayment(
     subscriptionId: number,
     amount: number,
-    method: 'orange_money' | 'wave',
     customer_phone: string,
     customer_name: string,
   ): Promise<{ success: boolean; data?: InitPaymentResponseDTO | null; message?: string }> {
@@ -33,7 +32,7 @@ export const paymentService = {
       const { data, meta } = await apiService.initPayment({
         abonnement_id: subscriptionId,
         montant: amount,
-        methode: method === 'orange_money' ? 'orange_money' : 'wave',
+        methode: 'wave',
         customer_phone,
         customer_name,
       });
@@ -56,11 +55,10 @@ export const paymentService = {
     }
   },
 
-  // Traiter un paiement de réservation (init Wave/OM)
+  // Traiter un paiement de réservation (init Wave)
   async processReservationPayment(
     reservationId: number,
     amount: number,
-    method: 'orange_money' | 'wave',
     customer_phone: string,
     customer_name: string,
     payment_id?: number,
@@ -70,7 +68,7 @@ export const paymentService = {
         payment_id,
         reservation_id: reservationId,
         montant: payment_id ? undefined : amount,
-        methode: method === 'orange_money' ? 'orange_money' : 'wave',
+        methode: 'wave',
         customer_phone,
         customer_name,
       });

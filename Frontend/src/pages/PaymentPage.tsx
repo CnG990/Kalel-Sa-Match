@@ -87,7 +87,7 @@ const PaymentPage: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservationId]);
 
-  const handlePayment = async (method: 'orange_money' | 'wave') => {
+  const handlePayment = async (method: 'wave') => {
     if (processing) return;
 
     if (!canProceed) {
@@ -111,7 +111,6 @@ const PaymentPage: React.FC = () => {
         result = await paymentService.processSubscriptionPayment(
           paymentDetails.subscriptionId,
           amount,
-          method,
           customerPhone,
           customerName,
         );
@@ -120,7 +119,6 @@ const PaymentPage: React.FC = () => {
         result = await paymentService.processReservationPayment(
           paymentDetails.reservationId,
           amount,
-          method,
           customerPhone,
           customerName,
           paymentId,
@@ -141,9 +139,6 @@ const PaymentPage: React.FC = () => {
           // Ouvrir Wave dans un nouvel onglet (lien de paiement)
           window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
           toast.success('Lien Wave ouvert. Finalisez le paiement puis revenez ici.');
-          void pollReservationStatus();
-        } else if (method === 'orange_money') {
-          toast.success('Instructions Orange Money affichées.');
           void pollReservationStatus();
         } else {
           toast.success('Paiement initialisé.');
@@ -306,21 +301,9 @@ const PaymentPage: React.FC = () => {
         )}
 
         <div>
-          <h2 className="text-xl font-bold mb-4">Choisissez votre méthode de paiement</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Orange Money */}
-            <button 
-              onClick={() => handlePayment('orange_money')}
-              disabled={processing}
-              className="flex flex-col items-center justify-center p-6 border-2 rounded-lg hover:border-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <img src="/orange-money.png" alt="Orange Money" className="h-16 mb-4" />
-              <span className="font-semibold">
-                {processing ? 'Traitement...' : 'Payer avec Orange Money'}
-              </span>
-            </button>
-
-            {/* Wave */}
+          <h2 className="text-xl font-bold mb-4">Méthode de paiement</h2>
+          <div className="grid grid-cols-1 gap-6">
+            {/* Wave uniquement */}
             <button 
               onClick={() => handlePayment('wave')}
               disabled={processing}
@@ -338,4 +321,4 @@ const PaymentPage: React.FC = () => {
   );
 };
 
-export default PaymentPage; 
+export default PaymentPage;
