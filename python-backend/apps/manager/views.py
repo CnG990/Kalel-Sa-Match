@@ -200,10 +200,10 @@ class ManagerStatsViewSet(viewsets.GenericViewSet):
             'montant': float(r.montant_total)
         } for r in prochaines]
         
-        # Réservations en attente de validation
+        # Réservations en attente de paiement
         reservations_en_attente = Reservation.objects.filter(
             terrain__in=terrains,
-            statut='en_attente_validation',
+            statut='en_attente',
             deleted_at__isnull=True
         ).count()
         
@@ -213,7 +213,7 @@ class ManagerStatsViewSet(viewsets.GenericViewSet):
             'reservations_mois': reservations_mois,
             'revenus_mois': float(revenus_mensuel),
             'clients_count': clients_count,
-            'reservations_en_attente_validation': reservations_en_attente,
+            'reservations_en_attente': reservations_en_attente,
             'prochaines_reservations': prochaines_data,
         }
         return Response({'data': stats, 'meta': {'success': True}})
@@ -346,7 +346,8 @@ class ManagerValidationViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=['get'])
     def pending(self, request):
-        queryset = self.get_queryset().filter(statut='en_attente_validation').order_by('date_debut')
+        # Plus de réservations en attente de validation
+        queryset = self.get_queryset().filter(statut='en_attente').order_by('date_debut')
         serializer = self.get_serializer(queryset, many=True)
         return Response({'data': serializer.data, 'meta': {'success': True}})
 
@@ -356,19 +357,8 @@ class ManagerValidationViewSet(viewsets.GenericViewSet):
         if reservation is None:
             return Response({'data': None, 'meta': {'success': False, 'message': 'Réservation introuvable'}}, status=status.HTTP_404_NOT_FOUND)
 
-        if reservation.statut != 'en_attente_validation':
-            return Response({'data': None, 'meta': {'success': False, 'message': 'Cette réservation a déjà été traitée'}}, status=status.HTTP_400_BAD_REQUEST)
-
-        notes = request.data.get('notes', '').strip()
-        reservation.statut = 'en_attente'
-        reservation.valide_par = request.user
-        reservation.date_validation = timezone.now()
-        reservation.validation_notes = notes
-        reservation.save()
-
-        notify_reservation_validation_client(reservation.user, reservation)
-        serializer = self.get_serializer(reservation)
-        return Response({'data': serializer.data, 'meta': {'success': True, 'message': 'Réservation approuvée - acompte autorisé'}})
+        # Plus besoin d'approuver - les réservations sont directement en attente de paiement
+        return Response({'data': None, 'meta': {'success': False, 'message': 'Les réservations n\'ont plus besoin d\'approbation du gestionnaire'}}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
@@ -376,7 +366,7 @@ class ManagerValidationViewSet(viewsets.GenericViewSet):
         if reservation is None:
             return Response({'data': None, 'meta': {'success': False, 'message': 'Réservation introuvable'}}, status=status.HTTP_404_NOT_FOUND)
 
-        if reservation.statut not in ['en_attente_validation', 'en_attente']:
+        if reservation.statut not in ['en_attente']:
             return Response({'data': None, 'meta': {'success': False, 'message': 'Cette réservation ne peut pas être refusée'}}, status=status.HTTP_400_BAD_REQUEST)
 
         motif = request.data.get('motif', '').strip() or 'Réservation refusée par le gestionnaire'

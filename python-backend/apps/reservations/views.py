@@ -92,7 +92,7 @@ def create_reservation(request):
         montant_restant=montant_restant,  # Toujours défini pour nouvelles réservations
         telephone=telephone,
         notes=notes,
-        statut='en_attente_validation'
+        statut='en_attente'
     )
     
     # Générer le QR code token et code ticket
@@ -296,7 +296,7 @@ def terrain_disponibilites(request, terrain_id):
         # Récupérer les réservations existantes (exclu les soft-deleted)
         reservations = Reservation.objects.filter(
             terrain=terrain,
-            statut__in=['confirmee', 'en_cours', 'en_attente_validation', 'acompte_paye'],
+            statut__in=['confirmee', 'en_cours', 'en_attente', 'acompte_paye'],
             date_debut__lt=date_fin,
             date_fin__gt=date_debut,
             deleted_at__isnull=True

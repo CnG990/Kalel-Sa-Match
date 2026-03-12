@@ -74,11 +74,6 @@ def init_payment(request):
             return api_error("Vous ne pouvez pas initier ce paiement", status.HTTP_403_FORBIDDEN)
 
     if reservation:
-        if reservation.statut == 'en_attente_validation':
-            return api_error(
-                "Cette réservation est encore en attente de validation du gestionnaire",
-                status.HTTP_400_BAD_REQUEST
-            )
         if reservation.statut == 'refusee':
             return api_error("Cette réservation a été refusée", status.HTTP_400_BAD_REQUEST)
         if reservation.statut == 'annulee':
