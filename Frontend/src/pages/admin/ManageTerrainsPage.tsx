@@ -179,8 +179,8 @@ const ManageTerrainsPageSimple: React.FC = () => {
               </h2>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto hidden md:block">
+              <table className="min-w-full divide-y divide-gray-200 table-auto">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -331,6 +331,111 @@ const ManageTerrainsPageSimple: React.FC = () => {
                 <div className="text-center py-12">
                   <p className="text-gray-500">Aucun terrain trouvé</p>
                 </div>
+              )}
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden p-4 space-y-4">
+              {terrains.map((terrain) => (
+                <div key={terrain.id} className="border border-gray-200 rounded-xl p-4 shadow-sm bg-white">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-base font-semibold text-gray-900">{terrain.nom}</div>
+                      {terrain.description && (
+                        <div className="text-sm text-gray-500 mt-0.5 line-clamp-2">{terrain.description}</div>
+                      )}
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                        <MapPin className="w-4 h-4 text-orange-500" />
+                        <span className="line-clamp-1">{terrain.adresse}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={togglingId === terrain.id}
+                      onClick={() => toggleDisponibilite(terrain)}
+                      className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                        terrain.est_actif
+                          ? 'border-red-200 text-red-600 bg-red-50'
+                          : 'border-green-200 text-green-600 bg-green-50'
+                      } disabled:opacity-50`}
+                    >
+                      {terrain.est_actif ? 'Désactiver' : 'Activer'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-gray-700 mt-3">
+                    <span className="inline-block px-2 py-1 rounded bg-green-50 text-green-700 font-medium">
+                      {(terrain.type_surface || 'gazon_synthetique').replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-gray-500">{terrain.nombre_joueurs || '5v5'}</span>
+                    {terrain.longueur && terrain.largeur && (
+                      <span className="text-gray-400">{terrain.longueur}×{terrain.largeur}m</span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 mt-2 text-lg">
+                    {terrain.eclairage && <span title="Éclairage">💡</span>}
+                    {terrain.vestiaires && <span title="Vestiaires">🚪</span>}
+                    {terrain.parking && <span title="Parking">🅿️</span>}
+                    {terrain.douches && <span title="Douches">🚿</span>}
+                    {terrain.buvette && <span title="Buvette">🥤</span>}
+                    {!terrain.eclairage && !terrain.vestiaires && !terrain.parking && !terrain.douches && !terrain.buvette && (
+                      <span className="text-gray-400 text-xs">—</span>
+                    )}
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-sm text-gray-900">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs uppercase text-gray-500">Gestionnaire</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTerrain(terrain);
+                          setShowAssignModal(true);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border border-purple-200 text-purple-600 hover:bg-purple-50"
+                      >
+                        <Users className="w-3 h-3" />
+                        {terrain.gestionnaire ? 'Changer' : 'Attribuer'}
+                      </button>
+                    </div>
+                    {terrain.gestionnaire ? (
+                      <div>
+                        <div className="font-medium">{terrain.gestionnaire.prenom} {terrain.gestionnaire.nom}</div>
+                        <div className="text-gray-500 text-xs">{terrain.gestionnaire.email}</div>
+                      </div>
+                    ) : (
+                      <div className="text-gray-400 text-xs">Non attribué</div>
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedTerrain(terrain);
+                        setShowEditModal(true);
+                      }}
+                      className="flex-1 min-w-[120px] inline-flex justify-center items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                      title="Modifier ce terrain"
+                    >
+                      Éditer
+                    </button>
+                    <button
+                      type="button"
+                      disabled={deletingId === terrain.id}
+                      onClick={() => deleteTerrain(terrain)}
+                      className="flex-1 min-w-[120px] inline-flex justify-center items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                      title="Supprimer ce terrain définitivement"
+                    >
+                      {deletingId === terrain.id ? 'Suppression...' : 'Supprimer'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {terrains.length === 0 && (
+                <div className="text-center py-8 text-sm text-gray-500">Aucun terrain trouvé</div>
               )}
             </div>
           </div>

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.accounts.serializers import UserSerializer
 from .models import (
     Abonnement,
     Notification,
@@ -13,12 +14,17 @@ from .models import (
 
 
 class TerrainSerializer(serializers.ModelSerializer):
+    # Autoriser plusieurs formats de jeu (ex: "5v5, 7v7") sans appliquer les choices strictes
+    nombre_joueurs = serializers.CharField(required=False, allow_blank=True)
+    gestionnaire = UserSerializer(read_only=True)
+
     class Meta:
         model = TerrainSynthetiquesDakar
         fields = [
             'id', 'nom', 'description', 'adresse', 'latitude', 'longitude',
             'image_principale', 'images_supplementaires', 'est_actif',
             'prix_heure', 'capacite', 'gestionnaire_id',
+            'gestionnaire',
             'type_surface', 'longueur', 'largeur', 'nombre_joueurs',
             'eclairage', 'vestiaires', 'parking', 'douches', 'buvette',
             'telephone', 'ville', 'quartier',

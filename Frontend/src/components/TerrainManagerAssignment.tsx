@@ -92,9 +92,7 @@ const TerrainManagerAssignment: React.FC<Props> = ({ isOpen, onClose, onSuccess,
 
     setIsSubmitting(true);
     try {
-      const { data, meta } = await apiService.updateTerrain(selectedTerrain.id, {
-        gestionnaire_id: selectedManagerId
-      });
+      const { data, meta } = await apiService.updateTerrainManagers(selectedTerrain.id, selectedManagerId);
 
       if (data) {
         toast.success('Gestionnaire attribué avec succès !');
@@ -116,9 +114,7 @@ const TerrainManagerAssignment: React.FC<Props> = ({ isOpen, onClose, onSuccess,
 
     setIsSubmitting(true);
     try {
-      const { data, meta } = await apiService.updateTerrain(selectedTerrain.id, {
-        gestionnaire_id: null
-      });
+      const { data, meta } = await apiService.updateTerrainManagers(selectedTerrain.id, null);
 
       if (data) {
         toast.success('Gestionnaire retiré du terrain');

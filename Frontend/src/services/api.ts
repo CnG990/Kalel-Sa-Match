@@ -1147,6 +1147,15 @@ class ApiService {
     });
   }
 
+  updateAdminTerrain(terrainId: number, terrainData: Record<string, unknown>) {
+    const url = `${API_ROOT}/admin/terrains/${terrainId}/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify(terrainData),
+    });
+  }
+
   // Admin - User Management -----------------------------------
   getUser(userId: number) {
     const url = `${API_ROOT}/admin/users/${userId}/`;
