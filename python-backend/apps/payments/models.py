@@ -14,6 +14,7 @@ class Payment(TimeStampedSoftDeleteModel):
     
     METHODE_CHOICES = [
         ('wave', 'Wave'),
+        ('orange_money', 'Orange Money'),
         ('especes', 'Espèces'),
         ('carte', 'Carte bancaire'),
         ('en_attente', 'Méthode non choisie'),
@@ -66,3 +67,13 @@ class WavePayment(TimeStampedSoftDeleteModel):
         db_table = 'wave_payments'
 
 
+class OrangeMoneyPayment(TimeStampedSoftDeleteModel):
+    """Paiements spécifiques à Orange Money"""
+    payment = models.OneToOneField(Payment, on_delete=models.CASCADE, related_name='orange_payment')
+    transaction_id = models.CharField(max_length=255, unique=True)
+    otp = models.CharField(max_length=10, blank=True)
+    customer_phone = models.CharField(max_length=20)
+    customer_name = models.CharField(max_length=255)
+    
+    class Meta:
+        db_table = 'orange_money_payments'

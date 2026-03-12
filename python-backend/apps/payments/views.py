@@ -10,8 +10,8 @@ from rest_framework.pagination import PageNumberPagination
 
 from apps.core.utils.api_response import api_success, api_error, api_paginated
 from apps.reservations.models import Reservation
-from .models import Payment, WavePayment
-from .serializers import PaymentSerializer, WavePaymentSerializer, InitPaymentSerializer
+from .models import Payment, WavePayment, OrangeMoneyPayment
+from .serializers import PaymentSerializer, WavePaymentSerializer, OrangeMoneyPaymentSerializer, InitPaymentSerializer
 
 
 class PaymentPagination(PageNumberPagination):
@@ -50,12 +50,6 @@ def init_payment(request):
     customer_phone = serializer.validated_data['customer_phone']
     customer_name = serializer.validated_data['customer_name']
     reservation = None
-
-    if methode != 'wave':
-        return api_error(
-            "Seule la méthode Wave est disponible pour le moment",
-            status.HTTP_400_BAD_REQUEST
-        )
 
     # Récupérer la réservation liée si fournie (ou via payment_id)
     if reservation_id:
@@ -114,37 +108,79 @@ def init_payment(request):
             customer_name=customer_name
         )
     
-    # Créer le paiement Wave
-    wave_payment = WavePayment.objects.create(
-        payment=payment,
-        customer_phone=customer_phone,
-        customer_name=customer_name
-    )
+    # Créer le paiement spécifique selon la méthode
+    if methode == 'wave':
+        wave_payment = WavePayment.objects.create(
+            payment=payment,
+            customer_phone=customer_phone,
+            customer_name=customer_name
+        )
+        
+        # Wave Business Link - Ch Tech Business
+        # Lien par défaut de l'admin, peut être remplacé par celui du gestionnaire
+        wave_business_link = "https://pay.wave.com/m/M_sn_OnnKDQNjnuxG/c/sn/"
+        
+        # Si la réservation a un terrain avec un gestionnaire qui a son propre lien Wave
+        reservation_id = serializer.validated_data.get('reservation_id')
+        if reservation_id:
+            try:
+                reservation = Reservation.objects.get(id=reservation_id)
+                gestionnaire = reservation.terrain.gestionnaire
+                if gestionnaire and gestionnaire.wave_payment_link:
+                    wave_business_link = gestionnaire.wave_payment_link
+            except Reservation.DoesNotExist:
+                pass
+        
+        # Format Wave: ajouter montant et référence en paramètres
+        checkout_url = f"{wave_business_link}?amount={montant}&ref={payment.reference}"
+        wave_payment.checkout_url = checkout_url
+        wave_payment.save()
+        
+        return api_success(
+            data={
+                'payment_id': payment.id,
+                'reference': payment.reference,
+                'checkout_url': wave_payment.checkout_url,
+                'montant': float(montant),
+                'methode': 'wave'
+            },
+            message="Paiement Wave initialisé - Veuillez payer via le lien"
+        )
     
-    wave_business_link = "https://pay.wave.com/m/M_sn_OnnKDQNjnuxG/c/sn/"
-    reservation_id = serializer.validated_data.get('reservation_id')
-    if reservation_id:
-        try:
-            reservation = Reservation.objects.get(id=reservation_id)
-            gestionnaire = reservation.terrain.gestionnaire
-            if gestionnaire and gestionnaire.wave_payment_link:
-                wave_business_link = gestionnaire.wave_payment_link
-        except Reservation.DoesNotExist:
-            pass
-    
-    checkout_url = f"{wave_business_link}?amount={montant}&ref={payment.reference}"
-    wave_payment.checkout_url = checkout_url
-    wave_payment.save()
+    elif methode == 'orange_money':
+        orange_payment = OrangeMoneyPayment.objects.create(
+            payment=payment,
+            customer_phone=customer_phone,
+            customer_name=customer_name
+        )
+        
+        # Orange Money - Format Sénégal: #144#montant#
+        # Génération transaction ID unique
+        import time
+        orange_payment.transaction_id = f"OM{int(time.time())}{payment.id}"
+        orange_payment.save()
+        
+        # Instructions pour le client
+        instructions = f"Composez *144*montant# sur votre téléphone Orange Money"
+        ussd_code = f"*144*{int(montant)}#"
+        
+        return api_success(
+            data={
+                'payment_id': payment.id,
+                'reference': payment.reference,
+                'transaction_id': orange_payment.transaction_id,
+                'montant': float(montant),
+                'methode': 'orange_money',
+                'ussd_code': ussd_code,
+                'instructions': instructions,
+                'numero_marchand': '+221 XX XXX XX XX'  # À remplacer par le vrai numéro
+            },
+            message="Paiement Orange Money initialisé - Suivez les instructions"
+        )
     
     return api_success(
-        data={
-            'payment_id': payment.id,
-            'reference': payment.reference,
-            'checkout_url': wave_payment.checkout_url,
-            'montant': float(montant),
-            'methode': 'wave'
-        },
-        message="Paiement Wave initialisé - Veuillez payer via le lien"
+        data={'payment_id': payment.id, 'reference': payment.reference},
+        message="Paiement initialisé"
     )
 
 

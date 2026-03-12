@@ -9,9 +9,7 @@ urlpatterns = [
     path('<int:reservation_id>/cancel/', views.cancel_reservation, name='cancel_reservation'),
     path('<int:reservation_id>/pay-balance/', pay_balance, name='pay_balance'),
     path('<int:reservation_id>/payment-status/', reservation_payment_status, name='payment_status'),
-    path('validate-qr-code/', views.validate_qr_code, name='validate-qr-code'),
-    path('tickets/', views.my_tickets, name='my-tickets'),
-    path('<int:reservation_id>/ticket/', views.reservation_ticket, name='reservation-ticket'),
+    path('validate-qr/', views.validate_qr_code, name='validate_qr_code'),
     path('check/', views.check_disponibilite, name='check_disponibilite'),
     path('<int:terrain_id>/disponibilites/', views.terrain_disponibilites, name='terrain_disponibilites'),
 ]

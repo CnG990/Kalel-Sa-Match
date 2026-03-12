@@ -189,64 +189,6 @@ class AdminPaymentViewSet(BaseViewSet):
         data = Analytics.get_payment_methods_breakdown()
         return Response({'data': data, 'meta': {'success': True}})
 
-    @action(detail=False, methods=['post'], url_path='confirm')
-    def confirm_payment(self, request):
-        """Confirmer manuellement un paiement et mettre à jour la réservation liée"""
-        if getattr(request.user, 'role', None) != 'admin':
-            return Response({'data': None, 'meta': {'success': False, 'message': 'Accès refusé'}}, status=403)
-
-        payment_id = request.data.get('payment_id')
-        transaction_id = request.data.get('transaction_id') or ''
-        if not payment_id:
-            return Response({'data': None, 'meta': {'success': False, 'message': 'payment_id requis'}}, status=400)
-
-        try:
-            payment = Payment.objects.get(id=payment_id)
-        except Payment.DoesNotExist:
-            return Response({'data': None, 'meta': {'success': False, 'message': 'Paiement introuvable'}}, status=404)
-
-        # Marquer le paiement comme réussi
-        payment.statut = 'reussi'
-        if transaction_id:
-            payment.transaction_id = transaction_id
-
-        reservation = None
-        # Paiement d'acompte
-        if hasattr(payment, 'reservation_acompte'):
-            reservation = payment.reservation_acompte.first()
-            if reservation:
-                reservation.acompte_paye = True
-                if reservation.montant_restant == 0 or payment.payment_type == 'total':
-                    reservation.solde_paye = True
-                    reservation.statut = 'confirmee'
-                else:
-                    reservation.statut = 'acompte_paye'
-                reservation.save()
-
-        # Paiement de solde
-        if reservation is None and hasattr(payment, 'reservation_solde'):
-            reservation = payment.reservation_solde.first()
-            if reservation:
-                reservation.solde_paye = True
-                reservation.statut = 'confirmee'
-                reservation.save()
-
-        # Paiement legacy unique
-        if reservation is None and hasattr(payment, 'reservation_legacy') and payment.reservation_legacy:
-            reservation = payment.reservation_legacy
-            reservation.statut = 'confirmee'
-            reservation.save()
-
-        payment.save()
-
-        message = 'Paiement confirmé. '
-        if reservation:
-            message += f"Réservation {reservation.id} mise à jour."
-        else:
-            message += "Aucune réservation liée trouvée."
-
-        return Response({'data': PaymentSerializer(payment).data, 'meta': {'success': True, 'message': message}})
-
 
 class AdminReservationViewSet(BaseViewSet):
     serializer_class = AdminReservationSerializer

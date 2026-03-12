@@ -13,6 +13,7 @@ class PaymentConfig(TimeStampedSoftDeleteModel):
     
     PAYMENT_METHOD_CHOICES = [
         ('wave', 'Wave Business'),
+        ('orange_money', 'Orange Money'),
     ]
     
     methode = models.CharField(
@@ -27,6 +28,7 @@ class PaymentConfig(TimeStampedSoftDeleteModel):
         help_text='Activer/désactiver cette méthode de paiement'
     )
     
+    # Wave Business
     wave_payment_link = models.URLField(
         null=True,
         blank=True,
@@ -44,6 +46,21 @@ class PaymentConfig(TimeStampedSoftDeleteModel):
         null=True,
         blank=True,
         help_text='ID marchand Wave (ex: M_sn_OnnKDQNjnuxG)'
+    )
+    
+    # Orange Money
+    orange_merchant_number = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text='Numéro marchand Orange Money principal (ex: 77 123 45 67)'
+    )
+    orange_merchant_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        default='Kalel Sa Match',
+        help_text='Nom du compte marchand Orange Money'
     )
     
     # Paramètres communs
@@ -85,6 +102,8 @@ class PaymentConfig(TimeStampedSoftDeleteModel):
         """Nom affiché sur le frontend"""
         if self.methode == 'wave':
             return self.wave_merchant_name or 'Wave Business'
+        elif self.methode == 'orange_money':
+            return self.orange_merchant_name or 'Orange Money'
         return self.get_methode_display()
     
     @property
@@ -92,6 +111,8 @@ class PaymentConfig(TimeStampedSoftDeleteModel):
         """Identifiant de paiement (lien Wave ou numéro Orange)"""
         if self.methode == 'wave':
             return self.wave_payment_link
+        elif self.methode == 'orange_money':
+            return self.orange_merchant_number
         return None
     
     @classmethod
@@ -107,6 +128,14 @@ class PaymentConfig(TimeStampedSoftDeleteModel):
         except cls.DoesNotExist:
             return None
     
+    @classmethod
+    def get_orange_config(cls):
+        """Récupère la configuration Orange Money active"""
+        try:
+            return cls.objects.get(methode='orange_money', est_actif=True, deleted_at__isnull=True)
+        except cls.DoesNotExist:
+            return None
+
 
 class PaymentStats(models.Model):
     """Statistiques temps réel des paiements (cache)"""
@@ -117,6 +146,11 @@ class PaymentStats(models.Model):
     wave_count = models.IntegerField(default=0)
     wave_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     wave_success_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
+    # Orange Money
+    orange_count = models.IntegerField(default=0)
+    orange_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    orange_success_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     
     # Global
     total_count = models.IntegerField(default=0)

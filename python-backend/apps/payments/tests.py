@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from .models import Payment, WavePayment
+from .models import Payment, WavePayment, OrangeMoneyPayment
 
 User = get_user_model()
 

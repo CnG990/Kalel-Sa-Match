@@ -11,7 +11,7 @@ from apps.notifications.firebase_service import notify_new_reservation_manager
 from apps.terrains.models import TerrainSynthetiquesDakar
 from .models import Reservation, Disponibilite, CreneauReservation
 from .serializers import (
-    ReservationSerializer,
+    ReservationSerializer, 
     CreateReservationSerializer,
     CheckDisponibiliteSerializer,
     CreneauReservationSerializer,
@@ -35,36 +35,6 @@ class ReservationPagination(PageNumberPagination):
                 'previous': self.get_previous_link(),
             }
         )
-
-
-def _serialize_ticket(reservation: Reservation) -> dict:
-    """Préparer les informations d'accès pour un ticket basé sur le code."""
-    expire_at = None
-    if reservation.date_fin:
-        expire_at = reservation.date_fin + timedelta(hours=2)
-
-    return {
-        'reservation_id': reservation.id,
-        'code_ticket': reservation.code_ticket or f"RES-{reservation.id:06d}",
-        'statut': reservation.statut,
-        'is_used': bool(reservation.derniere_validation),
-        'used_at': reservation.derniere_validation.isoformat() if reservation.derniere_validation else None,
-        'expire_at': expire_at.isoformat() if expire_at else None,
-        'terrain': {
-            'id': reservation.terrain.id,
-            'nom': reservation.terrain.nom,
-            'adresse': reservation.terrain.adresse,
-        },
-        'reservation': {
-            'date_debut': reservation.date_debut,
-            'date_fin': reservation.date_fin,
-            'montant_total': reservation.montant_total,
-        },
-        'access_instructions': [
-            "Présentez ce code au gestionnaire du terrain pour valider votre entrée.",
-            "Arrivez 10 minutes avant le début de votre créneau.",
-        ],
-    }
 
 
 @api_view(['POST'])
@@ -191,45 +161,6 @@ def reservation_detail(request, reservation_id):
         )
     except Reservation.DoesNotExist:
         return api_error("Réservation non trouvée", status.HTTP_404_NOT_FOUND)
-
-
-@api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
-def my_tickets(request):
-    """Retourner la liste des tickets (codes) pour les réservations confirmées de l'utilisateur."""
-    reservations = (
-        Reservation.objects
-        .select_related('terrain')
-        .filter(
-            user=request.user,
-            statut__in=['confirmee', 'en_cours', 'terminee']
-        )
-        .order_by('-date_debut')
-    )
-
-    data = [_serialize_ticket(reservation) for reservation in reservations]
-    return api_success(data=data)
-
-
-@api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
-def reservation_ticket(request, reservation_id):
-    """Retourner le code de ticket détaillé pour une réservation donnée."""
-    try:
-        reservation = Reservation.objects.select_related('terrain').get(
-            id=reservation_id,
-            user=request.user
-        )
-    except Reservation.DoesNotExist:
-        return api_error("Réservation non trouvée", status.HTTP_404_NOT_FOUND)
-
-    if reservation.statut not in ['confirmee', 'en_cours', 'terminee']:
-        return api_error(
-            "Le ticket sera disponible après confirmation du paiement",
-            status.HTTP_400_BAD_REQUEST
-        )
-
-    return api_success(data=_serialize_ticket(reservation))
 
 
 @api_view(['DELETE'])

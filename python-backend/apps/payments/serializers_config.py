@@ -19,6 +19,8 @@ class PaymentConfigSerializer(serializers.ModelSerializer):
             'wave_payment_link',
             'wave_merchant_name',
             'wave_merchant_id',
+            'orange_merchant_number',
+            'orange_merchant_name',
             'commission_pourcentage',
             'instructions',
             'logo_url',
@@ -36,6 +38,17 @@ class PaymentConfigSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Le lien Wave doit être un lien pay.wave.com valide")
         return value
     
+    def validate_orange_merchant_number(self, value):
+        """Valider le format du numéro Orange Money"""
+        if value:
+            # Nettoyer les espaces
+            cleaned = value.replace(' ', '').replace('-', '')
+            if not cleaned.isdigit():
+                raise serializers.ValidationError("Le numéro doit contenir uniquement des chiffres")
+            if len(cleaned) < 9 or len(cleaned) > 12:
+                raise serializers.ValidationError("Numéro invalide (9-12 chiffres attendus)")
+        return value
+
 
 class PaymentStatsSerializer(serializers.ModelSerializer):
     class Meta:
