@@ -202,17 +202,30 @@ const MapPageOptimized: React.FC = () => {
         maxWidth: '320px'
       }).setDOMContent(popupNode);
 
-      // Couleur du marqueur selon le statut
-      let markerColor = '#16a34a'; // Vert par défaut (ouvert)
-      
-      // Vérifier si le terrain est inactif (fermé)
+      // Marqueur personnalisé (icône football) au lieu d'un point vert
+      const markerEl = document.createElement('div');
+      markerEl.style.width = '32px';
+      markerEl.style.height = '32px';
+      markerEl.style.borderRadius = '50%';
+      markerEl.style.display = 'flex';
+      markerEl.style.alignItems = 'center';
+      markerEl.style.justifyContent = 'center';
+      markerEl.style.fontSize = '18px';
+      markerEl.style.fontWeight = 'bold';
+      markerEl.style.boxShadow = '0 6px 12px rgba(0,0,0,0.15)';
+      markerEl.style.border = '2px solid white';
+      markerEl.textContent = '⚽';
+
+      // Couleurs selon statut
       if (!terrain.est_actif || !terrain.est_disponible) {
-        markerColor = '#dc2626'; // Rouge pour terrain fermé/inactif
+        markerEl.style.background = '#dc2626';
       } else if (isReserved) {
-        markerColor = '#8b5cf6'; // Violet pour réservé
+        markerEl.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+      } else {
+        markerEl.style.background = 'linear-gradient(135deg, #16a34a, #22c55e)';
       }
 
-      const marker = new mapboxgl.Marker({ color: markerColor })
+      const marker = new mapboxgl.Marker({ element: markerEl, anchor: 'bottom' })
         .setLngLat([terrain.longitude, terrain.latitude])
         .setPopup(popup)
         .addTo(mapInstance);

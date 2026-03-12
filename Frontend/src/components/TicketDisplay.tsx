@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, MapPin, Clock, Calendar, CheckCircle, AlertCircle, Download, Share, RefreshCw } from 'lucide-react';
+import { MapPin, Clock, Calendar, CheckCircle, AlertCircle, Download, Share, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import apiService from '../services/api';
@@ -7,16 +7,22 @@ import { toast } from 'react-hot-toast';
 
 interface TicketData {
   reservation_id: number;
-  qr_code_url: string | null;
-  qr_code_token: string;
   code_ticket: string;
-  terrain_nom: string;
-  terrain_adresse: string;
-  date_debut: string;
-  date_fin: string;
-  montant_total: number;
   statut: string;
-  instructions: string[];
+  is_used: boolean;
+  used_at: string | null;
+  expire_at: string | null;
+  terrain: {
+    id: number;
+    nom: string;
+    adresse: string;
+  };
+  reservation: {
+    date_debut: string;
+    date_fin: string;
+    montant_total: number;
+  };
+  access_instructions: string[];
 }
 
 interface TicketDisplayProps {
@@ -79,18 +85,34 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
   };
 
   const downloadTicket = () => {
-    if (!ticket || !ticket.qr_code_url) {
-      toast.error('QR code non disponible');
+    if (!ticket) {
+      toast.error('Ticket non disponible');
       return;
     }
 
-    // Créer un lien de téléchargement
+    // Créer un contenu texte avec les informations du ticket
+    const ticketContent = `
+Ticket de Réservation - ${ticket.terrain.nom}
+=====================================
+Code du ticket: ${ticket.code_ticket}
+Terrain: ${ticket.terrain.adresse}
+Date: ${new Date(ticket.reservation.date_debut).toLocaleDateString('fr-FR')}
+Heure: ${new Date(ticket.reservation.date_debut).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})} - ${new Date(ticket.reservation.date_fin).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}
+Montant: ${ticket.reservation.montant_total} FCFA
+
+Instructions:
+${ticket.access_instructions.join('\n')}
+    `.trim();
+
+    // Créer un blob et télécharger
+    const blob = new Blob([ticketContent], { type: 'text/plain' });
     const link = document.createElement('a');
-    link.href = ticket.qr_code_url;
-    link.download = `ticket-${ticket.code_ticket}.png`;
+    link.href = URL.createObjectURL(blob);
+    link.download = `ticket-${ticket.code_ticket}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
     
     toast.success('Ticket téléchargé !');
   };
@@ -99,18 +121,16 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
     if (!ticket) return;
 
     const shareData = {
-      title: `Ticket - ${ticket.terrain_nom}`,
-      text: `Ma réservation ${ticket.code_ticket} pour ${ticket.terrain_nom}`,
-      url: window.location.href
+      title: `Ticket - ${ticket.terrain.nom}`,
+      text: `Ma réservation ${ticket.code_ticket} pour ${ticket.terrain.nom} - Code: ${ticket.code_ticket}`,
     };
 
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        // Fallback pour les navigateurs qui ne supportent pas Web Share API
-        await navigator.clipboard.writeText(`${shareData.text} - ${shareData.url}`);
-        toast.success('Lien copié dans le presse-papier !');
+        await navigator.clipboard.writeText(`${shareData.text}`);
+        toast.success('Code du ticket copié dans le presse-papier !');
       }
     } catch (error) {
       console.error('Erreur partage:', error);
@@ -212,33 +232,19 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
               
               <div className="text-center">
                 <div className="text-2xl font-bold mb-1">{ticket.code_ticket}</div>
-                <div className="text-indigo-100">{ticket.terrain_nom}</div>
+                <div className="text-indigo-100">{ticket.terrain.nom}</div>
               </div>
             </div>
 
-            {/* QR Code */}
+            {/* Code du ticket */}
             <div className="p-6 bg-gray-50 text-center">
-              {ticket.qr_code_url ? (
-                <div className="bg-white inline-block p-4 rounded-lg shadow-sm border">
-                  <img 
-                    src={ticket.qr_code_url} 
-                    alt="QR Code" 
-                    className="w-48 h-48 mx-auto"
-                    onError={(e) => {
-                      console.error('Erreur chargement QR code');
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className="bg-white inline-block p-8 rounded-lg shadow-sm border">
-                  <QrCode className="w-32 h-32 text-gray-400 mx-auto" />
-                  <p className="text-gray-500 mt-2">QR Code en cours de génération...</p>
-                </div>
-              )}
+              <div className="bg-white inline-block p-8 rounded-lg shadow-sm border">
+                <div className="text-6xl font-bold text-indigo-600 mb-2">{ticket.code_ticket}</div>
+                <p className="text-gray-600">Code du ticket</p>
+              </div>
               
               <p className="text-sm text-gray-600 mt-3">
-                Présentez ce QR code au gestionnaire du terrain
+                Présentez ce code au gestionnaire du terrain
               </p>
             </div>
 
@@ -248,8 +254,8 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                   <div>
-                    <div className="font-medium text-gray-900">{ticket.terrain_nom}</div>
-                    <div className="text-sm text-gray-600">{ticket.terrain_adresse}</div>
+                    <div className="font-medium text-gray-900">{ticket.terrain.nom}</div>
+                    <div className="text-sm text-gray-600">{ticket.terrain.adresse}</div>
                   </div>
                 </div>
 
@@ -257,11 +263,11 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
                   <Calendar className="w-5 h-5 text-gray-400" />
                   <div>
                     <div className="font-medium text-gray-900">
-                      {format(new Date(ticket.date_debut), 'EEEE dd MMMM yyyy', { locale: fr })}
+                      {format(new Date(ticket.reservation.date_debut), 'EEEE dd MMMM yyyy', { locale: fr })}
                     </div>
                     <div className="text-sm text-gray-600">
-                      {format(new Date(ticket.date_debut), 'HH:mm', { locale: fr })} - {' '}
-                      {format(new Date(ticket.date_fin), 'HH:mm', { locale: fr })}
+                      {format(new Date(ticket.reservation.date_debut), 'HH:mm', { locale: fr })} - {' '}
+                      {format(new Date(ticket.reservation.date_fin), 'HH:mm', { locale: fr })}
                     </div>
                   </div>
                 </div>
@@ -270,10 +276,10 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
                   <Clock className="w-5 h-5 text-gray-400" />
                   <div>
                     <div className="font-medium text-gray-900">
-                      Durée : {Math.round((new Date(ticket.date_fin).getTime() - new Date(ticket.date_debut).getTime()) / (1000 * 60))} minutes
+                      Durée : {Math.round((new Date(ticket.reservation.date_fin).getTime() - new Date(ticket.reservation.date_debut).getTime()) / (1000 * 60))} minutes
                     </div>
                     <div className="text-sm text-gray-600">
-                      Total : {ticket.montant_total.toLocaleString()} FCFA
+                      Total : {ticket.reservation.montant_total.toLocaleString()} FCFA
                     </div>
                   </div>
                 </div>
@@ -293,7 +299,7 @@ const TicketDisplay: React.FC<TicketDisplayProps> = ({ reservationId, isOpen, on
             <div className="p-6 bg-blue-50 border-t">
               <h4 className="font-semibold text-blue-900 mb-3">Instructions importantes :</h4>
               <ul className="space-y-2 text-sm text-blue-800">
-                {ticket.instructions.map((instruction, index) => (
+                {ticket.access_instructions.map((instruction: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
                     <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
                     {instruction}

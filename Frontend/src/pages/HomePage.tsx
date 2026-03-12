@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Users, Calendar, Star, ArrowRight, ExternalLink } from 'lucide-react';
+import { MapPin, Users, Calendar, ArrowRight, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
@@ -90,14 +90,14 @@ const HomePage: React.FC = () => {
               </Link>
             </div>
 
-            {/* Gestion */}
+            {/* Gestion / Sécurité */}
             <div className="text-center p-6 bg-gray-50 rounded-xl">
               <div className="w-16 h-16 bg-purple-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
                 <Users className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">👥 Gestion</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Sécurité & contrôle</h3>
               <p className="text-gray-600 mb-4">
-                Interface admin et gestionnaire avec analytics, rapports et validation
+                Accès gestionnaire sécurisé, suivi des réservations et contrôle des validations
               </p>
               <Link
                 to="/register/manager"
@@ -107,46 +107,6 @@ const HomePage: React.FC = () => {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Terrains populaires */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              🏆 Terrains populaires disponibles
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { name: "Stade Demba Diop", location: "Sicap Liberté", price: "25,000 FCFA/h" },
-              { name: "Complexe Be Sport", location: "Route Aéroport", price: "35,000 FCFA/h" },
-              { name: "Terrain ASC Liberté 6", location: "Liberté 6", price: "15,000 FCFA/h" },
-              { name: "TEMPLE DU FOOT", location: "Plateau", price: "40,000 FCFA/h" }
-            ].map((terrain, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <Star className="w-5 h-5 text-yellow-500" />
-                  <span className="text-green-600 font-bold text-sm">✅ Ouvert</span>
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">{terrain.name}</h3>
-                <p className="text-gray-600 text-sm mb-2">📍 {terrain.location}</p>
-                <p className="text-green-600 font-bold">{terrain.price}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-8">
-            <button
-              onClick={() => window.open('/dashboard/map', '_blank')}
-              className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 flex items-center space-x-2 mx-auto"
-            >
-              <MapPin className="w-5 h-5" />
-              <span>Voir tous les terrains sur la carte</span>
-            </button>
           </div>
         </div>
       </section>

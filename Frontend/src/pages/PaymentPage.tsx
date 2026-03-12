@@ -62,6 +62,24 @@ const PaymentPage: React.FC = () => {
     }
   };
 
+  const pollReservationStatus = async (attempts = 6, delayMs = 5000) => {
+    if (!reservationId) return;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const { data } = await apiService.getReservationDetail(reservationId);
+        if (data?.statut) {
+          setReservationStatus(data.statut);
+          if (['confirmee', 'acompte_paye', 'solde_paye', 'terminee'].includes(data.statut)) {
+            return;
+          }
+        }
+      } catch {
+        // ignore errors during polling
+      }
+      await new Promise(res => setTimeout(res, delayMs));
+    }
+  };
+
   useEffect(() => {
     if (reservationId) {
       fetchReservationStatus();
@@ -123,10 +141,13 @@ const PaymentPage: React.FC = () => {
           // Ouvrir Wave dans un nouvel onglet (lien de paiement)
           window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
           toast.success('Lien Wave ouvert. Finalisez le paiement puis revenez ici.');
+          void pollReservationStatus();
         } else if (method === 'orange_money') {
           toast.success('Instructions Orange Money affichées.');
+          void pollReservationStatus();
         } else {
           toast.success('Paiement initialisé.');
+          void pollReservationStatus();
         }
       } else {
         toast.error(result.message || 'Erreur lors du paiement');

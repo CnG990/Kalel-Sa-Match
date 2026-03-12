@@ -83,32 +83,13 @@ class AdminPaymentConfigViewSet(viewsets.ModelViewSet):
         if created:
             configs_created.append('Wave Business')
         
-        # Orange Money - Kalel Sa Match
-        orange_config, created = PaymentConfig.objects.get_or_create(
-            methode='orange_money',
-            defaults={
-                'orange_merchant_number': '77 000 00 00',  # À configurer
-                'orange_merchant_name': 'Kalel Sa Match',
-                'est_actif': True,
-                'commission_pourcentage': 0.00,
-                'ordre_affichage': 2,
-                'instructions': 'Composez #144#95# et suivez les instructions pour payer.',
-                'logo_url': 'https://www.orangemoney.sn/assets/img/logo.png'
-            }
-        )
-        if created:
-            configs_created.append('Orange Money')
-        
         if configs_created:
             message = f"Configurations créées: {', '.join(configs_created)}"
         else:
             message = "Configurations déjà existantes"
         
         return Response({
-            'data': {
-                'wave': PaymentConfigSerializer(wave_config).data,
-                'orange': PaymentConfigSerializer(orange_config).data
-            },
+            'data': PaymentConfigSerializer(wave_config).data,
             'meta': {
                 'success': True,
                 'message': message

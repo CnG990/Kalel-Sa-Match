@@ -52,8 +52,8 @@ const ContactPage: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Téléphone</h3>
                   <p className="text-gray-600 mt-1">
-                    +221 33 123 45 67<br />
-                    +221 77 123 45 67
+                    +221 77 617 32 61<br />
+                    WhatsApp : <a className="text-green-600 underline" href="https://wa.me/221776173261" target="_blank" rel="noreferrer">+221 77 617 32 61</a>
                   </p>
                 </div>
               </div>
@@ -148,7 +148,7 @@ const ContactPage: React.FC = () => {
                   id="phone"
                   name="phone"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="+221 77 123 45 67"
+                  placeholder="+221 77 617 32 61"
                 />
               </div>
 

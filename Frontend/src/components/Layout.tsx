@@ -296,20 +296,15 @@ const Layout: React.FC = () => {
                 <img src="/logo sans background.png" alt="Logo KSM" className="h-10 w-auto" />
                 <span className="ml-3 text-2xl font-bold text-green-400">KSM</span>
               </div>
-              <p className="text-gray-400 dark:text-gray-500 text-sm leading-relaxed mb-6">
+              <p className="text-gray-400 text-sm leading-relaxed mb-4">
                 Application de réservation de terrains synthétiques partout au Sénégal.
               </p>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 dark:text-gray-500 hover:text-green-400 transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                  </svg>
-                </a>
-                <a href="#" className="text-gray-400 dark:text-gray-500 hover:text-green-400 transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+              <div className="flex items-center space-x-2 text-green-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12.04 2h-.08a10 10 0 00-8.9 14.54l-1.1 4 4.1-1.07A10 10 0 1012.04 2zm0 2a8 8 0 016.86 12.07l-.27.41a1 1 0 00-.12.27l-.5 1.84-1.9-.5a1 1 0 00-.27.01l-.49.12A8 8 0 1112.04 4zm-2.1 3.25a.7.7 0 00-.54.27c-.16.21-.48.63-.48 1.22 0 .59.5 1.16.57 1.24l.08.1c.85 1.45 2.08 2.61 3.55 3.47.6.34 1.17.62 1.7.83.67.28 1.27.24 1.75.14.53-.11 1.17-.48 1.33-.95.16-.47.16-.86.12-.94-.04-.08-.17-.13-.35-.22-.2-.1-1.17-.58-1.35-.64-.18-.07-.3-.1-.44.1-.13.2-.51.64-.62.78-.12.14-.23.15-.43.05-.21-.1-.88-.33-1.67-1.04-.62-.55-1.04-1.23-1.17-1.44-.12-.21-.01-.3.08-.39.07-.07.17-.18.25-.28.08-.1.1-.17.15-.28.05-.1.02-.2-.02-.28-.04-.08-.39-.95-.55-1.3-.15-.34-.3-.29-.43-.3-.11-.01-.23-.01-.35-.01z" />
+                </svg>
+                <a href="https://wa.me/221776173261" target="_blank" rel="noreferrer" className="hover:text-green-300 text-sm font-medium">
+                  +221 77 617 32 61
                 </a>
               </div>
             </div>
@@ -355,9 +350,14 @@ const Layout: React.FC = () => {
                   <svg className="w-4 h-4 mr-3 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <a href="tel:+22177123456" className="hover:text-green-400 transition-colors">
-                    +221 77 123 45 67
-                  </a>
+                  <div className="flex flex-col">
+                    <a href="tel:+221776173261" className="hover:text-green-400 transition-colors">
+                      +221 77 617 32 61
+                    </a>
+                    <a href="https://wa.me/221776173261" target="_blank" rel="noreferrer" className="text-green-400 hover:text-green-300 text-xs">
+                      WhatsApp
+                    </a>
+                  </div>
                 </li>
                 <li className="flex items-center">
                   <svg className="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

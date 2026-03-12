@@ -148,6 +148,7 @@ const RefundModal: React.FC<RefundModalProps> = ({
   };
 
   const formatTime = (timeString: string) => {
+    if (!timeString) return '--:--';
     return timeString.substring(0, 5);
   };
 

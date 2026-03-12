@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
+import apiService from '../services/api';
 
 const RegisterClientPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +16,8 @@ const RegisterClientPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,23 +39,12 @@ const RegisterClientPage: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ ...formData, role: 'client' }),
-      });
+      const payload = { ...formData, role: 'client' };
+      const { data, meta } = await apiService.register(payload);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 422 && data.errors) {
-            const errorMessages = Object.values(data.errors).flat().join(' ');
-            throw new Error(errorMessages);
-        }
-        throw new Error(data.message || 'L\'inscription a échoué.');
+      if (!data) {
+        const message = (meta?.message as string | undefined) || "L'inscription a échoué.";
+        throw new Error(message);
       }
 
       setSuccess('Votre compte a été créé avec succès ! Vous allez être redirigé vers la page de connexion.');
@@ -96,8 +89,44 @@ const RegisterClientPage: React.FC = () => {
               <input name="email" type="email" placeholder="Adresse e-mail" required onChange={handleChange} value={formData.email} className="w-full px-4 py-2 border rounded-md" />
               <input name="telephone" type="tel" placeholder="Téléphone" required onChange={handleChange} value={formData.telephone} className="w-full px-4 py-2 border rounded-md" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input name="password" type="password" placeholder="Mot de passe" required onChange={handleChange} value={formData.password} className="w-full px-4 py-2 border rounded-md" />
-                <input name="password_confirmation" type="password" placeholder="Confirmer le mot de passe" required onChange={handleChange} value={formData.password_confirmation} className="w-full px-4 py-2 border rounded-md" />
+                <div className="relative">
+                  <input
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mot de passe"
+                    required
+                    onChange={handleChange}
+                    value={formData.password}
+                    className="w-full px-4 py-2 border rounded-md pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    name="password_confirmation"
+                    type={showPasswordConfirm ? 'text' : 'password'}
+                    placeholder="Confirmer le mot de passe"
+                    required
+                    onChange={handleChange}
+                    value={formData.password_confirmation}
+                    className="w-full px-4 py-2 border rounded-md pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordConfirm(v => !v)}
+                    className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
+                    tabIndex={-1}
+                  >
+                    {showPasswordConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
               
               <div className="flex items-start space-x-3">

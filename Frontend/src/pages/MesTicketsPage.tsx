@@ -1,49 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Ticket, Calendar, MapPin, Clock, Download, QrCode, CheckCircle, AlertCircle } from 'lucide-react';
+import { Ticket, Calendar, MapPin, Clock, Download, CheckCircle, AlertCircle } from 'lucide-react';
 import apiService from '../services/api';
 import toast from 'react-hot-toast';
 
 interface TicketData {
-  id: number;
-  code_ticket: string;
-  validation_code: string;
-  qr_code: string;
-  qr_code_url: string;
-  expire_at: string;
   reservation_id: number;
-  reservation: {
-    id: number;
-    date_reservation: string;
-    heure_debut: string;
-    heure_fin: string;
-    prix_total: number;
-    terrain: {
-      id: number;
-      nom: string;
-      adresse: string;
-    };
-    user: {
-      id: number;
-      prenom: string;
-      nom: string;
-    };
-  };
+  code_ticket: string;
+  statut: string;
+  is_used: boolean;
+  used_at: string | null;
+  expire_at: string | null;
   terrain: {
     id: number;
     nom: string;
     adresse: string;
   };
-  user: {
-    id: number;
-    prenom: string;
-    nom: string;
+  reservation: {
+    date_debut: string;
+    date_fin: string;
+    montant_total: number;
   };
+  access_instructions: string[];
 }
 
 interface TicketWithReservation extends TicketData {
   reservation_status?: string;
-  is_used?: boolean;
-  used_at?: string;
 }
 
 const MesTicketsPage: React.FC = () => {
@@ -58,7 +39,7 @@ const MesTicketsPage: React.FC = () => {
   const fetchMyTickets = async () => {
     try {
       setLoading(true);
-      const { data } = await apiService.get('/terrains/tickets/');
+      const { data } = await apiService.get('/reservations/tickets/');
       const ticketsData = Array.isArray(data) ? data : (data as any)?.results;
       if (Array.isArray(ticketsData)) {
         setTickets(ticketsData as TicketWithReservation[]);
@@ -75,12 +56,32 @@ const MesTicketsPage: React.FC = () => {
 
   const downloadTicket = async (ticketId: number) => {
     try {
-      const blob = await apiService.downloadFile(`/tickets/${ticketId}/download/`);
+      const { data } = await apiService.get(`/reservations/${ticketId}/ticket/`);
+      
+      if (!data) {
+        toast.error('Ticket non disponible');
+        return;
+      }
 
+      const ticketData = data as TicketData;
+      const ticketContent = `
+Ticket de Réservation - ${ticketData.terrain.nom}
+=====================================
+Code du ticket: ${ticketData.code_ticket}
+Terrain: ${ticketData.terrain.adresse}
+Date: ${new Date(ticketData.reservation.date_debut).toLocaleDateString('fr-FR')}
+Heure: ${new Date(ticketData.reservation.date_debut).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})} - ${new Date(ticketData.reservation.date_fin).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}
+Montant: ${ticketData.reservation.montant_total} FCFA
+
+Instructions:
+${ticketData.access_instructions.join('\n')}
+      `.trim();
+
+      const blob = new Blob([ticketContent], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `ticket-${ticketId}.pdf`);
+      link.setAttribute('download', `ticket-${ticketData.code_ticket}.txt`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -95,14 +96,14 @@ const MesTicketsPage: React.FC = () => {
 
   const getTicketStatus = (ticket: TicketWithReservation) => {
     const now = new Date();
-    const expireDate = new Date(ticket.expire_at);
-    const reservationDate = new Date(ticket.reservation.date_reservation);
+    const expireDate = ticket.expire_at ? new Date(ticket.expire_at) : null;
+    const reservationDate = new Date(ticket.reservation.date_debut);
     
     if (ticket.is_used) {
       return { status: 'used', label: 'Utilisé', color: 'text-gray-500', bgColor: 'bg-gray-100' };
     }
     
-    if (now > expireDate || now > reservationDate) {
+    if ((expireDate && now > expireDate) || now > reservationDate) {
       return { status: 'expired', label: 'Expiré', color: 'text-red-500', bgColor: 'bg-red-100' };
     }
     
@@ -205,7 +206,7 @@ const MesTicketsPage: React.FC = () => {
               const status = getTicketStatus(ticket);
               
               return (
-                <div key={ticket.qr_code} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div key={ticket.reservation_id} className="bg-white rounded-lg shadow-md overflow-hidden">
                   <div className="p-6">
                     <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4">
                       <div className="flex-1 min-w-0">
@@ -229,19 +230,19 @@ const MesTicketsPage: React.FC = () => {
                           
                           <div className="flex items-center">
                             <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                            {formatDate(ticket.reservation.date_reservation)}
+                            {formatDate(ticket.reservation.date_debut)}
                           </div>
                           
                           <div className="flex items-center">
                             <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                            {formatTime(ticket.reservation.heure_debut)} - {formatTime(ticket.reservation.heure_fin)}
+                            {formatTime(ticket.reservation.date_debut)} - {formatTime(ticket.reservation.date_fin)}
                           </div>
                         </div>
                       </div>
                       
                       <div className="text-left sm:text-right shrink-0">
                         <div className="text-xl font-bold text-green-600 mb-2">
-                          {formatPrice(ticket.reservation.prix_total)} FCFA
+                          {formatPrice(ticket.reservation.montant_total)} FCFA
                         </div>
                         
                         <div className="flex space-x-2">
@@ -255,12 +256,12 @@ const MesTicketsPage: React.FC = () => {
                           
                           <button
                             onClick={() => {
-                              navigator.clipboard.writeText(ticket.validation_code);
-                              toast.success('Code de validation copié');
+                              navigator.clipboard.writeText(ticket.code_ticket);
+                              toast.success('Code du ticket copié');
                             }}
                             className="flex items-center px-3 py-1 bg-gray-600 text-white text-xs rounded-lg hover:bg-gray-700 transition-colors"
                           >
-                            <QrCode className="w-3 h-3 mr-1" />
+                            <Ticket className="w-3 h-3 mr-1" />
                             Code
                           </button>
                         </div>
@@ -271,15 +272,17 @@ const MesTicketsPage: React.FC = () => {
                     <div className="border-t pt-4 mt-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                         <div>
-                          <span className="font-medium">Client:</span> {ticket.user.prenom} {ticket.user.nom}
+                          <span className="font-medium">Code du ticket:</span> 
+                          <code className="ml-1 bg-gray-100 px-1 rounded">{ticket.code_ticket}</code>
                         </div>
                         <div>
-                          <span className="font-medium">Code de validation:</span> 
-                          <code className="ml-1 bg-gray-100 px-1 rounded">{ticket.validation_code}</code>
+                          <span className="font-medium">Statut:</span> {ticket.statut}
                         </div>
-                        <div>
-                          <span className="font-medium">Expire le:</span> {formatDate(ticket.expire_at)}
-                        </div>
+                        {ticket.expire_at && (
+                          <div>
+                            <span className="font-medium">Expire le:</span> {formatDate(ticket.expire_at)}
+                          </div>
+                        )}
                         {ticket.used_at && (
                           <div>
                             <span className="font-medium">Utilisé le:</span> {formatDate(ticket.used_at)}

@@ -225,7 +225,7 @@ const TermsPage: React.FC = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-gray-700">
                   <strong>Email :</strong> contact@kalelsamatch.com<br />
-                  <strong>Téléphone :</strong> +221 77 123 45 67<br />
+                  <strong>Téléphone :</strong> +221 77 617 32 61 (WhatsApp : <a className="text-green-600 underline" href="https://wa.me/221776173261" target="_blank" rel="noreferrer">+221 77 617 32 61</a>)<br />
                   <strong>Adresse :</strong> Sénégal
                 </p>
               </div>
@@ -234,6 +234,7 @@ const TermsPage: React.FC = () => {
             <div className="mt-12 pt-8 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row justify-between items-center">
                 <p className="text-sm text-gray-600 mb-4 sm:mb-0">
+                  &copy; 2025 Kalél Sa Match. Tous droits réservés.
                   &copy; 2025 Kalél Sa Match. Tous droits réservés.
                   © 2025 Kalél Sa Match. Tous droits réservés.
                 </p>

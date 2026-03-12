@@ -20,9 +20,10 @@ interface ReservationCardProps {
   onCancel: (reservationId: number) => Promise<void>;
   onPayDeposit?: (reservation: Reservation) => void;
   onPayBalance?: (reservation: Reservation) => void;
+  onReportIssue?: (reservation: Reservation) => void;
 }
 
-const ReservationCard = ({ reservation, onCancel, onPayDeposit, onPayBalance }: ReservationCardProps) => {
+const ReservationCard = ({ reservation, onCancel, onPayDeposit, onPayBalance, onReportIssue }: ReservationCardProps) => {
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const formatTime = (dateString: string) => new Date(dateString).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
@@ -71,6 +72,7 @@ const ReservationCard = ({ reservation, onCancel, onPayDeposit, onPayBalance }: 
             <h3 className="text-xl font-bold text-gray-800">{reservation.terrain.nom}</h3>
             {getStatusBadge(reservation.statut)}
           </div>
+
           <p className="text-sm text-gray-500">{reservation.terrain.adresse}</p>
         </div>
         <div className="mt-4 border-t pt-4 space-y-2 text-sm text-gray-700">
@@ -89,17 +91,25 @@ const ReservationCard = ({ reservation, onCancel, onPayDeposit, onPayBalance }: 
           {/* Bouton Partager */}
           <button
             onClick={() => {
-              const lat = Number(reservation.terrain.latitude);
-              const lng = Number(reservation.terrain.longitude);
-              const mapsUrl = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0
+              const terrainNom = reservation.terrain?.nom || (reservation as any).terrain_nom || '';
+              const terrainAdresse = reservation.terrain?.adresse || '';
+              const lat = Number(reservation.terrain?.latitude);
+              const lng = Number(reservation.terrain?.longitude);
+              const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0;
+              const mapsUrl = hasCoords
                 ? `https://www.google.com/maps?q=${lat},${lng}`
-                : `https://www.google.com/maps/search/${encodeURIComponent(reservation.terrain.adresse)}`;
+                : (terrainAdresse ? `https://www.google.com/maps/search/${encodeURIComponent(terrainAdresse)}` : '');
               const dateStr = formatDate(reservation.date_debut);
               const timeStr = `${formatTime(reservation.date_debut)} - ${formatTime(reservation.date_fin)}`;
-              const text = `\u26bd Match pr\u00e9vu !\n\n\ud83c\udfdf\ufe0f ${reservation.terrain.nom}\n\ud83d\udccd ${reservation.terrain.adresse}\n\ud83d\udcc5 ${dateStr}\n\u23f0 ${timeStr}\n\ud83d\udcb0 ${reservation.montant_total.toLocaleString('fr-FR')} FCFA\n\n\ud83d\uddfa\ufe0f Localisation : ${mapsUrl}`;
+              const montantStr = reservation.montant_total.toLocaleString('fr-FR');
+              const baseText = `Match prevu !\n\n` +
+                (terrainNom ? `Terrain : ${terrainNom}\n` : '') +
+                (terrainAdresse ? `Adresse : ${terrainAdresse}\n` : '') +
+                `Date : ${dateStr}\nHeure : ${timeStr}\nMontant : ${montantStr} FCFA`;
+              const text = mapsUrl ? `${baseText}\n\nCarte : ${mapsUrl}` : baseText;
 
               if (navigator.share) {
-                navigator.share({ title: `Match - ${reservation.terrain.nom}`, text }).catch(() => {});
+                navigator.share({ title: `Match - ${terrainNom}`, text }).catch(() => {});
               } else {
                 const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
                 window.open(waUrl, '_blank');
@@ -137,6 +147,14 @@ const ReservationCard = ({ reservation, onCancel, onPayDeposit, onPayBalance }: 
               Payer le solde
             </button>
           )}
+
+          {/* Signaler un problème */}
+          <button
+            onClick={() => onReportIssue?.(reservation)}
+            className="flex-1 text-center px-4 py-2 bg-red-50 text-red-700 font-semibold rounded-lg hover:bg-red-100"
+          >
+            Signaler un problème
+          </button>
         </div>
       </div>
     </div>
@@ -147,7 +165,14 @@ const ReservationsPage: React.FC = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [issueModalOpen, setIssueModalOpen] = useState(false);
+  const [issueReservation, setIssueReservation] = useState<Reservation | null>(null);
+  const [issueDescription, setIssueDescription] = useState('');
+  const [issueLoading, setIssueLoading] = useState(false);
   const navigate = useNavigate();
+
+  const formatDateModal = (dateString: string) => new Date(dateString).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const formatTimeModal = (dateString: string) => new Date(dateString).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -200,6 +225,42 @@ const ReservationsPage: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue lors de l\'annulation.');
       console.error(err);
+    }
+  };
+
+  const handleReportIssue = (reservation: Reservation) => {
+    setIssueReservation(reservation);
+    setIssueDescription('');
+    setIssueModalOpen(true);
+  };
+
+  const submitIssue = async () => {
+    if (!issueReservation) return;
+    if (!issueDescription.trim()) {
+      toast.error('Décrivez le problème.');
+      return;
+    }
+    setIssueLoading(true);
+    try {
+      const payload: Record<string, unknown> = {
+        objet: 'Problème de réservation / paiement',
+        description: issueDescription.trim(),
+        reservation_id: issueReservation.id,
+      };
+      const { data, meta } = await apiService.creerLitige(payload);
+      if (data) {
+        toast.success(meta?.message || 'Problème signalé, support informé.');
+        setIssueModalOpen(false);
+        setIssueReservation(null);
+        setIssueDescription('');
+      } else {
+        toast.error(meta?.message || 'Impossible de signaler le problème.');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de l'envoi du problème.");
+    } finally {
+      setIssueLoading(false);
     }
   };
 
@@ -289,7 +350,7 @@ const ReservationsPage: React.FC = () => {
         <h2 className="text-2xl font-semibold text-gray-700 mb-4">À venir</h2>
         {upcomingReservations.length > 0 ? (
           <div className="space-y-6">
-            {upcomingReservations.map(res => <ReservationCard key={`upcoming-${res.id}`} reservation={res} onCancel={handleCancelReservation} onPayDeposit={handlePayDeposit} onPayBalance={handlePayBalance} />)}
+            {upcomingReservations.map(res => <ReservationCard key={`upcoming-${res.id}`} reservation={res} onCancel={handleCancelReservation} onPayDeposit={handlePayDeposit} onPayBalance={handlePayBalance} onReportIssue={handleReportIssue} />)}
           </div>
         ) : (
           <div className="bg-white p-8 rounded-lg shadow-sm text-center text-gray-500 border-2 border-dashed">
@@ -312,6 +373,7 @@ const ReservationsPage: React.FC = () => {
                 onCancel={handleCancelReservation}
                 onPayDeposit={handlePayDeposit}
                 onPayBalance={handlePayBalance}
+                onReportIssue={handleReportIssue}
               />
             ))}
           </div>
@@ -321,6 +383,57 @@ const ReservationsPage: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* Modal Signalement */}
+      {issueModalOpen && issueReservation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Signaler un problème</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Réservation #{issueReservation.id} — {issueReservation.terrain?.nom || 'Terrain'}
+                </p>
+              </div>
+              <button onClick={() => setIssueModalOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+
+            <div className="space-y-2 text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+              <p><strong>Date :</strong> {formatDateModal(issueReservation.date_debut)} — {formatTimeModal(issueReservation.date_debut)} / {formatTimeModal(issueReservation.date_fin)}</p>
+              <p><strong>Montant total :</strong> {issueReservation.montant_total.toLocaleString('fr-FR')} FCFA</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Décrivez le problème</label>
+              <textarea
+                className="w-full border rounded-lg p-3 text-sm focus:ring-blue-500 focus:border-blue-500"
+                rows={4}
+                placeholder="Exemple : Paiement effectué mais ticket non reçu, référence Wave ..."
+                value={issueDescription}
+                onChange={(e) => setIssueDescription(e.target.value)}
+                disabled={issueLoading}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIssueModalOpen(false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+                disabled={issueLoading}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={submitIssue}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+                disabled={issueLoading}
+              >
+                {issueLoading ? 'Envoi...' : 'Envoyer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

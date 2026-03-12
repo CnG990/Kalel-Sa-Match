@@ -417,7 +417,7 @@ export interface InitPaymentRequestDTO {
   reservation_id?: number;
   abonnement_id?: number;
   montant?: number;
-  methode: 'wave' | 'orange_money';
+  methode: 'wave';
   customer_phone: string;
   customer_name: string;
 }
@@ -426,12 +426,8 @@ export interface InitPaymentResponseDTO {
   payment_id: number;
   reference: string;
   checkout_url?: string;
-  transaction_id?: string;
-  ussd_code?: string;
-  instructions?: string;
-  numero_marchand?: string;
   montant: number;
-  methode: 'wave' | 'orange_money';
+  methode: 'wave';
   [key: string]: unknown;
 }
 
@@ -1472,9 +1468,9 @@ class ApiService {
     });
   }
 
-  // Tickets - Get single ------------------------------------
-  getTicket(ticketId: number) {
-    const url = `${ENDPOINTS.tickets}${ticketId}/`;
+  // Tickets - Get single reservation ticket ------------------------------------
+  getTicket(reservationId: number) {
+    const url = `${API_ROOT}/reservations/${reservationId}/ticket/`;
     return this.requestNormalized(url, {
       method: 'GET',
       headers: this.headers(),

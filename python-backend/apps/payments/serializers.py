@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Payment, WavePayment, OrangeMoneyPayment
+from .models import Payment, WavePayment
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -17,14 +17,6 @@ class WavePaymentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = WavePayment
-        fields = '__all__'
-
-
-class OrangeMoneyPaymentSerializer(serializers.ModelSerializer):
-    payment = PaymentSerializer(read_only=True)
-    
-    class Meta:
-        model = OrangeMoneyPayment
         fields = '__all__'
 
 

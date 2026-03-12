@@ -127,6 +127,11 @@ const MapPage: React.FC = () => {
 
     mapRef.current = map;
 
+    // Assure l'affichage immédiat des tuiles/markers (évite le rendu seulement après zoom)
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+
     // Couche de base par défaut (Street)
     const initialLayer = BASE_LAYERS.street.create();
     initialLayer.addTo(map);
