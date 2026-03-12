@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import apiService, { type TerrainDTO, type AbonnementDTO, type SubscriptionResponseDTO } from '../services/api';
+import apiService, {
+  type TerrainDTO,
+  type PlanAbonnementDTO,
+} from '../services/api';
 import toast from 'react-hot-toast';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { CheckCircle, ArrowLeft, Info, TrendingUp } from 'lucide-react';
 import { 
   abonnementConditionsService
@@ -24,6 +25,14 @@ const mapTerrainDto = (dto: TerrainDTO) => ({
   prix_heure: Number(dto.prix_heure ?? 0),
 });
 
+const mapPlanAbonnementDto = (dto: PlanAbonnementDTO) => ({
+  ...dto,
+  id: Number(dto.id),
+  nom: dto.nom ?? (dto as any).name ?? `Plan ${dto.id}`,
+  prix: Number(dto.prix ?? (dto as any).price ?? 0),
+  type_abonnement: (dto.type_abonnement as string | undefined)?.toLowerCase() ?? null,
+});
+
 const AbonnementsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -31,7 +40,7 @@ const AbonnementsPage: React.FC = () => {
 
   const [terrains, setTerrains] = useState<TerrainDTO[]>([]);
   const [terrainSelectionne, setTerrainSelectionne] = useState<TerrainDTO | null>(null);
-  const [abonnements, setAbonnements] = useState<AbonnementDTO[]>([]);
+  const [plans, setPlans] = useState<PlanAbonnementDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [traitement, setTraitement] = useState(false);
   const [dureeSeance, setDureeSeance] = useState(1);
@@ -48,6 +57,9 @@ const AbonnementsPage: React.FC = () => {
   const [modePaiement, setModePaiement] = useState<'integral' | 'differe' | 'par_seance'>('integral');
   const [disponibiliteCreneaux, setDisponibiliteCreneaux] = useState<any>(null);
   const [verificationEnCours, setVerificationEnCours] = useState(false);
+  const [planSelectionneId, setPlanSelectionneId] = useState<number | null>(null);
+  const [typeAbonnementSelectionne, setTypeAbonnementSelectionne] = useState<'mensuel' | 'trimestriel' | 'annuel' | null>(null);
+  const [prixEstimeSelection, setPrixEstimeSelection] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -60,7 +72,7 @@ const AbonnementsPage: React.FC = () => {
       return;
     }
     fetchTerrains();
-    fetchAbonnements();
+    fetchPlans();
   }, [isAuthenticated, navigate]);
 
   // Charger les conditions du terrain quand un terrain est sélectionné
@@ -77,6 +89,18 @@ const AbonnementsPage: React.FC = () => {
       calculerPrixAbonnement();
     }
   }, [terrainSelectionne, dureeSeance, nbSeances, modePaiement, conditionsTerrain]);
+
+  useEffect(() => {
+    if (!terrainSelectionne) return;
+    if (planSelectionneId) return;
+    if (plans.length === 0) return;
+
+    const first = plans[0];
+    const type = detectTypeAbonnement(first);
+    setPlanSelectionneId(first.id);
+    setTypeAbonnementSelectionne(type);
+    setPrixEstimeSelection(Number(first.prix ?? 0));
+  }, [terrainSelectionne, plans, planSelectionneId]);
 
   // Vérifier la disponibilité des créneaux quand les préférences changent
   useEffect(() => {
@@ -136,15 +160,37 @@ const AbonnementsPage: React.FC = () => {
     }
   };
 
-  const fetchAbonnements = async () => {
+  const paymentButtonLabel = () => {
+    if (traitement) return 'Traitement...';
+    switch (modePaiement) {
+      case 'integral':
+        return 'Valider ma demande (paiement intégral)';
+      case 'differe':
+        return 'Valider ma demande (acompte)';
+      case 'par_seance':
+        return 'Valider ma demande (par séance)';
+      default:
+        return 'Valider ma demande';
+    }
+  };
+
+  const isValidationDisabled = () => {
+    if (!terrainSelectionne) return true;
+    if (!planSelectionneId || !typeAbonnementSelectionne) return true;
+    if (!disponibiliteCreneaux?.disponibilite_suffisante) return true;
+    return traitement;
+  };
+
+  const fetchPlans = async () => {
     try {
-      const { data } = await apiService.getAbonnements();
-      const abonnementsRaw = Array.isArray(data) ? data : (data as any)?.results;
-      setAbonnements(Array.isArray(abonnementsRaw) ? abonnementsRaw : []);
+      const { data } = await apiService.getPlanAbonnements();
+      const plansRaw = Array.isArray(data) ? data : (data as any)?.results;
+      const plansData = Array.isArray(plansRaw) ? plansRaw.map(mapPlanAbonnementDto) : [];
+      setPlans(plansData);
     } catch (error) {
-      console.error('❌ Erreur fetchAbonnements:', error);
-      setAbonnements([]);
-      toast.error('Erreur lors du chargement des abonnements');
+      console.error('❌ Erreur fetchPlans:', error);
+      setPlans([]);
+      toast.error('Erreur lors du chargement des plans');
     }
   };
 
@@ -222,39 +268,49 @@ const AbonnementsPage: React.FC = () => {
     }
   };
 
+  const detectTypeAbonnement = (plan: PlanAbonnementDTO): 'mensuel' | 'trimestriel' | 'annuel' => {
+    const label = plan.type_abonnement ?? plan.nom.toLowerCase();
+    if (label.includes('trimestriel')) return 'trimestriel';
+    if (label.includes('annuel')) return 'annuel';
+    return 'mensuel';
+  };
+
   const calculerPrix = (type: 'mensuel' | 'trimestriel' | 'annuel') => {
     if (!terrainSelectionne) return null;
     const prix = Number(terrainSelectionne.prix_heure ?? 0);
     let nbSemaines = 4;
     if (type === 'trimestriel') nbSemaines = 12;
     if (type === 'annuel') nbSemaines = 52;
-    return prix * dureeSeance * nbSeances * nbSemaines;
+    const total = prix * dureeSeance * nbSeances * nbSemaines;
+    console.log(`🔍 Debug calculerPrix(${type}): prix=${prix}, dureeSeance=${dureeSeance}, nbSeances=${nbSeances}, nbSemaines=${nbSemaines} => total=${total}`);
+    return total;
   };
 
-  const buildSubscriptionDetails = (response: SubscriptionResponseDTO, terrain: TerrainDTO) => {
-    const startDate = response.date_debut ? new Date(response.date_debut) : new Date();
-    const endDate = response.date_fin ? new Date(response.date_fin) : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const type = response.type_abonnement === 'trimestriel'
-      ? 'trimestriel'
-      : response.type_abonnement === 'annuel'
-        ? 'annuel'
-        : 'mensuel';
-
-    return {
-      subscriptionId: response.abonnement_id ?? response.id,
-      terrainName: response.terrain_nom ?? terrain.nom,
-      totalAmount: response.prix_total ?? calculerPrix(type) ?? 0,
-      duration: type,
-      startDate: format(startDate, 'dd/MM/yyyy', { locale: fr }),
-      endDate: format(endDate, 'dd/MM/yyyy', { locale: fr }),
-      status: response.statut ?? 'pending',
-      preferences: response.preferences,
-    };
+  type DemandeCreationPayload = {
+    plan_id: number;
+    mode_paiement: 'integral' | 'differe' | 'par_seance';
+    nb_seances: number;
+    duree_seance: number;
+    jours_preferes: number[];
+    creneaux_preferes: string[];
+    prix_estime?: number | null;
   };
 
-  const souscrireAbonnement = async (abonnementId: number, type: 'mensuel' | 'trimestriel' | 'annuel') => {
-    console.log('🔍 Debug - souscrireAbonnement appelée:');
-    console.log('  - abonnementId:', abonnementId);
+  const buildDemandePayload = (planId: number): DemandeCreationPayload => ({
+    plan_id: planId,
+    mode_paiement: modePaiement,
+    nb_seances: nbSeances,
+    duree_seance: dureeSeance,
+    jours_preferes: joursPreferes,
+    creneaux_preferes: creneauxPreferes,
+  });
+
+  const createDemandeAbonnement = async (
+    planId: number,
+    type: 'mensuel' | 'trimestriel' | 'annuel'
+  ) => {
+    console.log('🔍 Debug - createDemandeAbonnement appelée:');
+    console.log('  - planId:', planId);
     console.log('  - type:', type);
     console.log('  - terrainSelectionne:', terrainSelectionne);
     console.log('  - dureeSeance:', dureeSeance);
@@ -282,39 +338,28 @@ const AbonnementsPage: React.FC = () => {
     try {
       const prix = calculerPrix(type);
       console.log('  - prix calculé:', prix);
-      
-      const payload = {
-        terrain_id: terrainSelectionne.id,
-        duree_seance: dureeSeance,
-        nb_seances: nbSeances,
-        prix_total: prix,
-        mode_paiement: modePaiement,
-        jours_preferes: joursPreferes,
-        creneaux_preferes: creneauxPreferes,
-        preferences_flexibles: true
-      };
+      const payload = buildDemandePayload(planId);
+      if (prix !== null) {
+        payload.prix_estime = prix;
+      }
       console.log('  - payload envoyé:', payload);
-      
-      const { data, meta } = await apiService.souscrireAbonnement(abonnementId, payload);
-      console.log('  - réponse API:', data);
+
+      const { data, meta } = await apiService.createDemandeAbonnement(payload);
+      console.log('  - réponse API demande:', data);
 
       if (!data) {
-        const errorMessage = (meta?.message as string | undefined) ?? 'Erreur lors de la souscription';
+        const errorMessage = (meta?.message as string | undefined) ?? 'Erreur lors de la demande';
         console.log('❌ Erreur API:', errorMessage);
         toast.error(errorMessage);
         return;
       }
 
-      console.log('✅ Souscription réussie');
-      toast.success((meta?.message as string | undefined) ?? 'Souscription initiée avec succès !');
-      navigate('/payment', {
-        state: {
-          subscriptionDetails: buildSubscriptionDetails(data, terrainSelectionne),
-        },
-      });
+      console.log('✅ Demande créée');
+      toast.success((meta?.message as string | undefined) ?? 'Demande enregistrée !');
+      navigate('/users/mes-abonnements');
     } catch (error) {
-      console.error('❌ Exception lors de la souscription:', error);
-      toast.error('Erreur lors de la souscription');
+      console.error('❌ Exception lors de la demande:', error);
+      toast.error('Erreur lors de la demande');
     } finally {
       setTraitement(false);
     }
@@ -583,71 +628,84 @@ const AbonnementsPage: React.FC = () => {
 
         {terrainSelectionne ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {abonnements.map((abonnement) => {
-              let type: 'mensuel' | 'trimestriel' | 'annuel' = 'mensuel';
-              if (abonnement.nom.toLowerCase().includes('trimestriel')) type = 'trimestriel';
-              if (abonnement.nom.toLowerCase().includes('annuel')) type = 'annuel';
+            {plans.map((plan) => {
+              const type = detectTypeAbonnement(plan);
               const prix = calculerPrix(type);
+              const isSelected = planSelectionneId === plan.id;
               return (
-                <div key={abonnement.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div
+                  key={plan.id}
+                  className={`bg-white rounded-lg shadow-sm overflow-hidden transition-shadow border-2 ${
+                    isSelected ? 'border-blue-500 shadow-md' : 'border-transparent hover:shadow-md'
+                  }`}
+                >
                   <div className="p-6">
-                                         <div className="flex items-center justify-between mb-4">
-                       <h3 className="text-xl font-bold">{abonnement.nom}</h3>
-                       <div className="text-right">
-                         <div className="text-2xl font-bold text-orange-600">
-                           {prix !== null ? prix.toLocaleString() + ' FCFA' : '--'}
-                         </div>
-                         <div className="text-sm text-gray-600">{abonnement.duree_jours} jours</div>
-                         {calculPrix && (
-                           <div className="text-xs text-green-600 mt-1">
-                             Réduction: {calculPrix.reduction_appliquee}%
-                           </div>
-                         )}
-                       </div>
-                     </div>
-                    <p className="text-gray-600 mb-4">{abonnement.description}</p>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold">{plan.nom}</h3>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {prix !== null ? prix.toLocaleString() + ' FCFA' : '--'}
+                        </div>
+                        {plan.duree_jours && (
+                          <div className="text-sm text-gray-600">{plan.duree_jours} jours</div>
+                        )}
+                        {calculPrix && (
+                          <div className="text-xs text-green-600 mt-1">
+                            Réduction: {calculPrix.reduction_appliquee}%
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-gray-600 mb-4">{plan.description}</p>
                     <div className="space-y-2 mb-6">
-                      {(abonnement.avantages ?? []).map((avantage: string, index: number) => (
+                      {(plan.avantages ?? []).map((avantage: string, index: number) => (
                         <div key={index} className="flex items-center gap-2 text-sm">
                           <CheckCircle className="w-4 h-4 text-green-500" />
                           <span>{avantage}</span>
                         </div>
                       ))}
                     </div>
-                                         {/* Détails du calcul selon le mode de paiement */}
-                     {calculPrix && modePaiement === 'differe' && (
-                       <div className="bg-yellow-50 p-3 rounded mb-4 text-sm">
-                         <p className="text-yellow-800">
-                           <strong>Acompte :</strong> {calculPrix.acompte?.toLocaleString()} FCFA
-                         </p>
-                         <p className="text-yellow-800">
-                           <strong>Reste à payer :</strong> {calculPrix.reste_a_payer?.toLocaleString()} FCFA
-                         </p>
-                       </div>
-                     )}
-                     
-                     {calculPrix && modePaiement === 'par_seance' && (
-                       <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
-                         <p className="text-blue-800">
-                           <strong>Prix par séance :</strong> {calculPrix.prix_par_seance?.toLocaleString()} FCFA
-                         </p>
-                         <p className="text-blue-800">
-                           <strong>Total séances :</strong> {calculPrix.total_seances}
-                         </p>
-                       </div>
-                     )}
-                     
-                     <button
-                       onClick={() => souscrireAbonnement(abonnement.id, type)}
-                       disabled={!terrainSelectionne || traitement}
-                       className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                         !terrainSelectionne 
-                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                           : 'bg-green-500 hover:bg-green-600 text-white'
-                       }`}
-                     >
-                       {traitement ? 'Traitement...' : 'Souscrire'}
-                     </button>
+                    {/* Détails du calcul selon le mode de paiement */}
+                    {calculPrix && modePaiement === 'differe' && (
+                      <div className="bg-yellow-50 p-3 rounded mb-4 text-sm">
+                        <p className="text-yellow-800">
+                          <strong>Acompte :</strong> {calculPrix.acompte?.toLocaleString()} FCFA
+                        </p>
+                        <p className="text-yellow-800">
+                          <strong>Reste à payer :</strong> {calculPrix.reste_a_payer?.toLocaleString()} FCFA
+                        </p>
+                      </div>
+                    )}
+                    
+                    {calculPrix && modePaiement === 'par_seance' && (
+                      <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
+                        <p className="text-blue-800">
+                          <strong>Prix par séance :</strong> {calculPrix.prix_par_seance?.toLocaleString()} FCFA
+                        </p>
+                        <p className="text-blue-800">
+                          <strong>Total séances :</strong> {calculPrix.total_seances}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPlanSelectionneId(plan.id);
+                        setTypeAbonnementSelectionne(type);
+                        setPrixEstimeSelection(prix);
+                      }}
+                      disabled={!terrainSelectionne}
+                      className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+                        !terrainSelectionne
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : isSelected
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-50'
+                      }`}
+                    >
+                      {isSelected ? 'Plan sélectionné' : 'Choisir ce plan'}
+                    </button>
                   </div>
                 </div>
               );
@@ -669,6 +727,65 @@ const AbonnementsPage: React.FC = () => {
                 Voir les terrains
               </button>
             </div>
+          </div>
+        )}
+
+        {planSelectionneId && typeAbonnementSelectionne && (
+          <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-xl font-semibold mb-4">Validation de l'abonnement</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+              <div>
+                <p className="text-gray-600">Abonnement choisi :</p>
+                <p className="font-medium">{plans.find(p => p.id === planSelectionneId)?.nom ?? ''}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Type :</p>
+                <p className="font-medium capitalize">{typeAbonnementSelectionne}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Mode de paiement :</p>
+                <p className="font-medium">
+                  {modePaiement === 'integral'
+                    ? 'Paiement intégral'
+                    : modePaiement === 'differe'
+                      ? 'Paiement différé'
+                      : 'Paiement par séance'}
+                </p>
+              </div>
+              {prixEstimeSelection !== null && (
+                <div>
+                  <p className="text-gray-600">Prix estimé :</p>
+                  <p className="font-medium text-green-600">{prixEstimeSelection.toLocaleString()} FCFA</p>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+              <p className="text-sm text-gray-600">
+                Assurez-vous d'avoir vérifié les disponibilités. Le bouton sera activé dès que tous les critères sont remplis
+                (terrain, créneaux, disponibilité et plan).
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  planSelectionneId &&
+                  typeAbonnementSelectionne &&
+                  createDemandeAbonnement(planSelectionneId, typeAbonnementSelectionne)
+                }
+                disabled={isValidationDisabled()}
+                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                  isValidationDisabled()
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+              >
+                {paymentButtonLabel()}
+              </button>
+            </div>
+            {!disponibiliteCreneaux?.disponibilite_suffisante && (
+              <p className="mt-3 text-sm text-red-600">
+                La validation nécessite au moins un créneau disponible. Veuillez ajuster vos préférences ou relancer la vérification.
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import { PlusCircle, RefreshCw, Power, MapPin, Users, Trash2 } from 'lucide-reac
 import apiService from '../../services/api';
 import AddTerrainOnSiteModal from './AddTerrainOnSiteModal';
 import AddTerrainRemoteModal from './AddTerrainRemoteModal';
+import EditTerrainModal from './EditTerrainModal';
 import TerrainManagerAssignment from '../../components/TerrainManagerAssignment';
 
 interface Terrain {
@@ -50,6 +51,7 @@ const ManageTerrainsPageSimple: React.FC = () => {
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedTerrain, setSelectedTerrain] = useState<Terrain | null>(null);
 
   const fetchTerrains = async () => {
@@ -292,20 +294,33 @@ const ManageTerrainsPageSimple: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          type="button"
-                          disabled={deletingId === terrain.id}
-                          onClick={() => deleteTerrain(terrain)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
-                          title="Supprimer ce terrain définitivement"
-                        >
-                          {deletingId === terrain.id ? (
-                            <span className="animate-spin">⏳</span>
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5" />
-                          )}
-                          Supprimer
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedTerrain(terrain);
+                              setShowEditModal(true);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="Modifier ce terrain"
+                          >
+                            Éditer
+                          </button>
+                          <button
+                            type="button"
+                            disabled={deletingId === terrain.id}
+                            onClick={() => deleteTerrain(terrain)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                            title="Supprimer ce terrain définitivement"
+                          >
+                            {deletingId === terrain.id ? (
+                              <span className="animate-spin">⏳</span>
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                            Supprimer
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -351,6 +366,20 @@ const ManageTerrainsPageSimple: React.FC = () => {
             setSelectedTerrain(null);
           }}
           onSuccess={() => {
+            fetchTerrains();
+          }}
+        />
+      )}
+
+      {showEditModal && selectedTerrain && (
+        <EditTerrainModal
+          terrain={selectedTerrain}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedTerrain(null);
+          }}
+          onSuccess={() => {
+            setShowEditModal(false);
             fetchTerrains();
           }}
         />

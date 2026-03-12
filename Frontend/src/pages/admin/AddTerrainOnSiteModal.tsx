@@ -90,7 +90,7 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
     capacite: '',
     telephone: '',
     type_surface: 'gazon_synthetique',
-    nombre_joueurs: '5v5',
+    nombre_joueurs: ['5v5'] as string[],
     longueur: '',
     largeur: '',
     eclairage: false,
@@ -258,7 +258,18 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
     const target = event.target;
     const { name } = target;
     if (target instanceof HTMLInputElement && target.type === 'checkbox') {
-      setForm((prev) => ({ ...prev, [name]: target.checked }));
+      if (name === 'nombre_joueurs') {
+        const { value, checked } = target;
+        setForm((prev) => {
+          const formats = prev.nombre_joueurs;
+          const newFormats = checked
+            ? [...formats, value]
+            : formats.filter((f) => f !== value);
+          return { ...prev, nombre_joueurs: newFormats };
+        });
+      } else {
+        setForm((prev) => ({ ...prev, [name]: target.checked }));
+      }
     } else {
       setForm((prev) => ({ ...prev, [name]: target.value }));
     }
@@ -298,7 +309,7 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
         capacite: numericCapacity,
         telephone: form.telephone,
         type_surface: form.type_surface,
-        nombre_joueurs: form.nombre_joueurs,
+        nombre_joueurs: form.nombre_joueurs.join(', '),
         longueur: form.longueur ? parseFloat(form.longueur) : undefined,
         largeur: form.largeur ? parseFloat(form.largeur) : undefined,
         eclairage: form.eclairage,
@@ -429,14 +440,23 @@ const AddTerrainOnSiteModal: React.FC<AddTerrainOnSiteModalProps> = ({ onClose, 
                   <option value="autre">Autre</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Format de jeu</label>
-                <select name="nombre_joueurs" value={form.nombre_joueurs} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-green-600 focus:border-green-600">
-                  <option value="5v5">5 contre 5</option>
-                  <option value="7v7">7 contre 7</option>
-                  <option value="9v9">9 contre 9</option>
-                  <option value="11v11">11 contre 11</option>
-                </select>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Formats de jeu (Plusieurs choix possibles)</label>
+                <div className="flex flex-wrap gap-4">
+                  {['5v5', '6v6', '7v7', '8v8', '9v9', '11v11'].map((format) => (
+                    <label key={format} className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border hover:bg-gray-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        name="nombre_joueurs"
+                        value={format}
+                        checked={form.nombre_joueurs.includes(format)}
+                        onChange={handleFormChange}
+                        className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-600"
+                      />
+                      <span className="text-sm text-gray-700 font-medium">{format}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

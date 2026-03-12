@@ -274,6 +274,19 @@ def render_ticket():
 
 ---
 
+### 8. Sécurisation du webhook Wave
+
+Depuis mars 2026, l'API Django vérifie systématiquement la signature HMAC envoyée par Wave avant de traiter un webhook.
+
+1. **Configurer la variable d'environnement** `WAVE_WEBHOOK_SECRET` (même valeur que dans le back-office Wave).
+2. Redémarrer le backend pour que `ksm_backend.settings.base` charge le secret.
+3. Wave enverra un en-tête `X-Wave-Signature=sha256=<hash>` calculé avec ce secret → Django recalculera et rejettera toute requête dont la signature est absente ou invalide.
+4. Sans secret, le webhook reste ouvert mais un warning apparaît dans les logs (`WAVE_WEBHOOK_SECRET non configuré - webhook non sécurisé`).
+
+Recommandation : activer le secret dès que possible en production afin de bloquer toute tentative de spoofing.
+
+---
+
 ### 8. Tests & Débogage
 
 #### Tester le lien Wave

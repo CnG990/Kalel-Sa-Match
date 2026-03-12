@@ -10,6 +10,8 @@ class ReservationSerializer(serializers.ModelSerializer):
     user_email = serializers.CharField(source='user.email', read_only=True)
     user_nom = serializers.SerializerMethodField()
     duree = serializers.SerializerMethodField()
+    paiement_acompte_id = serializers.SerializerMethodField()
+    paiement_solde_id = serializers.SerializerMethodField()
     
     class Meta:
         model = Reservation
@@ -17,7 +19,10 @@ class ReservationSerializer(serializers.ModelSerializer):
             'id', 'terrain', 'terrain_nom', 'terrain_adresse', 'terrain_image',
             'user', 'user_email', 'user_nom',
             'date_debut', 'date_fin', 'duree_heures', 'duree',
-            'montant_total', 'statut', 'telephone', 'notes',
+            'montant_total', 'montant_acompte', 'montant_restant',
+            'acompte_paye', 'solde_paye',
+            'paiement_acompte_id', 'paiement_solde_id',
+            'statut', 'telephone', 'notes',
             'qr_code_token', 'code_ticket', 'valide_par',
             'date_validation', 'date_annulation', 'motif_annulation',
             'created_at', 'updated_at'
@@ -29,6 +34,12 @@ class ReservationSerializer(serializers.ModelSerializer):
     
     def get_duree(self, obj):
         return f"{obj.duree_heures}h"
+
+    def get_paiement_acompte_id(self, obj):
+        return obj.paiement_acompte.id if obj.paiement_acompte else None
+
+    def get_paiement_solde_id(self, obj):
+        return obj.paiement_solde.id if obj.paiement_solde else None
 
 
 class CreneauReservationSerializer(serializers.ModelSerializer):

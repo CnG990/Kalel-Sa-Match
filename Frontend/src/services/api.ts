@@ -36,6 +36,43 @@ export interface AbonnementDTO {
   [key: string]: unknown;
 }
 
+export interface PlanAbonnementDTO {
+  id: number;
+  terrain?: TerrainDTO | null;
+  terrain_id?: number;
+  nom: string;
+  description?: string;
+  type_abonnement?: 'mensuel' | 'trimestriel' | 'annuel' | string | null;
+  duree_jours?: number | null;
+  prix: number;
+  avantages?: string[];
+  actif?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
+export interface DemandeAbonnementDTO {
+  id: number;
+  user?: UserDTO;
+  terrain?: TerrainDTO | null;
+  terrain_id?: number;
+  plan?: PlanAbonnementDTO | null;
+  plan_id?: number;
+  mode_paiement?: 'integral' | 'differe' | 'par_seance' | string;
+  nb_seances?: number;
+  duree_seance?: number;
+  jours_preferes?: number[];
+  creneaux_preferes?: string[];
+  prix_calcule?: number;
+  statut?: string;
+  disponibilite_confirmee?: boolean;
+  notes_manager?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
 export interface SubscriptionResponseDTO {
   id: number;
   abonnement_id?: number;
@@ -187,6 +224,8 @@ export interface ReservationDTO {
   montant_restant?: number;
   acompte_paye?: boolean;
   solde_paye?: boolean;
+  paiement_acompte_id?: number | null;
+  paiement_solde_id?: number | null;
   statut: string;
   notes?: string;
   [key: string]: unknown;
@@ -372,6 +411,30 @@ export interface PaymentResponseDTO {
   [key: string]: unknown;
 }
 
+// Nouveau flux Paiement (backend: /api/payments/init/)
+export interface InitPaymentRequestDTO {
+  payment_id?: number;
+  reservation_id?: number;
+  abonnement_id?: number;
+  montant?: number;
+  methode: 'wave' | 'orange_money';
+  customer_phone: string;
+  customer_name: string;
+}
+
+export interface InitPaymentResponseDTO {
+  payment_id: number;
+  reference: string;
+  checkout_url?: string;
+  transaction_id?: string;
+  ussd_code?: string;
+  instructions?: string;
+  numero_marchand?: string;
+  montant: number;
+  methode: 'wave' | 'orange_money';
+  [key: string]: unknown;
+}
+
 export interface NotificationDTO {
   id: number;
   type: string;
@@ -411,6 +474,7 @@ const ENDPOINTS = {
   availability: `${API_ROOT}/terrains/check-availability/`,
   reservations: `${API_ROOT}/reservations/`,
   paiements: `${API_ROOT}/terrains/paiements/`,
+  payments: `${API_ROOT}/payments/`,
   tickets: `${API_ROOT}/terrains/tickets/`,
   notifications: `${API_ROOT}/terrains/notifications/`,
   manager: {
@@ -426,6 +490,8 @@ const ENDPOINTS = {
     supportTickets: `${API_ROOT}/admin/support/tickets/`,
   },
   abonnements: `${API_ROOT}/terrains/abonnements/`,
+  planAbonnements: `${API_ROOT}/terrains/plans/`,
+  demandesAbonnement: `${API_ROOT}/terrains/demandes-abonnement/`,
 };
 
 type QueryParams = Record<string, string | number | boolean | null | undefined>;
@@ -679,6 +745,14 @@ class ApiService {
     });
   }
 
+  getPlanAbonnements(params?: QueryParams) {
+    const url = `${ENDPOINTS.planAbonnements}${buildQueryString(params)}`;
+    return this.requestNormalized<PlanAbonnementDTO[]>(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
   // Reservations -----------------------------------------
   listReservations(params?: QueryParams) {
     return this.request(`${ENDPOINTS.reservations}${buildQueryString(params)}`, {
@@ -798,6 +872,40 @@ class ApiService {
     });
   }
 
+  getDemandesAbonnement(params?: QueryParams) {
+    const url = `${ENDPOINTS.demandesAbonnement}${buildQueryString(params)}`;
+    return this.requestNormalized<DemandeAbonnementDTO[]>(url, {
+      method: 'GET',
+      headers: this.headers(),
+    });
+  }
+
+  createDemandeAbonnement(payload: Record<string, unknown>) {
+    return this.requestNormalized<DemandeAbonnementDTO>(ENDPOINTS.demandesAbonnement, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(payload),
+    });
+  }
+
+  confirmerDisponibiliteDemande(demandeId: number, disponibilite: boolean) {
+    const url = `${ENDPOINTS.demandesAbonnement}${demandeId}/confirmer_disponibilite/`;
+    return this.requestNormalized<DemandeAbonnementDTO>(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ disponibilite_confirmee: disponibilite }),
+    });
+  }
+
+  changerStatutDemande(demandeId: number, statut: string) {
+    const url = `${ENDPOINTS.demandesAbonnement}${demandeId}/changer-statut/`;
+    return this.requestNormalized<DemandeAbonnementDTO>(url, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ statut }),
+    });
+  }
+
   updateManagerReservationStatus(reservationId: number, statut: string, notes?: string) {
     const url = `${API_ROOT}/manager/validation/${reservationId}/`;
     const payload = { statut, ...(notes ? { notes } : {}) };
@@ -854,22 +962,36 @@ class ApiService {
     });
   }
 
-  createSubscriptionPayment(payload: PaymentRequestDTO) {
-    const url = `${ENDPOINTS.paiements}subscription/`;
-    return this.requestNormalized<PaymentResponseDTO>(url, {
+  /**
+   * Initie un paiement Wave/Orange Money via l'API officielle backend.
+   * Backend: POST /api/payments/init/
+   */
+  initPayment(payload: InitPaymentRequestDTO) {
+    const url = `${ENDPOINTS.payments}init/`;
+    return this.requestNormalized<InitPaymentResponseDTO>(url, {
       method: 'POST',
       headers: this.headers(),
       body: JSON.stringify(payload),
     });
   }
 
-  createReservationPayment(payload: PaymentRequestDTO) {
-    const url = `${ENDPOINTS.paiements}reservation/`;
-    return this.requestNormalized<PaymentResponseDTO>(url, {
-      method: 'POST',
+  getPaymentStatus(paymentId: number) {
+    const url = `${ENDPOINTS.payments}${paymentId}/status/`;
+    return this.requestNormalized(url, {
+      method: 'GET',
       headers: this.headers(),
-      body: JSON.stringify(payload),
     });
+  }
+
+  /**
+   * Legacy wrappers (historique). Ne pas utiliser pour Wave/OM: PaiementViewSet terrains est deprecated.
+   */
+  createSubscriptionPayment(_payload: PaymentRequestDTO) {
+    throw new Error('createSubscriptionPayment: deprecated - use initPayment(/api/payments/init/)');
+  }
+
+  createReservationPayment(_payload: PaymentRequestDTO) {
+    throw new Error('createReservationPayment: deprecated - use initPayment(/api/payments/init/)');
   }
 
   // Tickets & notifications -------------------------------
@@ -1016,19 +1138,12 @@ class ApiService {
     });
   }
 
-  getAdminTerrains(params?: QueryParams) {
-    const url = `${API_ROOT}/admin/terrains/${buildQueryString(params)}`;
+  updateTerrainManagers(terrainId: number, gestionnaireId: number | null) {
+    const url = `${API_ROOT}/terrains/terrains/${terrainId}/`;
     return this.requestNormalized(url, {
-      method: 'GET',
+      method: 'PATCH',
       headers: this.headers(),
-    });
-  }
-
-  approveTerrainMobile(terrainId: number) {
-    const url = `${API_ROOT}/admin/terrain-mobile/${terrainId}/approve/`;
-    return this.requestNormalized(url, {
-      method: 'POST',
-      headers: this.headers(),
+      body: JSON.stringify({ gestionnaire_id: gestionnaireId }),
     });
   }
 
@@ -1164,28 +1279,37 @@ class ApiService {
   }
 
   // Admin - Reservations --------------------------------------
-  getAllReservations(params?: QueryParams) {
-    const url = `${API_ROOT}/admin/payments/${buildQueryString(params)}`;
+  getAdminReservations(params?: QueryParams) {
+    const url = `${API_ROOT}/admin/reservations/${buildQueryString(params)}`;
     return this.requestNormalized(url, {
       method: 'GET',
       headers: this.headers(),
     });
   }
 
-  deleteReservation(reservationId: number) {
-    const url = `${API_ROOT}/admin/payments/${reservationId}/`;
+  deleteAdminReservation(reservationId: number) {
+    const url = `${API_ROOT}/admin/reservations/${reservationId}/`;
     return this.requestNormalized(url, {
       method: 'DELETE',
       headers: this.headers(),
     });
   }
 
-  updateReservationNotes(reservationId: number, notes: string) {
-    const url = `${API_ROOT}/admin/payments/${reservationId}/`;
+  updateAdminReservationNotes(reservationId: number, notes: string) {
+    const url = `${API_ROOT}/admin/reservations/${reservationId}/notes/`;
     return this.requestNormalized(url, {
       method: 'PATCH',
       headers: this.headers(),
       body: JSON.stringify({ notes }),
+    });
+  }
+
+  updateAdminReservationStatus(reservationId: number, status: string, motif?: string) {
+    const url = `${API_ROOT}/admin/reservations/${reservationId}/status/`;
+    return this.requestNormalized(url, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({ status, ...(motif ? { motif_annulation: motif } : {}) }),
     });
   }
 
@@ -1358,15 +1482,6 @@ class ApiService {
     });
   }
 
-  // Admin - Reservation Status ------------------------------
-  updateAdminReservationStatus(reservationId: number, statut: string) {
-    const url = `${API_ROOT}/admin/payments/${reservationId}/`;
-    return this.requestNormalized(url, {
-      method: 'PATCH',
-      headers: this.headers(),
-      body: JSON.stringify({ statut }),
-    });
-  }
 
   // Subscriptions - Recurring -------------------------------
   createRecurringSubscription(subData: Record<string, unknown>) {

@@ -34,6 +34,7 @@ if env_file.exists():
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('DJANGO_SECRET_KEY', default='change-me')
+WAVE_WEBHOOK_SECRET = env('WAVE_WEBHOOK_SECRET', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DJANGO_DEBUG', default=False)

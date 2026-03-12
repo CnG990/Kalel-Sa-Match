@@ -2,11 +2,13 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
+from django.utils import timezone
 
 from apps.terrains.models import TerrainSynthetiquesDakar, TicketSupport, Notification, Abonnement, Souscription
 from apps.terrains.serializers import (
-    TerrainSerializer, 
-    TicketSupportSerializer, 
+    TerrainSerializer,
+    TicketSupportSerializer,
     NotificationSerializer
 )
 from apps.terrains.analytics import Analytics
@@ -14,9 +16,11 @@ from apps.accounts.models import User
 from apps.accounts.serializers import UserSerializer
 from apps.payments.models import Payment
 from apps.payments.serializers import PaymentSerializer
+from apps.reservations.models import Reservation
 from .serializers import (
     AdminAbonnementSerializer,
     AdminSouscriptionSerializer,
+    AdminReservationSerializer,
 )
 
 
@@ -184,6 +188,92 @@ class AdminPaymentViewSet(BaseViewSet):
         """Répartition des méthodes de paiement"""
         data = Analytics.get_payment_methods_breakdown()
         return Response({'data': data, 'meta': {'success': True}})
+
+
+class AdminReservationViewSet(BaseViewSet):
+    serializer_class = AdminReservationSerializer
+    queryset = Reservation.objects.select_related('terrain', 'terrain__gestionnaire', 'user').prefetch_related(
+        'paiement_acompte', 'paiement_solde', 'paiement'
+    ).filter(deleted_at__isnull=True)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        request = getattr(self, 'request', None)
+        user = getattr(request, 'user', None)
+        if not user or getattr(user, 'role', None) != 'admin':
+            return Reservation.objects.none()
+
+        params = request.query_params
+        search = params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(user__nom__icontains=search) |
+                Q(user__prenom__icontains=search) |
+                Q(user__email__icontains=search) |
+                Q(terrain__nom__icontains=search)
+            )
+
+        statut = params.get('statut')
+        if statut:
+            queryset = queryset.filter(statut=statut)
+
+        date_debut = params.get('date_debut')
+        if date_debut:
+            queryset = queryset.filter(date_debut__date__gte=date_debut)
+
+        date_fin = params.get('date_fin')
+        if date_fin:
+            queryset = queryset.filter(date_debut__date__lte=date_fin)
+
+        terrain_id = params.get('terrain_id')
+        if terrain_id:
+            queryset = queryset.filter(Q(terrain_id=terrain_id) | Q(terrain__id=terrain_id))
+
+        probleme = params.get('probleme')
+        if probleme and probleme.lower() in ['1', 'true', 'yes']:
+            queryset = queryset.filter(
+                Q(statut='annulee') |
+                Q(paiement_acompte__statut='echoue') |
+                Q(paiement_solde__statut='echoue') |
+                Q(date_debut__lt=timezone.now(), statut='en_attente')
+            )
+
+        sort_by = params.get('sort_by', '-created_at')
+        queryset = queryset.order_by(sort_by)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'data': serializer.data, 'meta': {'success': True}})
+
+    @action(detail=True, methods=['patch'], url_path='notes')
+    def update_notes(self, request, pk=None):
+        reservation = self.get_object()
+        notes = request.data.get('notes')
+        if not notes:
+            return Response({'meta': {'success': False, 'message': 'Notes requises'}}, status=400)
+        reservation.validation_notes = notes
+        reservation.save(update_fields=['validation_notes', 'updated_at'])
+        return Response({'data': self.get_serializer(reservation).data, 'meta': {'success': True, 'message': 'Notes mises à jour'}})
+
+    @action(detail=True, methods=['patch'], url_path='status')
+    def update_status(self, request, pk=None):
+        reservation = self.get_object()
+        new_status = request.data.get('status')
+        allowed = [choice[0] for choice in Reservation.STATUT_CHOICES]
+        if new_status not in allowed:
+            return Response({'meta': {'success': False, 'message': 'Statut invalide'}}, status=400)
+        reservation.statut = new_status
+        if new_status == 'annulee':
+            reservation.date_annulation = timezone.now()
+            reservation.motif_annulation = request.data.get('motif_annulation', "Annulé par l'administrateur")
+        reservation.save(update_fields=['statut', 'date_annulation', 'motif_annulation', 'updated_at'])
+        return Response({'data': self.get_serializer(reservation).data, 'meta': {'success': True, 'message': 'Statut mis à jour'}})
 
 
 class AdminTicketViewSet(BaseViewSet):

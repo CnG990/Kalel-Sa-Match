@@ -4,14 +4,19 @@ import { paymentService } from '../services/paymentService';
 import type { PaymentDetails } from '../services/paymentService';
 import { toast } from 'react-hot-toast';
 import apiService from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const PaymentPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [processing, setProcessing] = useState(false);
   const { reservationDetails, subscriptionDetails } = location.state || {};
   const [reservationStatus, setReservationStatus] = useState<string | undefined>(reservationDetails?.status);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [customerPhone, setCustomerPhone] = useState<string>(String(user?.telephone ?? ''));
+  const [customerName, setCustomerName] = useState<string>(`${user?.prenom ?? ''} ${user?.nom ?? ''}`.trim());
+  const [lastCheckout, setLastCheckout] = useState<{ methode: string; url?: string; instructions?: string; ussd?: string } | null>(null);
 
   // Déterminer le type de paiement (réservation ou abonnement)
   const paymentDetails: PaymentDetails = reservationDetails || subscriptionDetails;
@@ -32,6 +37,7 @@ const PaymentPage: React.FC = () => {
   }
 
   const reservationId = paymentDetails.reservationId;
+  const paymentId = (paymentDetails as any).paymentId as number | undefined;
   const paymentType = paymentDetails.payment_type ?? 'total';
   const isRefused = reservationStatus === 'refusee';
 
@@ -71,6 +77,11 @@ const PaymentPage: React.FC = () => {
       return;
     }
 
+    if (!customerPhone.trim() || !customerName.trim()) {
+      toast.error('Veuillez renseigner votre nom et votre numéro pour le paiement.');
+      return;
+    }
+
     setProcessing(true);
     const amount = paymentDetails.price || paymentDetails.totalAmount;
 
@@ -82,28 +93,41 @@ const PaymentPage: React.FC = () => {
         result = await paymentService.processSubscriptionPayment(
           paymentDetails.subscriptionId,
           amount,
-          method
+          method,
+          customerPhone,
+          customerName,
         );
       } else if (paymentDetails.reservationId) {
         // Paiement de réservation
         result = await paymentService.processReservationPayment(
           paymentDetails.reservationId,
           amount,
-          method
+          method,
+          customerPhone,
+          customerName,
+          paymentId,
         );
       } else {
         throw new Error('Type de paiement non reconnu');
       }
 
       if (result.success) {
-        toast.success('Paiement traité avec succès !');
-        // Rediriger vers la page de confirmation
-        navigate('/dashboard', { 
-          state: { 
-            paymentSuccess: true,
-            paymentDetails: paymentDetails 
-          } 
-        });
+        const payload = result.data as any;
+        const checkoutUrl = payload?.checkout_url as string | undefined;
+        const instructions = payload?.instructions as string | undefined;
+        const ussd = payload?.ussd_code as string | undefined;
+
+        setLastCheckout({ methode: method, url: checkoutUrl, instructions, ussd });
+
+        if (method === 'wave' && checkoutUrl) {
+          // Ouvrir Wave dans un nouvel onglet (lien de paiement)
+          window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+          toast.success('Lien Wave ouvert. Finalisez le paiement puis revenez ici.');
+        } else if (method === 'orange_money') {
+          toast.success('Instructions Orange Money affichées.');
+        } else {
+          toast.success('Paiement initialisé.');
+        }
       } else {
         toast.error(result.message || 'Erreur lors du paiement');
       }
@@ -182,6 +206,54 @@ const PaymentPage: React.FC = () => {
             </p>
           )}
         </div>
+
+        {/* Infos payeur */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <h2 className="text-lg font-bold mb-3">Informations de paiement</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+              <input
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full border rounded px-3 py-2"
+                placeholder="Votre nom"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+              <input
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full border rounded px-3 py-2"
+                placeholder="+2217XXXXXXXX"
+              />
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Ces informations sont utilisées pour initier le paiement (Wave / Orange Money).
+          </p>
+        </div>
+
+        {lastCheckout?.methode === 'orange_money' && (lastCheckout.instructions || lastCheckout.ussd) && (
+          <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+            <h3 className="font-bold text-orange-900 mb-2">Orange Money</h3>
+            {lastCheckout.ussd && <p className="font-mono text-orange-900">USSD : {lastCheckout.ussd}</p>}
+            {lastCheckout.instructions && <p className="text-sm text-orange-800 mt-1">{lastCheckout.instructions}</p>}
+          </div>
+        )}
+
+        {lastCheckout?.methode === 'wave' && lastCheckout.url && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="font-bold text-blue-900 mb-2">Wave</h3>
+            <p className="text-sm text-blue-800 mb-2">
+              Si le lien ne s’est pas ouvert, clique ici :
+            </p>
+            <a className="text-blue-700 underline break-all" href={lastCheckout.url} target="_blank" rel="noreferrer">
+              {lastCheckout.url}
+            </a>
+          </div>
+        )}
 
         {reservationId && (
           <div className={`mb-6 p-4 rounded-lg flex items-center justify-between text-sm font-medium ${

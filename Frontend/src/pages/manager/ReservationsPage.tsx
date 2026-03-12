@@ -23,12 +23,22 @@ const ReservationsPage: React.FC = () => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showRefundModal, setShowRefundModal] = useState(false);
 
+  const normalizeStatus = (statut: string) => {
+    const value = (statut || '').toLowerCase();
+    if (value === 'annulée') return 'annulee';
+    return statut;
+  };
+
   const fetchReservations = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await apiService.getManagerReservations();
       const raw = Array.isArray(data) ? data : (data as any)?.results ?? (data as any)?.data;
-      setReservations(Array.isArray(raw) ? raw : []);
+      setReservations(
+        Array.isArray(raw)
+          ? raw.map((reservation) => ({ ...reservation, statut: normalizeStatus(reservation.statut) }))
+          : [],
+      );
     } catch (error: any) {
       console.error('Erreur lors du chargement:', error);
 
@@ -51,10 +61,11 @@ const ReservationsPage: React.FC = () => {
   }, [fetchReservations]);
 
   const updateReservationStatus = async (reservationId: number, newStatus: string) => {
+    const canonicalStatus = normalizeStatus(newStatus);
     try {
-      const { meta } = await apiService.updateManagerReservationStatus(reservationId, newStatus);
+      const { meta } = await apiService.updateManagerReservationStatus(reservationId, canonicalStatus);
       setReservations(prev =>
-        prev.map(r => (r.id === reservationId ? { ...r, statut: newStatus } : r)),
+        prev.map(r => (r.id === reservationId ? { ...r, statut: canonicalStatus } : r)),
       );
       toast.success(meta.message || `Réservation ${newStatus === 'confirmee' ? 'confirmée' : 'annulée'}.`);
     } catch (error) {
@@ -102,31 +113,34 @@ const ReservationsPage: React.FC = () => {
   };
 
   const getStatusColor = (statut: string) => {
-    switch (statut) {
+    const normalized = normalizeStatus(statut);
+    switch (normalized) {
       case 'confirmee': return 'text-green-600 bg-green-100 border-green-200';
       case 'en_attente': return 'text-yellow-600 bg-yellow-100 border-yellow-200';
       case 'en_attente_validation': return 'text-orange-600 bg-orange-100 border-orange-200';
       case 'refusee': return 'text-red-600 bg-red-100 border-red-200';
-      case 'annulee': case 'annulée': return 'text-red-600 bg-red-100 border-red-200';
+      case 'annulee':
+        return 'text-red-600 bg-red-100 border-red-200';
       case 'terminee': return 'text-gray-600 bg-gray-100 border-gray-200';
       default: return 'text-gray-600 bg-gray-100 border-gray-200';
     }
   };
 
   const getStatusIcon = (statut: string) => {
-    switch (statut) {
+    const normalized = normalizeStatus(statut);
+    switch (normalized) {
       case 'confirmee': return <CheckCircle className="w-4 h-4" />;
       case 'en_attente': return <AlertCircle className="w-4 h-4" />;
       case 'en_attente_validation': return <Clock className="w-4 h-4" />;
       case 'refusee': return <XCircle className="w-4 h-4" />;
-      case 'annulee': case 'annulée': return <XCircle className="w-4 h-4" />;
+      case 'annulee': return <XCircle className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
   };
 
   const filteredReservations = reservations.filter(reservation => {
     if (filter === 'toutes') return true;
-    return reservation.statut === filter;
+    return normalizeStatus(reservation.statut) === filter;
   });
 
   const formatAmount = (reservation: Reservation) => (reservation.prix_total ?? reservation.montant_total ?? 0).toLocaleString();
@@ -157,7 +171,7 @@ const ReservationsPage: React.FC = () => {
           <p className="text-gray-600">Gérez les réservations sur vos terrains</p>
         </div>
         <div className="flex space-x-2">
-          {['toutes', 'en_attente_validation', 'en_attente', 'confirmee', 'terminee'].map(status => (
+          {['toutes', 'en_attente_validation', 'en_attente', 'acompte_paye', 'confirmee', 'annulee', 'terminee'].map(status => (
             <button
               key={status}
               onClick={() => setFilter(status)}
@@ -195,7 +209,7 @@ const ReservationsPage: React.FC = () => {
                     </h3>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(reservation.statut)}`}>
                       {getStatusIcon(reservation.statut)}
-                      <span className="ml-1 capitalize">{reservation.statut.replace('_', ' ')}</span>
+                      <span className="ml-1 capitalize">{normalizeStatus(reservation.statut).replace('_', ' ')}</span>
                     </span>
                   </div>
 
@@ -270,7 +284,7 @@ const ReservationsPage: React.FC = () => {
                         Confirmer
                       </button>
                       <button
-                        onClick={() => updateReservationStatus(reservation.id, 'annulée')}
+                        onClick={() => updateReservationStatus(reservation.id, 'annulee')}
                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
                       >
                         Annuler

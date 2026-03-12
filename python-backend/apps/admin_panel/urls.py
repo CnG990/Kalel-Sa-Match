@@ -5,6 +5,7 @@ from .views import (
     AdminUserViewSet,
     AdminTerrainViewSet,
     AdminPaymentViewSet,
+    AdminReservationViewSet,
     AdminTicketViewSet,
     AdminNotificationViewSet,
     AdminAbonnementViewSet,
@@ -20,6 +21,7 @@ router.register(r'users', AdminUserViewSet, basename='admin-users')
 router.register(r'terrains', AdminTerrainViewSet, basename='admin-terrains')
 router.register(r'terrain-mobile', AdminTerrainMobileViewSet, basename='admin-terrain-mobile')
 router.register(r'payments', AdminPaymentViewSet, basename='admin-payments')
+router.register(r'reservations', AdminReservationViewSet, basename='admin-reservations')
 router.register(r'payment-config', AdminPaymentConfigViewSet, basename='admin-payment-config')
 router.register(r'payment-stats', AdminPaymentStatsViewSet, basename='admin-payment-stats')
 router.register(r'support/tickets', AdminTicketViewSet, basename='admin-support-tickets')

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Search, Download, Eye, Plus, Users, DollarSign, CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
-import apiService from '../../services/api';
+import apiService, { PlanAbonnementDTO, DemandeAbonnementDTO } from '../../services/api';
 import toast from 'react-hot-toast';
 
 interface Subscription {
@@ -404,6 +404,60 @@ const SubscriptionsPage: React.FC = () => {
   });
   const [isFallback, setIsFallback] = useState(false);
 
+  const mapPlanToSubscription = (plan: PlanAbonnementDTO): Subscription => {
+    const duree = plan.duree_jours ?? (() => {
+      const type = (plan.type_abonnement || '').toString();
+      if (type === 'mensuel') return 30;
+      if (type === 'trimestriel') return 90;
+      if (type === 'annuel') return 365;
+      return 30;
+    })();
+
+    return {
+      id: plan.id,
+      nom: plan.nom,
+      description: plan.description || '',
+      prix: plan.prix,
+      duree_jours: duree,
+      avantages: plan.avantages || [],
+      statut: plan.actif ? 'active' : 'inactive',
+      nombre_abonnes: 0,
+      revenus_totaux: 0,
+      date_creation: plan.created_at || new Date().toISOString(),
+      date_modification: plan.updated_at || plan.created_at || new Date().toISOString(),
+    };
+  };
+
+  const mapDemandeToSubscriber = (demande: DemandeAbonnementDTO): Subscriber => {
+    const user = demande.user;
+    const plan = demande.plan;
+    const created = demande.created_at || new Date().toISOString();
+
+    let statut: Subscriber['statut'] = 'active';
+    if (demande.statut === 'expired') {
+      statut = 'expired';
+    } else if (demande.statut && ['cancelled', 'annulee', 'refusee'].includes(demande.statut)) {
+      statut = 'cancelled';
+    }
+
+    return {
+      id: demande.id,
+      user: {
+        id: user?.id ?? 0,
+        nom: user ? `${user.prenom ?? ''} ${user.nom ?? ''}`.trim() || 'Inconnu' : 'Inconnu',
+        email: user?.email ?? '—',
+      },
+      abonnement: {
+        id: plan?.id ?? demande.plan_id ?? 0,
+        nom: plan?.nom ?? `Plan #${plan?.id ?? demande.plan_id ?? ''}`,
+      },
+      date_debut: created,
+      date_fin: created,
+      statut,
+      montant_paye: demande.prix_calcule ?? plan?.prix ?? 0,
+    };
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -411,41 +465,23 @@ const SubscriptionsPage: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
 
-    const toList = (payload: unknown) => {
-      if (Array.isArray(payload)) return payload;
-      if (payload && typeof payload === 'object') {
-        const candidate = (payload as Record<string, unknown>).data
-          || (payload as Record<string, unknown>).results
-          || (payload as Record<string, unknown>).subscriptions
-          || (payload as Record<string, unknown>).subscribers;
-        if (Array.isArray(candidate)) return candidate;
-      }
-      return [];
-    };
-
     let subsList: Subscription[] = [];
     let subscrList: Subscriber[] = [];
     let hadError = false;
 
-    const loadCollections = async () => {
-      try {
-        const response = await apiService.get<Subscription[]>('/admin/subscriptions/');
-        subsList = toList(response.data ?? []) as Subscription[];
-      } catch (error) {
-        hadError = true;
-        console.error('Erreur chargement abonnements admin:', error);
-      }
+    try {
+      const plansResponse = await apiService.getPlanAbonnements();
+      const demandesResponse = await apiService.getDemandesAbonnement();
 
-      try {
-        const response = await apiService.get<Subscriber[]>('/admin/subscribers/');
-        subscrList = toList(response.data ?? []) as Subscriber[];
-      } catch (error) {
-        hadError = true;
-        console.error('Erreur chargement souscriptions admin:', error);
-      }
-    };
+      const plans = (plansResponse.data ?? []) as PlanAbonnementDTO[];
+      const demandes = (demandesResponse.data ?? []) as DemandeAbonnementDTO[];
 
-    await loadCollections();
+      subsList = plans.map(mapPlanToSubscription);
+      subscrList = demandes.map(mapDemandeToSubscriber);
+    } catch (error) {
+      hadError = true;
+      console.error('Erreur chargement plans/demandes abonnements admin:', error);
+    }
 
     if (hadError && subsList.length === 0 && subscrList.length === 0) {
       setSubscriptions(SUBSCRIPTION_FALLBACK);

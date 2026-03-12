@@ -3,33 +3,40 @@ import toast from 'react-hot-toast';
 import { MapPin, Search } from 'lucide-react';
 import apiService from '../../services/api';
 
-interface AddTerrainRemoteModalProps {
+interface EditTerrainModalProps {
+  terrain: any;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, onSuccess }) => {
+const EditTerrainModal: React.FC<EditTerrainModalProps> = ({ terrain, onClose, onSuccess }) => {
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Convert nombre_joueurs from string "5v5, 7v7" to array for checkboxes
+  const initialFormats = terrain.nombre_joueurs 
+    ? terrain.nombre_joueurs.split(',').map((f: string) => f.trim()) 
+    : ['5v5'];
+
   const [form, setForm] = useState({
-    nom: '',
-    description: '',
-    adresse: '',
-    ville: '',
-    quartier: '',
-    latitude: '',
-    longitude: '',
-    prix_heure: '',
-    capacite: '',
-    telephone: '',
-    type_surface: 'gazon_synthetique',
-    nombre_joueurs: ['5v5'] as string[],
-    longueur: '',
-    largeur: '',
-    eclairage: false,
-    vestiaires: false,
-    parking: false,
-    douches: false,
-    buvette: false,
+    nom: terrain.nom || '',
+    description: terrain.description || '',
+    adresse: terrain.adresse || '',
+    ville: terrain.ville || '',
+    quartier: terrain.quartier || '',
+    latitude: terrain.latitude?.toString() || '',
+    longitude: terrain.longitude?.toString() || '',
+    prix_heure: terrain.prix_heure?.toString() || '',
+    capacite: terrain.capacite?.toString() || '',
+    telephone: terrain.telephone || '',
+    type_surface: terrain.type_surface || 'gazon_synthetique',
+    nombre_joueurs_array: initialFormats,
+    longueur: terrain.longueur?.toString() || '',
+    largeur: terrain.largeur?.toString() || '',
+    eclairage: terrain.eclairage || false,
+    vestiaires: terrain.vestiaires || false,
+    parking: terrain.parking || false,
+    douches: terrain.douches || false,
+    buvette: terrain.buvette || false,
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -43,10 +50,21 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
     const L = (window as any).L;
     if (!L) return;
 
-    const map = L.map(mapRef.current).setView([14.6937, -17.4572], 12);
+    const lat = form.latitude ? parseFloat(form.latitude) : 14.6937;
+    const lng = form.longitude ? parseFloat(form.longitude) : -17.4572;
+
+    const map = L.map(mapRef.current).setView([lat, lng], form.latitude ? 16 : 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
+
+    if (form.latitude && form.longitude) {
+      markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(map);
+      markerRef.current.on('dragend', () => {
+        const pos = markerRef.current.getLatLng();
+        setForm(prev => ({ ...prev, latitude: pos.lat.toFixed(8), longitude: pos.lng.toFixed(8) }));
+      });
+    }
 
     map.on('click', (e: any) => {
       const { lat, lng } = e.latlng;
@@ -64,20 +82,22 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
 
     leafletMapRef.current = map;
     return () => { map.remove(); };
-  }, []);
+  }, []); // Only empty deps to initialize once
 
   const handleFormChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const target = event.target;
     const { name } = target;
     if (target instanceof HTMLInputElement && target.type === 'checkbox') {
-      if (name === 'nombre_joueurs') {
-        const { value, checked } = target;
+      if (['5v5', '6v6', '7v7', '8v8', '9v9', '11v11'].includes(name)) { // Format checkboxes
         setForm(prev => {
-          const formats = prev.nombre_joueurs;
-          const newFormats = checked 
-            ? [...formats, value]
-            : formats.filter(f => f !== value);
-          return { ...prev, nombre_joueurs: newFormats };
+          const currentFormats = [...prev.nombre_joueurs_array];
+          if (target.checked) {
+            if (!currentFormats.includes(name)) currentFormats.push(name);
+          } else {
+            const idx = currentFormats.indexOf(name);
+            if (idx > -1) currentFormats.splice(idx, 1);
+          }
+          return { ...prev, nombre_joueurs_array: currentFormats };
         });
       } else {
         setForm(prev => ({ ...prev, [name]: target.checked }));
@@ -137,10 +157,14 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
       toast.error('Sélectionnez un emplacement sur la carte ou saisissez les coordonnées');
       return;
     }
+    if (form.nombre_joueurs_array.length === 0) {
+      toast.error('Sélectionnez au moins un format de jeu');
+      return;
+    }
 
     try {
       setIsSaving(true);
-      const { data, meta } = await apiService.createAdminTerrain({
+      const { data, meta } = await apiService.updateAdminTerrain(terrain.id, {
         nom: form.nom,
         description: form.description,
         adresse: form.adresse,
@@ -150,9 +174,9 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
         capacite: parseInt(form.capacite, 10),
         telephone: form.telephone,
         type_surface: form.type_surface,
-        nombre_joueurs: form.nombre_joueurs.join(', '),
-        longueur: form.longueur ? parseFloat(form.longueur) : undefined,
-        largeur: form.largeur ? parseFloat(form.largeur) : undefined,
+        nombre_joueurs: form.nombre_joueurs_array.join(', '),
+        longueur: form.longueur ? parseFloat(form.longueur) : null,
+        largeur: form.largeur ? parseFloat(form.largeur) : null,
         eclairage: form.eclairage,
         vestiaires: form.vestiaires,
         parking: form.parking,
@@ -160,18 +184,17 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
         buvette: form.buvette,
         latitude: parseFloat(form.latitude),
         longitude: parseFloat(form.longitude),
-        source_creation: 'remote',
       });
 
       if (!data) {
-        toast.error(meta.message || "Impossible d'ajouter ce terrain");
+        toast.error(meta.message || "Impossible de modifier ce terrain");
         return;
       }
-      toast.success('Terrain ajouté avec succès');
+      toast.success('Terrain modifié avec succès');
       onSuccess();
       onClose();
     } catch (error) {
-      toast.error((error as Error).message || "Erreur lors de l'ajout");
+      toast.error((error as Error).message || "Erreur lors de la modification");
     } finally {
       setIsSaving(false);
     }
@@ -183,11 +206,11 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h3 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-              <MapPin className="w-6 h-6 text-blue-600" />
-              Ajouter un terrain à distance
+              <MapPin className="w-6 h-6 text-orange-600" />
+              Modifier le terrain : {terrain.nom}
             </h3>
             <p className="text-sm text-gray-500">
-              Recherchez l'adresse ou cliquez sur la carte pour positionner le terrain.
+              Ajustez les informations, équipements ou coordonnées du terrain.
             </p>
           </div>
           <button onClick={onClose} className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100" aria-label="Fermer">×</button>
@@ -202,7 +225,7 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && searchAddress()}
                 placeholder="Rechercher une adresse au Sénégal..."
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-blue-600 focus:border-blue-600"
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600"
               />
               <button
                 type="button"
@@ -224,15 +247,15 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
               </div>
             )}
             <div className="h-80 rounded-xl overflow-hidden border" ref={mapRef} />
-            <p className="text-sm text-gray-500">Cliquez sur la carte pour placer le marqueur, ou utilisez la recherche.</p>
+            <p className="text-sm text-gray-500">Ajustez le marqueur sur la carte si nécessaire.</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-500">Latitude</label>
-                <input name="latitude" value={form.latitude} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 text-sm" placeholder="14.6937" />
+                <input name="latitude" value={form.latitude} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50" readOnly />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500">Longitude</label>
-                <input name="longitude" value={form.longitude} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 text-sm" placeholder="-17.4572" />
+                <input name="longitude" value={form.longitude} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50" readOnly />
               </div>
             </div>
           </div>
@@ -241,36 +264,36 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
           <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
             <div>
               <label className="block text-sm font-medium text-gray-700">Nom du terrain *</label>
-              <input name="nom" value={form.nom} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-blue-600 focus:border-blue-600" placeholder="Ex: Terrain Almadies" />
+              <input name="nom" value={form.nom} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Ville</label>
-                <input name="ville" value={form.ville} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" placeholder="Dakar" />
+                <input name="ville" value={form.ville} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Quartier</label>
-                <input name="quartier" value={form.quartier} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" placeholder="Almadies" />
+                <input name="quartier" value={form.quartier} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Adresse *</label>
-              <input name="adresse" value={form.adresse} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" placeholder="Commune, repère" />
+              <input name="adresse" value={form.adresse} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Téléphone contact</label>
-              <input name="telephone" value={form.telephone} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" placeholder="77 123 45 67" />
+              <input name="telephone" value={form.telephone} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea name="description" value={form.description} onChange={handleFormChange} rows={2} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" placeholder="Remarques, particularités..." />
+              <textarea name="description" value={form.description} onChange={handleFormChange} rows={2} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
             </div>
 
             <h4 className="font-semibold text-gray-800 border-b pb-1">Caractéristiques</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Type de surface</label>
-                <select name="type_surface" value={form.type_surface} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300">
+                <select name="type_surface" value={form.type_surface} onChange={handleFormChange} className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600">
                   <option value="gazon_synthetique">Gazon synthétique</option>
                   <option value="gazon_naturel">Gazon naturel</option>
                   <option value="terre_battue">Terre battue</option>
@@ -279,20 +302,19 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
                   <option value="autre">Autre</option>
                 </select>
               </div>
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Formats de jeu (Plusieurs choix possibles)</label>
-                <div className="flex flex-wrap gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Formats de jeu *</label>
+                <div className="grid grid-cols-3 gap-2">
                   {['5v5', '6v6', '7v7', '8v8', '9v9', '11v11'].map((format) => (
-                    <label key={format} className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border hover:bg-gray-100 transition-colors">
-                      <input
-                        type="checkbox"
-                        name="nombre_joueurs"
-                        value={format}
-                        checked={form.nombre_joueurs.includes(format)}
-                        onChange={handleFormChange}
-                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
+                    <label key={format} className="flex items-center gap-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        name={format} 
+                        checked={form.nombre_joueurs_array.includes(format)} 
+                        onChange={handleFormChange} 
+                        className="rounded text-orange-600 focus:ring-orange-500" 
                       />
-                      <span className="text-sm text-gray-700 font-medium">{format}</span>
+                      <span className="text-sm">{format.replace('v', ' contre ')}</span>
                     </label>
                   ))}
                 </div>
@@ -301,21 +323,21 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Longueur (m)</label>
-                <input name="longueur" value={form.longueur} onChange={handleFormChange} type="number" min="0" step="0.5" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" />
+                <input name="longueur" value={form.longueur} onChange={handleFormChange} type="number" min="0" step="0.5" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Largeur (m)</label>
-                <input name="largeur" value={form.largeur} onChange={handleFormChange} type="number" min="0" step="0.5" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" />
+                <input name="largeur" value={form.largeur} onChange={handleFormChange} type="number" min="0" step="0.5" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Prix / heure (FCFA) *</label>
-                <input name="prix_heure" value={form.prix_heure} onChange={handleFormChange} type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" />
+                <input name="prix_heure" value={form.prix_heure} onChange={handleFormChange} type="number" min="0" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Capacité joueurs *</label>
-                <input name="capacite" value={form.capacite} onChange={handleFormChange} type="number" min="1" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300" />
+                <label className="block text-sm font-medium text-gray-700">Capacité joueurs max *</label>
+                <input name="capacite" value={form.capacite} onChange={handleFormChange} type="number" min="1" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
               </div>
             </div>
 
@@ -329,7 +351,7 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
                 { name: 'buvette', label: 'Buvette', emoji: '🥤' },
               ].map((item) => (
                 <label key={item.name} className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                  <input type="checkbox" name={item.name} checked={(form as any)[item.name]} onChange={handleFormChange} className="rounded text-blue-600 focus:ring-blue-500" />
+                  <input type="checkbox" name={item.name} checked={(form as any)[item.name]} onChange={handleFormChange} className="rounded text-orange-600 focus:ring-orange-500" />
                   <span className="text-sm">{item.emoji} {item.label}</span>
                 </label>
               ))}
@@ -337,8 +359,8 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
 
             <div className="flex justify-end gap-3 pt-4">
               <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100">Annuler</button>
-              <button type="button" disabled={isSaving} onClick={handleSubmit} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
-                {isSaving ? 'Enregistrement…' : 'Enregistrer le terrain'}
+              <button type="button" disabled={isSaving} onClick={handleSubmit} className="px-4 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50">
+                {isSaving ? 'Enregistrement…' : 'Enregistrer les modifications'}
               </button>
             </div>
           </div>
@@ -348,4 +370,4 @@ const AddTerrainRemoteModal: React.FC<AddTerrainRemoteModalProps> = ({ onClose, 
   );
 };
 
-export default AddTerrainRemoteModal;
+export default EditTerrainModal;

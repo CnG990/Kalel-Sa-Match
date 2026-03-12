@@ -1,18 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import apiService from '../../services/api';
+import apiService, { type ReservationDTO } from '../../services/api';
 import { AlertTriangle, Loader2, Share2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
-interface Reservation {
-  id: number;
-  date_debut: string;
-  date_fin: string;
-  statut: 'en_attente_validation' | 'refusee' | 'en_attente' | 'confirmee' | 'acompte_paye' | 'annulee' | 'terminee' | 'en_cours';
-  montant_total: number;
-  montant_acompte?: number;
-  montant_restant?: number;
-  acompte_paye?: boolean;
-  solde_paye?: boolean;
+type Reservation = ReservationDTO & {
   terrain: {
     id: number;
     nom: string;
@@ -21,14 +13,16 @@ interface Reservation {
     latitude?: number | string | null;
     longitude?: number | string | null;
   };
-}
+};
 
 interface ReservationCardProps {
   reservation: Reservation;
   onCancel: (reservationId: number) => Promise<void>;
+  onPayDeposit?: (reservation: Reservation) => void;
+  onPayBalance?: (reservation: Reservation) => void;
 }
 
-const ReservationCard = ({ reservation, onCancel }: ReservationCardProps) => {
+const ReservationCard = ({ reservation, onCancel, onPayDeposit, onPayBalance }: ReservationCardProps) => {
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const formatTime = (dateString: string) => new Date(dateString).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
@@ -57,6 +51,16 @@ const ReservationCard = ({ reservation, onCancel }: ReservationCardProps) => {
   };
 
   const isCancellable = reservation.statut === 'confirmee' && new Date(reservation.date_debut) > new Date();
+  const canPayDeposit =
+    reservation.statut === 'en_attente' &&
+    !reservation.acompte_paye &&
+    Boolean(reservation.paiement_acompte_id) &&
+    typeof onPayDeposit === 'function';
+  const canPayBalance =
+    (reservation.acompte_paye || reservation.statut === 'acompte_paye' || reservation.statut === 'confirmee') &&
+    !reservation.solde_paye &&
+    (reservation.montant_restant ?? 0) > 0 &&
+    typeof onPayBalance === 'function';
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col sm:flex-row transition-transform hover:scale-105 duration-300">
@@ -115,6 +119,24 @@ const ReservationCard = ({ reservation, onCancel }: ReservationCardProps) => {
               Annuler
             </button>
           )}
+
+          {canPayDeposit && (
+            <button
+              onClick={() => onPayDeposit?.(reservation)}
+              className="flex-1 text-center px-4 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200"
+            >
+              Payer l'acompte
+            </button>
+          )}
+
+          {canPayBalance && (
+            <button
+              onClick={() => onPayBalance?.(reservation)}
+              className="flex-1 text-center px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200"
+            >
+              Payer le solde
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -125,6 +147,7 @@ const ReservationsPage: React.FC = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -180,6 +203,78 @@ const ReservationsPage: React.FC = () => {
     }
   };
 
+  const buildPaymentPayload = (
+    reservation: Reservation,
+    paymentId: number,
+    paymentType: 'acompte' | 'solde',
+    amount: number,
+  ) => {
+    const startDate = new Date(reservation.date_debut);
+    return {
+      reservationId: reservation.id,
+      paymentId,
+      terrainName: reservation.terrain.nom,
+      date: startDate.toLocaleDateString('fr-FR'),
+      time: startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      price: amount,
+      totalAmount: reservation.montant_total,
+      montant_acompte: reservation.montant_acompte,
+      payment_type: paymentType,
+      status: reservation.statut,
+    };
+  };
+
+  const handlePayDeposit = (reservation: Reservation) => {
+    if (!reservation.paiement_acompte_id) {
+      toast.error('Paiement d’acompte introuvable.');
+      return;
+    }
+    const amount = reservation.montant_acompte ?? reservation.montant_total;
+    navigate('/payment', {
+      state: {
+        reservationDetails: buildPaymentPayload(reservation, reservation.paiement_acompte_id, 'acompte', amount),
+      },
+    });
+  };
+
+  const handlePayBalance = async (reservation: Reservation) => {
+    const remaining = reservation.montant_restant ?? 0;
+    if (remaining <= 0) {
+      toast.error('Aucun solde à régler.');
+      return;
+    }
+
+    try {
+      let paymentId = reservation.paiement_solde_id ?? null;
+      let amount = remaining;
+
+      if (!paymentId) {
+        const { data } = await apiService.createReservationBalancePayment(reservation.id);
+        if (!data) {
+          throw new Error('Impossible de préparer le paiement du solde.');
+        }
+        paymentId = data.payment_id;
+        amount = data.montant_solde;
+        setReservations(prev =>
+          prev.map(r => (r.id === reservation.id ? { ...r, paiement_solde_id: paymentId } : r)),
+        );
+      }
+
+      if (!paymentId) {
+        throw new Error('Identifiant de paiement indisponible.');
+      }
+
+      navigate('/payment', {
+        state: {
+          reservationDetails: buildPaymentPayload(reservation, paymentId, 'solde', amount),
+        },
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Erreur lors de l’initiation du paiement du solde.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -210,7 +305,7 @@ const ReservationsPage: React.FC = () => {
         <h2 className="text-2xl font-semibold text-gray-700 mb-4">À venir</h2>
         {upcomingReservations.length > 0 ? (
           <div className="space-y-6">
-            {upcomingReservations.map(res => <ReservationCard key={`upcoming-${res.id}`} reservation={res} onCancel={handleCancelReservation} />)}
+            {upcomingReservations.map(res => <ReservationCard key={`upcoming-${res.id}`} reservation={res} onCancel={handleCancelReservation} onPayDeposit={handlePayDeposit} onPayBalance={handlePayBalance} />)}
           </div>
         ) : (
           <div className="bg-white p-8 rounded-lg shadow-sm text-center text-gray-500 border-2 border-dashed">
@@ -226,7 +321,15 @@ const ReservationsPage: React.FC = () => {
         <h2 className="text-2xl font-semibold text-gray-700 mb-4">Historique</h2>
         {pastReservations.length > 0 ? (
           <div className="space-y-6">
-            {pastReservations.map(res => <ReservationCard key={`past-${res.id}`} reservation={res} onCancel={handleCancelReservation} />)}
+            {pastReservations.map(res => (
+              <ReservationCard
+                key={`past-${res.id}`}
+                reservation={res}
+                onCancel={handleCancelReservation}
+                onPayDeposit={handlePayDeposit}
+                onPayBalance={handlePayBalance}
+              />
+            ))}
           </div>
         ) : (
           <div className="bg-white p-8 rounded-lg shadow-sm text-center text-gray-500 border-2 border-dashed">

@@ -110,6 +110,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
             state: { 
               reservationDetails: {
                 reservationId: data.id,
+                paymentId: (data as any).payment_id,
+                paymentReference: (data as any).payment_reference,
                 terrainName: terrain.nom,
                 date: format(selectedDate, 'dd/MM/yyyy', { locale: fr }),
                 time: selectedSlot,

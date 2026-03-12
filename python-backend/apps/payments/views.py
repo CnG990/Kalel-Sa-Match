@@ -1,4 +1,8 @@
 import uuid
+import hashlib
+import hmac
+
+from django.conf import settings
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -189,6 +193,26 @@ def wave_webhook(request):
     logger = logging.getLogger(__name__)
     
     try:
+        secret = getattr(settings, 'WAVE_WEBHOOK_SECRET', '')
+        if secret:
+            header_signature = (
+                request.headers.get('X-Wave-Signature')
+                or request.headers.get('Wave-Signature')
+                or request.META.get('HTTP_X_WAVE_SIGNATURE')
+            )
+            if not header_signature:
+                logger.warning("Signature Wave absente")
+                return api_error("Signature webhook manquante", status.HTTP_400_BAD_REQUEST)
+
+            signature = header_signature.split('=', 1)[-1]
+            computed = hmac.new(secret.encode('utf-8'), request.body, hashlib.sha256).hexdigest()
+
+            if not hmac.compare_digest(signature, computed):
+                logger.warning("Signature Wave invalide", extra={'header': header_signature})
+                return api_error("Signature webhook invalide", status.HTTP_400_BAD_REQUEST)
+        else:
+            logger.warning("WAVE_WEBHOOK_SECRET non configuré - webhook non sécurisé")
+
         data = request.data
         logger.info(f"Wave webhook reçu: {data}")
         

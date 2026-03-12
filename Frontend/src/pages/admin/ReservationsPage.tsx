@@ -75,6 +75,7 @@ const ReservationsPage: React.FC = () => {
   const [adminNotes, setAdminNotes] = useState('');
   const [ticketCode, setTicketCode] = useState('');
   const [validatingTicket, setValidatingTicket] = useState(false);
+  const [statusLoading, setStatusLoading] = useState<number | null>(null);
 
   useEffect(() => {
     fetchReservations();
@@ -83,7 +84,7 @@ const ReservationsPage: React.FC = () => {
   const fetchReservations = async () => {
     setLoading(true);
     try {
-      const { data, meta } = await apiService.getAllReservations({ 
+      const { data, meta } = await apiService.getAdminReservations({ 
         search: searchTerm,
         ...filters 
       });
@@ -130,7 +131,7 @@ const ReservationsPage: React.FC = () => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette réservation ? Cette action est irréversible.')) return;
     
     try {
-      const { data, meta } = await apiService.deleteReservation(id);
+      const { data, meta } = await apiService.deleteAdminReservation(id);
       if (data) {
         toast.success('Réservation supprimée avec succès');
         fetchReservations();
@@ -146,7 +147,7 @@ const ReservationsPage: React.FC = () => {
     if (!selectedReservation || !adminNotes.trim()) return;
     
     try {
-      const { data, meta } = await apiService.updateReservationNotes(selectedReservation.id, adminNotes);
+      const { data, meta } = await apiService.updateAdminReservationNotes(selectedReservation.id, adminNotes);
       if (data) {
         toast.success('Notes ajoutées avec succès');
         setShowNotesModal(false);
@@ -171,6 +172,33 @@ const ReservationsPage: React.FC = () => {
       }
     } catch (error) {
       // Erreur déjà gérée par toast.error dans le bloc try
+    }
+  };
+
+  const handleUpdateStatus = async (reservation: Reservation, status: Reservation['statut']) => {
+    if (status === 'annulee') {
+      const motif = window.prompt('Motif de l\'annulation (optionnel) :', 'Annulé par l\'administrateur') ?? undefined;
+      await submitStatusUpdate(reservation.id, status, motif);
+    } else {
+      await submitStatusUpdate(reservation.id, status);
+    }
+  };
+
+  const submitStatusUpdate = async (reservationId: number, status: string, motif?: string) => {
+    setStatusLoading(reservationId);
+    try {
+      const { data, meta } = await apiService.updateAdminReservationStatus(reservationId, status, motif);
+      if (data) {
+        toast.success(meta.message || 'Statut mis à jour');
+        fetchReservations();
+      } else {
+        toast.error(meta.message || 'Impossible de mettre à jour le statut');
+      }
+    } catch (error) {
+      console.error('Erreur statut admin:', error);
+      toast.error('Erreur lors de la mise à jour du statut');
+    } finally {
+      setStatusLoading(null);
     }
   };
 
@@ -558,6 +586,26 @@ const ReservationsPage: React.FC = () => {
                           </button>
                         )}
                         
+                        {reservation.statut !== 'confirmee' && (
+                          <button
+                            onClick={() => handleUpdateStatus(reservation, 'confirmee')}
+                            className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-medium hover:bg-green-200 disabled:opacity-50"
+                            disabled={statusLoading === reservation.id}
+                          >
+                            {statusLoading === reservation.id ? '...' : 'Confirmer'}
+                          </button>
+                        )}
+
+                        {reservation.statut !== 'annulee' && (
+                          <button
+                            onClick={() => handleUpdateStatus(reservation, 'annulee')}
+                            className="bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-medium hover:bg-red-200 disabled:opacity-50"
+                            disabled={statusLoading === reservation.id}
+                          >
+                            {statusLoading === reservation.id ? '...' : 'Annuler'}
+                          </button>
+                        )}
+
                         <button
                           onClick={() => handleDelete(reservation.id)}
                           className="text-red-600 hover:text-red-900"
