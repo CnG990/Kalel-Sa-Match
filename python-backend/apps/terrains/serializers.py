@@ -15,7 +15,7 @@ from .models import (
 
 class TerrainSerializer(serializers.ModelSerializer):
     # Autoriser plusieurs formats de jeu (ex: "5v5, 7v7") sans appliquer les choices strictes
-    nombre_joueurs = serializers.CharField(required=False, allow_blank=True)
+    nombre_joueurs = serializers.CharField(required=False, allow_blank=True, max_length=100)
     gestionnaire = UserSerializer(read_only=True)
 
     class Meta:
