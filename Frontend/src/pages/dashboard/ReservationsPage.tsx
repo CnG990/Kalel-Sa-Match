@@ -205,7 +205,7 @@ const ReservationsPage: React.FC = () => {
 
   const buildPaymentPayload = (
     reservation: Reservation,
-    paymentId: number,
+    paymentId: number | undefined,
     paymentType: 'acompte' | 'solde',
     amount: number,
   ) => {
@@ -213,7 +213,7 @@ const ReservationsPage: React.FC = () => {
     return {
       reservationId: reservation.id,
       paymentId,
-      terrainName: reservation.terrain.nom,
+      terrainName: reservation.terrain?.nom || (reservation as any).terrain_nom || `Terrain #${reservation.terrain_id}`,
       date: startDate.toLocaleDateString('fr-FR'),
       time: startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       price: amount,
@@ -245,28 +245,12 @@ const ReservationsPage: React.FC = () => {
     }
 
     try {
-      let paymentId = reservation.paiement_solde_id ?? null;
-      let amount = remaining;
-
-      if (!paymentId) {
-        const { data } = await apiService.createReservationBalancePayment(reservation.id);
-        if (!data) {
-          throw new Error('Impossible de préparer le paiement du solde.');
-        }
-        paymentId = data.payment_id;
-        amount = data.montant_solde;
-        setReservations(prev =>
-          prev.map(r => (r.id === reservation.id ? { ...r, paiement_solde_id: paymentId } : r)),
-        );
-      }
-
-      if (!paymentId) {
-        throw new Error('Identifiant de paiement indisponible.');
-      }
+      const paymentId = reservation.paiement_solde_id ?? null;
+      const amount = remaining;
 
       navigate('/payment', {
         state: {
-          reservationDetails: buildPaymentPayload(reservation, paymentId, 'solde', amount),
+          reservationDetails: buildPaymentPayload(reservation, paymentId ?? undefined, 'solde', amount),
         },
       });
     } catch (err: any) {

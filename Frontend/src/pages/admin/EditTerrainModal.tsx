@@ -28,6 +28,9 @@ const EditTerrainModal: React.FC<EditTerrainModalProps> = ({ terrain, onClose, o
     prix_heure: terrain.prix_heure?.toString() || '',
     capacite: terrain.capacite?.toString() || '',
     telephone: terrain.telephone || '',
+    type_acompte: terrain.type_acompte || 'pourcentage',
+    pourcentage_acompte: terrain.pourcentage_acompte?.toString() || '30',
+    montant_acompte_fixe: terrain.montant_acompte_fixe?.toString() || '',
     type_surface: terrain.type_surface || 'gazon_synthetique',
     nombre_joueurs_array: initialFormats,
     longueur: terrain.longueur?.toString() || '',
@@ -173,6 +176,9 @@ const EditTerrainModal: React.FC<EditTerrainModalProps> = ({ terrain, onClose, o
         prix_heure: parseFloat(form.prix_heure),
         capacite: parseInt(form.capacite, 10),
         telephone: form.telephone,
+        type_acompte: form.type_acompte,
+        pourcentage_acompte: form.pourcentage_acompte ? parseFloat(form.pourcentage_acompte) : null,
+        montant_acompte_fixe: form.montant_acompte_fixe ? parseFloat(form.montant_acompte_fixe) : null,
         type_surface: form.type_surface,
         nombre_joueurs: form.nombre_joueurs_array.join(', '),
         longueur: form.longueur ? parseFloat(form.longueur) : null,
@@ -338,6 +344,48 @@ const EditTerrainModal: React.FC<EditTerrainModalProps> = ({ terrain, onClose, o
               <div>
                 <label className="block text-sm font-medium text-gray-700">Capacité joueurs max *</label>
                 <input name="capacite" value={form.capacite} onChange={handleFormChange} type="number" min="1" className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Type d'avance</label>
+                <select
+                  name="type_acompte"
+                  value={form.type_acompte}
+                  onChange={handleFormChange}
+                  className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600"
+                >
+                  <option value="pourcentage">Pourcentage</option>
+                  <option value="montant_fixe">Montant fixe</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Avance (%)</label>
+                <input
+                  name="pourcentage_acompte"
+                  value={form.pourcentage_acompte}
+                  onChange={handleFormChange}
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  disabled={form.type_acompte === 'montant_fixe'}
+                  className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600 disabled:bg-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Avance fixe (FCFA)</label>
+                <input
+                  name="montant_acompte_fixe"
+                  value={form.montant_acompte_fixe}
+                  onChange={handleFormChange}
+                  type="number"
+                  min="0"
+                  step="100"
+                  disabled={form.type_acompte === 'pourcentage'}
+                  className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-orange-600 focus:border-orange-600 disabled:bg-gray-100"
+                />
               </div>
             </div>
 

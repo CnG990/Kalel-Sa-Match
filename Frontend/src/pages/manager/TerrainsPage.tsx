@@ -20,6 +20,12 @@ const TerrainsPage: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [editingTerrain, setEditingTerrain] = useState<{ id: number; currentPrice: number } | null>(null);
   const [newPrice, setNewPrice] = useState('');
+  const [editingAdvance, setEditingAdvance] = useState<{
+    id: number;
+    type_acompte: string;
+    pourcentage_acompte: string;
+    montant_acompte_fixe: string;
+  } | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -75,6 +81,36 @@ const TerrainsPage: React.FC = () => {
       }
     }
   };
+
+  const startAdvanceEdit = (terrain: any) => {
+    setEditingAdvance({
+      id: terrain.id,
+      type_acompte: terrain.type_acompte || 'pourcentage',
+      pourcentage_acompte: terrain.pourcentage_acompte?.toString() || '30',
+      montant_acompte_fixe: terrain.montant_acompte_fixe?.toString() || ''
+    });
+  };
+
+  const saveAdvance = async () => {
+    if (!editingAdvance) return;
+    const { id, type_acompte, pourcentage_acompte, montant_acompte_fixe } = editingAdvance;
+    try {
+      const payload: Record<string, unknown> = {
+        type_acompte,
+        pourcentage_acompte: pourcentage_acompte ? parseFloat(pourcentage_acompte) : null,
+        montant_acompte_fixe: montant_acompte_fixe ? parseFloat(montant_acompte_fixe) : null,
+      };
+      const { data } = await apiService.updateTerrain(id, payload);
+      setTerrains(prev => prev.map(t => (t.id === id ? { ...t, ...(data || payload) } : t)));
+      toast.success('Avance mise à jour');
+      setEditingAdvance(null);
+    } catch (error) {
+      console.error('Erreur avance:', error);
+      toast.error("Erreur lors de la mise à jour de l'avance");
+    }
+  };
+
+  const cancelAdvanceEdit = () => setEditingAdvance(null);
 
   const cancelPriceEdit = () => {
     setEditingTerrain(null);
@@ -298,6 +334,20 @@ const TerrainsPage: React.FC = () => {
                               ({terrain.nombre_avis || 0})
                             </span>
                           </div>
+                          <div className="flex items-center space-x-2 text-xs text-gray-600">
+                            <span>Avance :</span>
+                            <span className="font-semibold text-orange-600">
+                              {terrain.type_acompte === 'montant_fixe'
+                                ? `${Number((terrain as any).montant_acompte_fixe ?? 0).toLocaleString()} CFA`
+                                : `${Number((terrain as any).pourcentage_acompte ?? 0)}%`}
+                            </span>
+                            <button
+                              onClick={() => startAdvanceEdit(terrain)}
+                              className="text-gray-400 hover:text-gray-600 touch-target"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -342,6 +392,57 @@ const TerrainsPage: React.FC = () => {
         </div>
       )}
 
+      {editingAdvance && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4">
+            <h3 className="text-xl font-bold text-gray-900">Configurer l'avance</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <select
+                  value={editingAdvance.type_acompte}
+                  onChange={(e) => setEditingAdvance(prev => prev ? { ...prev, type_acompte: e.target.value } : prev)}
+                  className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-blue-600 focus:border-blue-600"
+                >
+                  <option value="pourcentage">Pourcentage</option>
+                  <option value="montant_fixe">Montant fixe</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Pourcentage (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    disabled={editingAdvance.type_acompte === 'montant_fixe'}
+                    value={editingAdvance.pourcentage_acompte}
+                    onChange={(e) => setEditingAdvance(prev => prev ? { ...prev, pourcentage_acompte: e.target.value } : prev)}
+                    className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-blue-600 focus:border-blue-600 disabled:bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Montant fixe (FCFA)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="100"
+                    disabled={editingAdvance.type_acompte === 'pourcentage'}
+                    value={editingAdvance.montant_acompte_fixe}
+                    onChange={(e) => setEditingAdvance(prev => prev ? { ...prev, montant_acompte_fixe: e.target.value } : prev)}
+                    className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-blue-600 focus:border-blue-600 disabled:bg-gray-100"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={cancelAdvanceEdit} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">Annuler</button>
+              <button onClick={saveAdvance} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

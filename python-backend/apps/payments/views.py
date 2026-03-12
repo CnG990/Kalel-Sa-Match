@@ -123,7 +123,6 @@ def init_payment(request):
         # Si la réservation a un terrain avec un gestionnaire qui a son propre lien Wave
         reservation_id = serializer.validated_data.get('reservation_id')
         if reservation_id:
-            from apps.reservations.models import Reservation
             try:
                 reservation = Reservation.objects.get(id=reservation_id)
                 gestionnaire = reservation.terrain.gestionnaire

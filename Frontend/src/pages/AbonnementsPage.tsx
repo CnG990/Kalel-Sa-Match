@@ -27,7 +27,9 @@ const mapPlanAbonnementDto = (dto: PlanAbonnementDTO) => ({
   ...dto,
   id: Number(dto.id),
   nom: dto.nom ?? (dto as any).name ?? `Plan ${dto.id}`,
-  prix: Number(dto.prix ?? (dto as any).price ?? 0),
+  prix: dto.prix != null ? Number(dto.prix) : (dto as any).price ?? null,
+  reduction_percent: dto.reduction_percent != null ? Number(dto.reduction_percent) : 0,
+  description: dto.description ?? (dto as any).desc ?? '',
   type_abonnement: (dto.type_abonnement as string | undefined)?.toLowerCase() ?? null,
 });
 
@@ -200,7 +202,10 @@ const AbonnementsPage: React.FC = () => {
         setPlanSelectionneId(first.id);
         const type = detectTypeAbonnement(first);
         setTypeAbonnementSelectionne(type);
-        setPrixEstimeSelection(Number(first.prix ?? 0));
+        const reduction = Number(first.reduction_percent ?? 0);
+        const prixBase = Number(first.prix ?? 0);
+        const prixNet = prixBase * (1 - reduction / 100);
+        setPrixEstimeSelection(prixNet);
       }
     } catch (error) {
       console.error('❌ Erreur fetchPlans:', error);
@@ -268,7 +273,10 @@ const AbonnementsPage: React.FC = () => {
 
   const calculerPrix = (_type: 'mensuel' | 'trimestriel' | 'annuel', plan?: PlanAbonnementDTO | null) => {
     if (plan && plan.prix != null) {
-      return Number(plan.prix);
+      const reduction = Number(plan.reduction_percent ?? 0);
+      const prixBase = Number(plan.prix);
+      const prixNet = prixBase * (1 - reduction / 100);
+      return prixNet;
     }
     return null;
   };
