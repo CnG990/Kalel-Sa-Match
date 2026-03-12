@@ -265,8 +265,14 @@ class DemandeAbonnementViewSet(BaseViewSet):
     def perform_create(self, serializer):
         plan = serializer.validated_data['plan']
         nb_seances = serializer.validated_data.get('nb_seances') or 1
-        prix_calcule = plan.prix * nb_seances
-        serializer.save(user=self.request.user, terrain=plan.terrain, prix_calcule=prix_calcule)
+        prix_brut = plan.prix * nb_seances
+        reduction = float(plan.reduction_percent or 0)
+        prix_calcule = prix_brut * (1 - reduction / 100)
+        serializer.save(
+            user=self.request.user,
+            terrain=plan.terrain,
+            prix_calcule=prix_calcule,
+        )
 
     def _user_can_manage(self, user):
         return bool(user and user.is_authenticated and getattr(user, 'role', None) in ['admin', 'gestionnaire'])

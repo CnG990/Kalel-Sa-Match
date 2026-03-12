@@ -51,6 +51,7 @@ class PlanAbonnementSerializer(serializers.ModelSerializer):
             'type_abonnement',
             'duree_jours',
             'prix',
+            'reduction_percent',
             'avantages',
             'actif',
             'created_at',

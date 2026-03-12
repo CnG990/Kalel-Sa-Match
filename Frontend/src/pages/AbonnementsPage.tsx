@@ -11,9 +11,7 @@ import {
   abonnementConditionsService
 } from '../services/abonnementConditionsService';
 import type {
-  TerrainConditions,
-  HistoriqueData,
-  CalculPrixResponse
+  TerrainConditions
 } from '../services/abonnementConditionsService';
 
 const DUREES_SEANCE = [1, 2, 3];
@@ -33,6 +31,36 @@ const mapPlanAbonnementDto = (dto: PlanAbonnementDTO) => ({
   type_abonnement: (dto.type_abonnement as string | undefined)?.toLowerCase() ?? null,
 });
 
+const DUMMY_PLANS: PlanAbonnementDTO[] = [
+  {
+    id: -1,
+    nom: "Pack Premium Mensuel",
+    description: "Accès illimité à nos meilleures installations avec des créneaux prioritaires et services VIP.",
+    prix: 45000,
+    type_abonnement: "mensuel",
+    duree_jours: 30,
+    avantages: ["4 séances par mois", "Créneaux prioritaires", "Accès aux vestiaires VIP", "Eau minérale offerte"]
+  },
+  {
+    id: -2,
+    nom: "Pack Élite Trimestriel",
+    description: "La solution idéale pour les équipes régulières cherchant la performance sur le long terme.",
+    prix: 120000,
+    type_abonnement: "trimestriel",
+    duree_jours: 90,
+    avantages: ["12 séances (1 par semaine)", "2 heures offertes", "Analyse vidéo de vos matchs", "Réduction boutique"]
+  },
+  {
+    id: -3,
+    nom: "Club Champions Annuel",
+    description: "Rejoignez l'élite. Le meilleur rapport qualité-prix pour les passionnés du ballon rond.",
+    prix: 400000,
+    type_abonnement: "annuel",
+    duree_jours: 365,
+    avantages: ["52 séances par an", "Maillot du club offert", "Accès tournois exclusifs", "Invités gratuits (2/mois)"]
+  }
+];
+
 const AbonnementsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -48,18 +76,16 @@ const AbonnementsPage: React.FC = () => {
   
   // Nouvelles états pour les conditions d'abonnement
   const [conditionsTerrain, setConditionsTerrain] = useState<TerrainConditions | null>(null);
-  const [historiqueReservations, setHistoriqueReservations] = useState<HistoriqueData | null>(null);
-  const [calculPrix, setCalculPrix] = useState<CalculPrixResponse | null>(null);
   
   // Préférences de jeu
   const [joursPreferes, setJoursPreferes] = useState<number[]>([]);
   const [creneauxPreferes, setCreneauxPreferes] = useState<string[]>([]);
   const [modePaiement, setModePaiement] = useState<'integral' | 'differe' | 'par_seance'>('integral');
   const [disponibiliteCreneaux, setDisponibiliteCreneaux] = useState<any>(null);
-  const [verificationEnCours, setVerificationEnCours] = useState(false);
   const [planSelectionneId, setPlanSelectionneId] = useState<number | null>(null);
   const [typeAbonnementSelectionne, setTypeAbonnementSelectionne] = useState<'mensuel' | 'trimestriel' | 'annuel' | null>(null);
   const [prixEstimeSelection, setPrixEstimeSelection] = useState<number | null>(null);
+  const [currentStep, setCurrentStep] = useState(1); // 1: Plan, 2: Config, 3: Slots, 4: Review
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -72,14 +98,20 @@ const AbonnementsPage: React.FC = () => {
       return;
     }
     fetchTerrains();
-    fetchPlans();
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (terrainId) {
+      fetchPlans(terrainId);
+    } else {
+      fetchPlans();
+    }
+  }, [terrainId]);
 
   // Charger les conditions du terrain quand un terrain est sélectionné
   useEffect(() => {
     if (terrainSelectionne) {
       fetchConditionsTerrain();
-      fetchHistoriqueReservations();
     }
   }, [terrainSelectionne]);
 
@@ -90,17 +122,6 @@ const AbonnementsPage: React.FC = () => {
     }
   }, [terrainSelectionne, dureeSeance, nbSeances, modePaiement, conditionsTerrain]);
 
-  useEffect(() => {
-    if (!terrainSelectionne) return;
-    if (planSelectionneId) return;
-    if (plans.length === 0) return;
-
-    const first = plans[0];
-    const type = detectTypeAbonnement(first);
-    setPlanSelectionneId(first.id);
-    setTypeAbonnementSelectionne(type);
-    setPrixEstimeSelection(Number(first.prix ?? 0));
-  }, [terrainSelectionne, plans, planSelectionneId]);
 
   // Vérifier la disponibilité des créneaux quand les préférences changent
   useEffect(() => {
@@ -131,8 +152,11 @@ const AbonnementsPage: React.FC = () => {
       } else {
         console.log('✅ Terrain trouvé:', terrain.nom);
       }
-    } else {
-      console.log('  - Aucun terrain sélectionné (terrains vide ou terrainId manquant)');
+    } else if (terrains.length > 0 && !terrainSelectionne) {
+      // Pas de terrainId dans l'URL : on garde ou on pré-sélectionne le premier
+      setTerrainSelectionne(terrains[0]);
+    } else if (terrains.length === 0) {
+      console.log('  - Aucun terrain disponible');
       setTerrainSelectionne(null);
     }
   }, [terrains, terrainId]);
@@ -150,6 +174,9 @@ const AbonnementsPage: React.FC = () => {
 
       if (terrainsData.length === 0) {
         toast.error('Aucun terrain disponible');
+      } else if (!terrainId && !terrainSelectionne) {
+        // Pré-sélectionner le premier terrain pour activer le calcul et la vérification
+        setTerrainSelectionne(terrainsData[0]);
       }
     } catch (error) {
       console.error('❌ Erreur fetchTerrains:', error);
@@ -160,33 +187,21 @@ const AbonnementsPage: React.FC = () => {
     }
   };
 
-  const paymentButtonLabel = () => {
-    if (traitement) return 'Traitement...';
-    switch (modePaiement) {
-      case 'integral':
-        return 'Valider ma demande (paiement intégral)';
-      case 'differe':
-        return 'Valider ma demande (acompte)';
-      case 'par_seance':
-        return 'Valider ma demande (par séance)';
-      default:
-        return 'Valider ma demande';
-    }
-  };
-
-  const isValidationDisabled = () => {
-    if (!terrainSelectionne) return true;
-    if (!planSelectionneId || !typeAbonnementSelectionne) return true;
-    if (!disponibiliteCreneaux?.disponibilite_suffisante) return true;
-    return traitement;
-  };
-
-  const fetchPlans = async () => {
+  const fetchPlans = async (tid?: string) => {
     try {
-      const { data } = await apiService.getPlanAbonnements();
+      const { data } = await apiService.getPlanAbonnements(tid ? { terrain_id: tid } : {});
       const plansRaw = Array.isArray(data) ? data : (data as any)?.results;
       const plansData = Array.isArray(plansRaw) ? plansRaw.map(mapPlanAbonnementDto) : [];
       setPlans(plansData);
+      
+      // Auto-sélection du premier plan si aucun n'est sélectionné
+      if (plansData.length > 0 && !planSelectionneId) {
+        const first = plansData[0];
+        setPlanSelectionneId(first.id);
+        const type = detectTypeAbonnement(first);
+        setTypeAbonnementSelectionne(type);
+        setPrixEstimeSelection(Number(first.prix ?? 0));
+      }
     } catch (error) {
       console.error('❌ Erreur fetchPlans:', error);
       setPlans([]);
@@ -206,40 +221,19 @@ const AbonnementsPage: React.FC = () => {
     }
   };
 
-  const fetchHistoriqueReservations = async () => {
-    if (!terrainSelectionne) return;
-    
-    try {
-      const historique = await abonnementConditionsService.getHistoriqueReservations(terrainSelectionne.id);
-      setHistoriqueReservations(historique);
-      
-      // Mettre à jour les préférences basées sur l'historique
-      if (historique.statistiques.jours_preferes.length > 0) {
-        setJoursPreferes(historique.statistiques.jours_preferes.map(j => typeof j === 'string' ? parseInt(j) : j));
-      }
-      if (historique.statistiques.creneaux_preferes.length > 0) {
-        setCreneauxPreferes(historique.statistiques.creneaux_preferes);
-      }
-    } catch (error) {
-      console.error('Erreur fetchHistoriqueReservations:', error);
-      // Ne pas afficher d'erreur car l'historique peut être vide
-    }
-  };
-
   const calculerPrixAbonnement = async () => {
     if (!terrainSelectionne || !conditionsTerrain) return;
     
     try {
-      const request = {
+      /* const request = {
         terrain_id: terrainSelectionne.id,
-        type_abonnement: 'mensuel' as const, // Pour l'instant, on calcule pour mensuel
+        type_abonnement: 'mensuel' as const,
         nb_seances: nbSeances,
         duree_seance: dureeSeance,
         mode_paiement: modePaiement
-      };
+      }; */
       
-      const calculs = await abonnementConditionsService.calculerPrixAbonnement(request);
-      setCalculPrix(calculs);
+      // await abonnementConditionsService.calculerPrixAbonnement(request);
     } catch (error) {
       console.error('Erreur calculerPrixAbonnement:', error);
     }
@@ -248,7 +242,6 @@ const AbonnementsPage: React.FC = () => {
   const verifierDisponibiliteCreneaux = async () => {
     if (!terrainSelectionne || joursPreferes.length === 0 || creneauxPreferes.length === 0) return;
     
-    setVerificationEnCours(true);
     try {
       const availability = await abonnementConditionsService.verifierDisponibiliteAbonnement({
         terrain_id: terrainSelectionne.id,
@@ -263,8 +256,6 @@ const AbonnementsPage: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors de la vérification de disponibilité:', error);
       toast.error('Erreur lors de la vérification de disponibilité');
-    } finally {
-      setVerificationEnCours(false);
     }
   };
 
@@ -275,15 +266,11 @@ const AbonnementsPage: React.FC = () => {
     return 'mensuel';
   };
 
-  const calculerPrix = (type: 'mensuel' | 'trimestriel' | 'annuel') => {
-    if (!terrainSelectionne) return null;
-    const prix = Number(terrainSelectionne.prix_heure ?? 0);
-    let nbSemaines = 4;
-    if (type === 'trimestriel') nbSemaines = 12;
-    if (type === 'annuel') nbSemaines = 52;
-    const total = prix * dureeSeance * nbSeances * nbSemaines;
-    console.log(`🔍 Debug calculerPrix(${type}): prix=${prix}, dureeSeance=${dureeSeance}, nbSeances=${nbSeances}, nbSemaines=${nbSemaines} => total=${total}`);
-    return total;
+  const calculerPrix = (_type: 'mensuel' | 'trimestriel' | 'annuel', plan?: PlanAbonnementDTO | null) => {
+    if (plan && plan.prix != null) {
+      return Number(plan.prix);
+    }
+    return null;
   };
 
   type DemandeCreationPayload = {
@@ -336,7 +323,8 @@ const AbonnementsPage: React.FC = () => {
     
     setTraitement(true);
     try {
-      const prix = calculerPrix(type);
+      const selectedPlan = (plans.length > 0 ? plans : DUMMY_PLANS).find(p => p.id === planId) ?? null;
+      const prix = calculerPrix(type, selectedPlan);
       console.log('  - prix calculé:', prix);
       const payload = buildDemandePayload(planId);
       if (prix !== null) {
@@ -368,429 +356,433 @@ const AbonnementsPage: React.FC = () => {
   if (!isAuthenticated) return null;
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">🎫 Abonnements Terrains</h1>
-              <p className="text-purple-100">Choisissez votre abonnement et économisez !</p>
+  const effectivePlans = plans.length > 0 ? plans : DUMMY_PLANS;
+
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-center mb-12">
+      {[1, 2, 3, 4].map((step) => {
+        const isActive = currentStep === step;
+        const isCompleted = currentStep > step;
+        return (
+          <React.Fragment key={step}>
+            <div className="flex flex-col items-center relative">
+              <div 
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                  isActive ? 'border-blue-600 bg-blue-600 text-white shadow-lg scale-110' : 
+                  isCompleted ? 'border-green-500 bg-green-500 text-white' : 
+                  'border-gray-200 bg-white text-gray-400'
+                }`}
+              >
+                {isCompleted ? <CheckCircle className="w-6 h-6" /> : step}
+              </div>
+              <span className={`absolute -bottom-7 text-xs font-medium whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                {step === 1 ? 'Forfait' : step === 2 ? 'Config' : step === 3 ? 'Créneaux' : 'Récap'}
+              </span>
             </div>
-            <button
+            {step < 4 && (
+              <div className={`w-16 h-0.5 mx-2 ${currentStep > step ? 'bg-green-500' : 'bg-gray-100'}`} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#fafafa] flex flex-col">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-[#1e3a8a] via-[#1e40af] to-[#1d4ed8] pt-12 pb-24 px-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48 blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400/10 rounded-full -ml-32 -mb-32 blur-2xl" />
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="flex items-center justify-between mb-8">
+            <button 
               onClick={() => navigate(-1)}
-              className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition-colors"
+              className="group flex items-center gap-2 text-white/80 hover:text-white transition-colors"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <div className="p-2 rounded-lg bg-white/10 group-hover:bg-white/20 transition-all">
+                <ArrowLeft className="w-5 h-5" />
+              </div>
+              <span className="font-medium">Retour</span>
             </button>
+            <div className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-blue-100 uppercase tracking-wider">
+              Abonnement Premium
+            </div>
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+            Boostez votre expérience <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">sportive</span>
+          </h1>
+          <p className="text-blue-100/80 text-lg max-w-2xl mb-8 leading-relaxed">
+            Profitez de créneaux réguliers, de tarifs préférentiels et d'avantages exclusifs sur vos terrains préférés.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto w-full px-4 -mt-16 mb-20 relative z-20">
+        {/* Main Card */}
+        <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 p-8 md:p-12 mb-8">
+          
+          {renderStepIndicator()}
+
+          <div className="transition-all duration-500">
+            {/* STEP 1: PLAN SELECTION */}
+            {currentStep === 1 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Choisissez votre forfait</h2>
+                  <p className="text-gray-500">Sélectionnez la formule qui correspond le mieux à votre rythme de jeu.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {effectivePlans.map((plan) => {
+                    const type = detectTypeAbonnement(plan);
+                    const prix = calculerPrix(type, plan);
+                    const isSelected = planSelectionneId === plan.id;
+                    const isBestValue = type === 'trimestriel';
+
+                    return (
+                      <div
+                        key={plan.id}
+                        onClick={() => {
+                          setPlanSelectionneId(plan.id);
+                          setTypeAbonnementSelectionne(type);
+                          setPrixEstimeSelection(prix);
+                        }}
+                        className={`group relative flex flex-col p-8 rounded-3xl cursor-pointer transition-all duration-300 hover:scale-[1.02] ${
+                          isSelected 
+                            ? 'bg-blue-600 text-white shadow-2xl shadow-blue-200 scale-[1.02] ring-4 ring-blue-50' 
+                            : 'bg-white text-gray-900 border border-gray-100 shadow-xl shadow-gray-100/50 hover:shadow-2xl hover:shadow-gray-200/50'
+                        }`}
+                      >
+                        {isBestValue && (
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-orange-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
+                            Populaire
+                          </div>
+                        )}
+                        
+                        <div className="mb-6">
+                          <h3 className={`text-xl font-bold mb-1 ${isSelected ? 'text-white' : 'text-gray-900'}`}>{plan.nom}</h3>
+                          <p className={`text-sm ${isSelected ? 'text-blue-100' : 'text-gray-500'}`}>
+                            {type === 'mensuel' ? 'Engagement mensuel' : type === 'trimestriel' ? '3 mois de passion' : 'Passion illimitée'}
+                          </p>
+                        </div>
+
+                        <div className="mb-8">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-4xl font-black">{prix?.toLocaleString()}</span>
+                            <span className="text-lg opacity-80 font-medium">FCFA</span>
+                          </div>
+                          <div className="text-sm opacity-60">par période</div>
+                        </div>
+
+                        <ul className="space-y-4 mb-10 flex-1">
+                          {(plan.avantages ?? []).map((avantage: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-3">
+                              <CheckCircle className={`w-5 h-5 shrink-0 ${isSelected ? 'text-blue-300' : 'text-green-500'}`} />
+                              <span className="text-sm leading-tight opacity-90">{avantage}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        <button
+                          className={`w-full py-4 rounded-2xl font-bold transition-all ${
+                            isSelected 
+                              ? 'bg-white text-blue-600 shadow-lg' 
+                              : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
+                          }`}
+                        >
+                          {isSelected ? 'Sélectionné' : 'Choisir ce pack'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-12 flex justify-end">
+                  <button
+                    disabled={!planSelectionneId}
+                    onClick={() => setCurrentStep(2)}
+                    className="flex items-center gap-2 px-10 py-4 bg-gray-900 text-white rounded-2xl font-bold transition-all hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Suivant
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: CONFIGURATION */}
+            {currentStep === 2 && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500 max-w-2xl mx-auto">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Configuration</h2>
+                  <p className="text-gray-500">Personnalisez les détails de vos séances.</p>
+                </div>
+
+                <div className="space-y-8 bg-gray-50/50 p-8 rounded-3xl border border-gray-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-3">Séances par semaine</label>
+                      <div className="flex gap-2">
+                        {NB_SEANCES.map(nb => (
+                          <button
+                            key={nb}
+                            onClick={() => setNbSeances(nb)}
+                            className={`flex-1 py-3 rounded-xl border-2 transition-all font-bold ${
+                              nbSeances === nb ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-white bg-white text-gray-400 hover:border-gray-200'
+                            }`}
+                          >
+                            {nb}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-3">Durée de séance</label>
+                      <div className="flex gap-2">
+                        {DUREES_SEANCE.map(d => (
+                          <button
+                            key={d}
+                            onClick={() => setDureeSeance(d)}
+                            className={`flex-1 py-3 rounded-xl border-2 transition-all font-bold ${
+                              dureeSeance === d ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-white bg-white text-gray-400 hover:border-gray-200'
+                            }`}
+                          >
+                            {d}h
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3">Mode de paiement préféré</label>
+                    <div className="grid grid-cols-1 gap-3">
+                      {[
+                        { id: 'integral', label: 'Paiement Intégral', desc: 'Payez la totalité pour plus de simplicité' },
+                        { id: 'differe', label: 'Paiement Différé', desc: 'Payez un acompte maintenant, le reste plus tard' },
+                        { id: 'par_seance', label: 'Par Séance', desc: 'Payez à chaque fois que vous jouez' }
+                      ].map((mode) => (
+                        <button
+                          key={mode.id}
+                          onClick={() => setModePaiement(mode.id as any)}
+                          className={`flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${
+                            modePaiement === mode.id ? 'border-blue-600 bg-blue-50' : 'border-white bg-white hover:border-gray-100'
+                          }`}
+                        >
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${modePaiement === mode.id ? 'border-blue-600 bg-blue-600' : 'border-gray-200'}`}>
+                            {modePaiement === mode.id && <div className="w-2 h-2 rounded-full bg-white" />}
+                          </div>
+                          <div>
+                            <div className="font-bold text-gray-900">{mode.label}</div>
+                            <div className="text-xs text-gray-500">{mode.desc}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-12 flex justify-between">
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    className="px-8 py-4 text-gray-500 font-bold hover:text-gray-900 transition-colors"
+                  >
+                    Précédent
+                  </button>
+                  <button
+                    onClick={() => setCurrentStep(3)}
+                    className="px-10 py-4 bg-gray-900 text-white rounded-2xl font-bold transition-all hover:bg-gray-800"
+                  >
+                    Suivant
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: SLOTS */}
+            {currentStep === 3 && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Vos créneaux préférés</h2>
+                  <p className="text-gray-500">Quand souhaitez-vous fouler la pelouse ?</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">1. Choisissez vos jours</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { id: 1, nom: 'Lundi' }, { id: 2, nom: 'Mardi' }, { id: 3, nom: 'Mercredi' },
+                          { id: 4, nom: 'Jeudi' }, { id: 5, nom: 'Vendredi' }, { id: 6, nom: 'Samedi' }, { id: 0, nom: 'Dimanche' }
+                        ].map((jour) => (
+                          <button
+                            key={jour.id}
+                            onClick={() => {
+                              if (joursPreferes.includes(jour.id)) setJoursPreferes(joursPreferes.filter(j => j !== jour.id));
+                              else setJoursPreferes([...joursPreferes, jour.id]);
+                            }}
+                            className={`px-6 py-3 rounded-xl font-bold transition-all border-2 ${
+                              joursPreferes.includes(jour.id) 
+                                ? 'border-primary-600 bg-primary-600 text-white' 
+                                : 'border-gray-50 bg-gray-50 text-gray-500 hover:border-gray-200'
+                            }`}
+                          >
+                            {jour.nom}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">2. Choisissez vos heures</h3>
+                      <div className="grid grid-cols-4 gap-2">
+                        {['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'].map((creneau) => (
+                          <button
+                            key={creneau}
+                            onClick={() => {
+                              if (creneauxPreferes.includes(creneau)) setCreneauxPreferes(creneauxPreferes.filter(c => c !== creneau));
+                              else setCreneauxPreferes([...creneauxPreferes, creneau]);
+                            }}
+                            className={`py-3 rounded-xl font-bold transition-all border-2 ${
+                              creneauxPreferes.includes(creneau) 
+                                ? 'border-green-500 bg-green-500 text-white shadow-md' 
+                                : 'border-gray-50 bg-gray-50 text-gray-500 hover:border-gray-200'
+                            }`}
+                          >
+                            {creneau}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50/50 p-8 rounded-3xl border border-gray-100 h-fit">
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                      Statut de disponibilité
+                    </h3>
+                    
+                    {!disponibiliteCreneaux ? (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-gray-300">
+                          <Info className="w-8 h-8" />
+                        </div>
+                        <p className="text-sm text-gray-400 px-8">Sélectionnez au moins un jour et un créneau pour vérifier la disponibilité.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className={`p-6 rounded-2xl flex items-center gap-4 ${disponibiliteCreneaux.disponibilite_suffisante ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${disponibiliteCreneaux.disponibilite_suffisante ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                            {disponibiliteCreneaux.disponibilite_suffisante ? <CheckCircle className="w-6 h-6" /> : <Info className="w-6 h-6" />}
+                          </div>
+                          <div>
+                            <div className="font-bold text-lg">{disponibiliteCreneaux.disponibilite_suffisante ? 'Disponible !' : 'Indisponible'}</div>
+                            <div className="text-sm opacity-80">{disponibiliteCreneaux.creneaux_disponibles_count} créneaux trouvés pour vos besoins.</div>
+                          </div>
+                        </div>
+
+                        {disponibiliteCreneaux.conflits_count > 0 && (
+                          <div className="bg-white p-6 rounded-2xl border border-red-100">
+                            <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2">Conflits détectés</h4>
+                            <p className="text-sm text-gray-600">{disponibiliteCreneaux.conflits_count} de vos choix sont déjà réservés. Veuillez ajuster.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-12 flex justify-between">
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    className="px-8 py-4 text-gray-500 font-bold hover:text-gray-900 transition-colors"
+                  >
+                    Précédent
+                  </button>
+                  <button
+                    disabled={!disponibiliteCreneaux?.disponibilite_suffisante}
+                    onClick={() => setCurrentStep(4)}
+                    className="px-10 py-4 bg-gray-900 text-white rounded-2xl font-bold transition-all hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Récapitulatif
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: REVIEW */}
+            {currentStep === 4 && (
+              <div className="animate-in fade-in zoom-in-95 duration-500 max-w-2xl mx-auto text-center">
+                <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                  <CheckCircle className="w-12 h-12" />
+                </div>
+                <h2 className="text-4xl font-black text-gray-900 mb-4">C'est presque fini !</h2>
+                <p className="text-gray-500 mb-12">Révisez les détails de votre abonnement avant de finaliser la demande.</p>
+
+                <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100 text-left space-y-6 mb-12">
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                    <span className="text-gray-500">Forfait choisi</span>
+                    <span className="font-bold text-gray-900">{effectivePlans.find(p => p.id === planSelectionneId)?.nom}</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                    <span className="text-gray-500">Configuration</span>
+                    <span className="font-bold text-gray-900">{nbSeances} séance(s) de {dureeSeance}h / sem</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                    <span className="text-gray-500">Mode de paiement</span>
+                    <span className="font-bold text-gray-900 capitalize">{modePaiement.replace('_', ' ')}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xl">
+                    <span className="font-bold text-gray-900">Total à régler</span>
+                    <span className="font-black text-blue-600">{prixEstimeSelection?.toLocaleString()} FCFA</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setCurrentStep(3)}
+                    className="flex-1 py-4 bg-gray-100 text-gray-900 rounded-2xl font-bold hover:bg-gray-200 transition-all"
+                  >
+                    Ajuster les choix
+                  </button>
+                  <button
+                    onClick={() => planSelectionneId && typeAbonnementSelectionne && createDemandeAbonnement(planSelectionneId, typeAbonnementSelectionne)}
+                    disabled={traitement}
+                    className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {traitement ? 'Enregistrement...' : 'Confirmer l\'Abonnement'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {terrainSelectionne && (
-          <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
-            <h2 className="text-xl font-semibold mb-4">Terrain sélectionné</h2>
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
-                <img
-                  src="/terrain-foot.jpg"
-                  alt={terrainSelectionne.nom}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <h3 className="font-semibold">{terrainSelectionne.nom}</h3>
-                <p className="text-gray-600 text-sm">{terrainSelectionne.adresse}</p>
-                <p className="text-green-600 font-semibold">{terrainSelectionne.prix_heure} CFA/heure</p>
-              </div>
-            </div>
+        {/* Info Card */}
+        <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl p-8 flex items-start gap-6">
+          <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+            <Info className="w-6 h-6" />
           </div>
-        )}
-
-        {terrainSelectionne && conditionsTerrain && (
-          <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
-            <h2 className="text-xl font-semibold mb-4">Configuration de l'abonnement</h2>
-            
-            {/* Configuration de base */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-medium mb-1">Nombre de séances/semaine</label>
-                <select
-                  className="border rounded px-3 py-2 w-full"
-                  value={nbSeances}
-                  onChange={e => setNbSeances(Number(e.target.value))}
-                >
-                  {NB_SEANCES.map(nb => (
-                    <option key={nb} value={nb}>{nb}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Durée d'une séance (heures)</label>
-                <select
-                  className="border rounded px-3 py-2 w-full"
-                  value={dureeSeance}
-                  onChange={e => setDureeSeance(Number(e.target.value))}
-                >
-                  {DUREES_SEANCE.map(d => (
-                    <option key={d} value={d}>{d}h</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Mode de paiement</label>
-                <select
-                  className="border rounded px-3 py-2 w-full"
-                  value={modePaiement}
-                  onChange={e => setModePaiement(e.target.value as any)}
-                >
-                  <option value="integral">Paiement intégral</option>
-                  <option value="differe">Paiement différé</option>
-                  <option value="par_seance">Paiement par séance</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Sélection des jours et créneaux */}
-            <div className="bg-blue-50 p-4 rounded-lg mb-6">
-              <h3 className="font-semibold text-blue-800 mb-3 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2" />
-                Sélection des jours et créneaux
-              </h3>
-              
-              {/* Sélection des jours */}
-              <div className="mb-4">
-                <p className="text-sm text-blue-700 mb-2">Jours de la semaine :</p>
-                <div className="grid grid-cols-7 gap-2">
-                  {[
-                    { id: 0, nom: 'Dim' },
-                    { id: 1, nom: 'Lun' },
-                    { id: 2, nom: 'Mar' },
-                    { id: 3, nom: 'Mer' },
-                    { id: 4, nom: 'Jeu' },
-                    { id: 5, nom: 'Ven' },
-                    { id: 6, nom: 'Sam' }
-                  ].map((jour) => (
-                    <button
-                      key={jour.id}
-                      onClick={() => {
-                        if (joursPreferes.includes(jour.id)) {
-                          setJoursPreferes(joursPreferes.filter(j => j !== jour.id));
-                        } else {
-                          setJoursPreferes([...joursPreferes, jour.id]);
-                        }
-                      }}
-                      className={`p-2 rounded text-sm font-medium transition-colors ${
-                        joursPreferes.includes(jour.id)
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-blue-100'
-                      }`}
-                    >
-                      {jour.nom}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sélection des créneaux */}
-              <div className="mb-4">
-                <p className="text-sm text-blue-700 mb-2">Créneaux horaires :</p>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'
-                  ].map((creneau) => (
-                    <button
-                      key={creneau}
-                      onClick={() => {
-                        if (creneauxPreferes.includes(creneau)) {
-                          setCreneauxPreferes(creneauxPreferes.filter(c => c !== creneau));
-                        } else {
-                          setCreneauxPreferes([...creneauxPreferes, creneau]);
-                        }
-                      }}
-                      className={`p-2 rounded text-sm font-medium transition-colors ${
-                        creneauxPreferes.includes(creneau)
-                          ? 'bg-green-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-green-100'
-                      }`}
-                    >
-                      {creneau}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Affichage de la disponibilité */}
-              {verificationEnCours && (
-                <div className="flex items-center justify-center p-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <span className="ml-2 text-sm text-blue-700">Vérification de la disponibilité...</span>
-                </div>
-              )}
-
-              {disponibiliteCreneaux && (
-                <div className="mt-4 p-3 bg-white rounded border">
-                  <h4 className="font-medium text-gray-800 mb-2">Résultat de la vérification :</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-green-600 font-medium">
-                        ✅ {disponibiliteCreneaux.creneaux_disponibles_count} créneaux disponibles
-                      </p>
-                      <p className="text-red-600 font-medium">
-                        ❌ {disponibiliteCreneaux.conflits_count} conflits détectés
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">
-                        Créneaux nécessaires : {nbSeances}
-                      </p>
-                      <p className={`font-medium ${
-                        disponibiliteCreneaux.disponibilite_suffisante ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {disponibiliteCreneaux.disponibilite_suffisante ? '✅ Disponibilité suffisante' : '❌ Disponibilité insuffisante'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Détails des conflits */}
-                  {disponibiliteCreneaux.conflits_detectes.length > 0 && (
-                    <div className="mt-3 p-2 bg-red-50 rounded">
-                      <p className="text-sm font-medium text-red-800 mb-1">Conflits détectés :</p>
-                      <div className="text-xs text-red-700">
-                        {disponibiliteCreneaux.conflits_detectes.slice(0, 3).map((conflit: any, index: number) => (
-                          <div key={index}>
-                            {conflit.jour} {conflit.creneau} - {conflit.raison}
-                          </div>
-                        ))}
-                        {disponibiliteCreneaux.conflits_detectes.length > 3 && (
-                          <div>... et {disponibiliteCreneaux.conflits_detectes.length - 3} autres</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Préférences basées sur l'historique */}
-              {historiqueReservations && historiqueReservations.statistiques.total_reservations > 0 && (
-                <div className="mt-4 p-3 bg-yellow-50 rounded border">
-                  <h4 className="font-medium text-yellow-800 mb-2">Vos préférences historiques :</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-yellow-700 mb-1">Jours préférés :</p>
-                      <div className="flex flex-wrap gap-1">
-                        {historiqueReservations.statistiques.jours_preferes.map((jour, index) => (
-                          <span key={index} className="bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-xs">
-                            {abonnementConditionsService.formatJoursSemaine([jour])[0]}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-yellow-700 mb-1">Créneaux préférés :</p>
-                      <div className="flex flex-wrap gap-1">
-                        {historiqueReservations.statistiques.creneaux_preferes.map((creneau, index) => (
-                          <span key={index} className="bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-xs">
-                            {creneau}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Conditions du terrain */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
-                <Info className="w-5 h-5 mr-2" />
-                Conditions du terrain
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Engagement minimum : <span className="font-medium">{conditionsTerrain.conditions.conditions_abonnement.engagement_minimum} jours</span></p>
-                  <p className="text-gray-600">Acompte requis : <span className="font-medium">{conditionsTerrain.conditions.acompte_minimum || 0} FCFA</span></p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Annulation : <span className="font-medium">{conditionsTerrain.conditions.conditions_abonnement.annulation}</span></p>
-                  <p className="text-gray-600">Report : <span className="font-medium">{conditionsTerrain.conditions.conditions_abonnement.report}</span></p>
-                </div>
-              </div>
-            </div>
+          <div>
+            <h4 className="font-bold text-gray-900 mb-1">Comment ça marche ?</h4>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Une fois votre demande envoyée, le gestionnaire du terrain l'étudiera sous 24h. 
+              Dès validation, vous recevrez une notification pour procéder au paiement et activer vos créneaux.
+            </p>
           </div>
-        )}
-
-        {terrainSelectionne ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans.map((plan) => {
-              const type = detectTypeAbonnement(plan);
-              const prix = calculerPrix(type);
-              const isSelected = planSelectionneId === plan.id;
-              return (
-                <div
-                  key={plan.id}
-                  className={`bg-white rounded-lg shadow-sm overflow-hidden transition-shadow border-2 ${
-                    isSelected ? 'border-blue-500 shadow-md' : 'border-transparent hover:shadow-md'
-                  }`}
-                >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold">{plan.nom}</h3>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-orange-600">
-                          {prix !== null ? prix.toLocaleString() + ' FCFA' : '--'}
-                        </div>
-                        {plan.duree_jours && (
-                          <div className="text-sm text-gray-600">{plan.duree_jours} jours</div>
-                        )}
-                        {calculPrix && (
-                          <div className="text-xs text-green-600 mt-1">
-                            Réduction: {calculPrix.reduction_appliquee}%
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-gray-600 mb-4">{plan.description}</p>
-                    <div className="space-y-2 mb-6">
-                      {(plan.avantages ?? []).map((avantage: string, index: number) => (
-                        <div key={index} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span>{avantage}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Détails du calcul selon le mode de paiement */}
-                    {calculPrix && modePaiement === 'differe' && (
-                      <div className="bg-yellow-50 p-3 rounded mb-4 text-sm">
-                        <p className="text-yellow-800">
-                          <strong>Acompte :</strong> {calculPrix.acompte?.toLocaleString()} FCFA
-                        </p>
-                        <p className="text-yellow-800">
-                          <strong>Reste à payer :</strong> {calculPrix.reste_a_payer?.toLocaleString()} FCFA
-                        </p>
-                      </div>
-                    )}
-                    
-                    {calculPrix && modePaiement === 'par_seance' && (
-                      <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
-                        <p className="text-blue-800">
-                          <strong>Prix par séance :</strong> {calculPrix.prix_par_seance?.toLocaleString()} FCFA
-                        </p>
-                        <p className="text-blue-800">
-                          <strong>Total séances :</strong> {calculPrix.total_seances}
-                        </p>
-                      </div>
-                    )}
-                    
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPlanSelectionneId(plan.id);
-                        setTypeAbonnementSelectionne(type);
-                        setPrixEstimeSelection(prix);
-                      }}
-                      disabled={!terrainSelectionne}
-                      className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                        !terrainSelectionne
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : isSelected
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-50'
-                      }`}
-                    >
-                      {isSelected ? 'Plan sélectionné' : 'Choisir ce plan'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-                Aucun terrain sélectionné
-              </h3>
-              <p className="text-yellow-700 mb-4">
-                Pour souscrire à un abonnement, veuillez d'abord sélectionner un terrain.
-              </p>
-              <button
-                onClick={() => navigate('/users/terrains')}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-medium"
-              >
-                Voir les terrains
-              </button>
-            </div>
-          </div>
-        )}
-
-        {planSelectionneId && typeAbonnementSelectionne && (
-          <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-xl font-semibold mb-4">Validation de l'abonnement</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
-              <div>
-                <p className="text-gray-600">Abonnement choisi :</p>
-                <p className="font-medium">{plans.find(p => p.id === planSelectionneId)?.nom ?? ''}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Type :</p>
-                <p className="font-medium capitalize">{typeAbonnementSelectionne}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Mode de paiement :</p>
-                <p className="font-medium">
-                  {modePaiement === 'integral'
-                    ? 'Paiement intégral'
-                    : modePaiement === 'differe'
-                      ? 'Paiement différé'
-                      : 'Paiement par séance'}
-                </p>
-              </div>
-              {prixEstimeSelection !== null && (
-                <div>
-                  <p className="text-gray-600">Prix estimé :</p>
-                  <p className="font-medium text-green-600">{prixEstimeSelection.toLocaleString()} FCFA</p>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-              <p className="text-sm text-gray-600">
-                Assurez-vous d'avoir vérifié les disponibilités. Le bouton sera activé dès que tous les critères sont remplis
-                (terrain, créneaux, disponibilité et plan).
-              </p>
-              <button
-                type="button"
-                onClick={() =>
-                  planSelectionneId &&
-                  typeAbonnementSelectionne &&
-                  createDemandeAbonnement(planSelectionneId, typeAbonnementSelectionne)
-                }
-                disabled={isValidationDisabled()}
-                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                  isValidationDisabled()
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-              >
-                {paymentButtonLabel()}
-              </button>
-            </div>
-            {!disponibiliteCreneaux?.disponibilite_suffisante && (
-              <p className="mt-3 text-sm text-red-600">
-                La validation nécessite au moins un créneau disponible. Veuillez ajuster vos préférences ou relancer la vérification.
-              </p>
-            )}
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default AbonnementsPage; 
+export default AbonnementsPage;

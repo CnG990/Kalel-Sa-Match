@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Search, Download, Eye, Plus, Users, DollarSign, CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
-import apiService, { PlanAbonnementDTO, DemandeAbonnementDTO } from '../../services/api';
+import apiService, { type PlanAbonnementDTO, type DemandeAbonnementDTO } from '../../services/api';
 import toast from 'react-hot-toast';
 
 interface Subscription {

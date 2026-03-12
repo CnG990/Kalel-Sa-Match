@@ -163,8 +163,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ terrain, onClose })
   };
 
   const handleSubscription = () => {
-    // Rediriger vers la page des abonnements avec l'id du terrain dans l'URL
-    navigate(`/users/abonnements/${terrain.id}`);
+    // Redirige vers la nouvelle page abonnements premium (optionnel: terrain en query)
+    navigate(`/users/abonnements${terrain?.id ? `?terrainId=${terrain.id}` : ''}`);
   };
 
   // Si pas authentifié, ne pas afficher la modal (elle va se fermer automatiquement)

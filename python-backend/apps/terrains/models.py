@@ -166,6 +166,7 @@ class PlanAbonnement(TimeStampedSoftDeleteModel):
     type_abonnement = models.CharField(max_length=20, choices=TYPE_CHOICES, default='mensuel')
     duree_jours = models.PositiveIntegerField(default=30)
     prix = models.DecimalField(max_digits=10, decimal_places=2)
+    reduction_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     avantages = models.JSONField(default=list, blank=True)
     actif = models.BooleanField(default=True)
 

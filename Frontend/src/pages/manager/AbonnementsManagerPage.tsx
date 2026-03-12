@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Users, TrendingUp, Calendar, RefreshCw, CheckCircle, XCircle, ClipboardEdit } from 'lucide-react';
 import toast from 'react-hot-toast';
 import apiService from '../../services/api';
-import type { DemandeAbonnementDTO } from '../../services/api';
 
 type ManagerDemande = {
   id: number;
