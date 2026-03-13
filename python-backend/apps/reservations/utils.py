@@ -10,6 +10,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A6
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 from PIL import Image, ImageDraw, ImageFont
 
 from .models import Reservation
@@ -121,7 +122,8 @@ def generate_ticket_pdf(reservation: Reservation) -> bytes:
     pdf.drawString(10 * mm, height - 122 * mm, reservation.code_ticket or '---')
 
     qr_stream = _build_qr_code(reservation.code_ticket or str(reservation.id))
-    pdf.drawImage(qr_stream, width - 40 * mm, height - 120 * mm, width=30 * mm, height=30 * mm)
+    qr_image = ImageReader(qr_stream)
+    pdf.drawImage(qr_image, width - 40 * mm, height - 120 * mm, width=30 * mm, height=30 * mm)
 
     # Instructions
     pdf.setFont('Helvetica-Bold', 9)
