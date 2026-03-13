@@ -3,6 +3,23 @@ import { Ticket, Calendar, MapPin, Clock, Download, CheckCircle, AlertCircle } f
 import apiService from '../services/api';
 import toast from 'react-hot-toast';
 
+interface TicketAPIResponse {
+  id: number;
+  code_ticket: string;
+  statut: string;
+  date_debut: string;
+  date_fin: string;
+  terrain: {
+    id: number;
+    nom: string;
+    adresse: string;
+    photo_url?: string | null;
+  };
+  montant_total: number | null;
+  created_at: string;
+  [key: string]: unknown;
+}
+
 interface TicketData {
   reservation_id: number;
   code_ticket: string;
@@ -14,6 +31,7 @@ interface TicketData {
     id: number;
     nom: string;
     adresse: string;
+    photo_url?: string | null;
   };
   reservation: {
     date_debut: string;
@@ -21,14 +39,37 @@ interface TicketData {
     montant_total: number;
   };
   access_instructions: string[];
-}
-
-interface TicketWithReservation extends TicketData {
   reservation_status?: string;
 }
 
+const normalizeTicket = (ticket: TicketAPIResponse): TicketData => {
+  const montant = typeof ticket.montant_total === 'number' ? ticket.montant_total : 0;
+
+  return {
+    reservation_id: ticket.id,
+    code_ticket: ticket.code_ticket,
+    statut: ticket.statut,
+    is_used: false,
+    used_at: null,
+    expire_at: null,
+    terrain: {
+      id: ticket.terrain.id,
+      nom: ticket.terrain.nom,
+      adresse: ticket.terrain.adresse,
+      photo_url: ticket.terrain.photo_url ?? undefined,
+    },
+    reservation: {
+      date_debut: ticket.date_debut,
+      date_fin: ticket.date_fin,
+      montant_total: montant,
+    },
+    access_instructions: [],
+    reservation_status: ticket.statut,
+  };
+};
+
 const MesTicketsPage: React.FC = () => {
-  const [tickets, setTickets] = useState<TicketWithReservation[]>([]);
+  const [tickets, setTickets] = useState<TicketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active' | 'used' | 'expired'>('all');
 
@@ -42,7 +83,8 @@ const MesTicketsPage: React.FC = () => {
       const { data } = await apiService.get('/reservations/tickets/');
       const ticketsData = Array.isArray(data) ? data : (data as any)?.results;
       if (Array.isArray(ticketsData)) {
-        setTickets(ticketsData as TicketWithReservation[]);
+        const normalized = ticketsData.map((ticket: TicketAPIResponse) => normalizeTicket(ticket));
+        setTickets(normalized);
       } else {
         setTickets([]);
       }
@@ -63,7 +105,7 @@ const MesTicketsPage: React.FC = () => {
         return;
       }
 
-      const ticketData = data as TicketData;
+      const ticketData = normalizeTicket(data as TicketAPIResponse);
       const ticketContent = `
 Ticket de Réservation - ${ticketData.terrain.nom}
 =====================================
@@ -94,7 +136,7 @@ ${ticketData.access_instructions.join('\n')}
     }
   };
 
-  const getTicketStatus = (ticket: TicketWithReservation) => {
+  const getTicketStatus = (ticket: TicketData) => {
     const now = new Date();
     const expireDate = ticket.expire_at ? new Date(ticket.expire_at) : null;
     const reservationDate = new Date(ticket.reservation.date_debut);
