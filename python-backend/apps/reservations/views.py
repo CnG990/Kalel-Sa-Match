@@ -378,6 +378,9 @@ def user_tickets(request):
 @permission_classes([IsAuthenticated])
 def reservation_ticket(request, reservation_id):
     """Retourne le ticket d'une réservation spécifique"""
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"reservation_ticket called: reservation_id={reservation_id}, download={request.query_params.get('download')}, format={request.query_params.get('format')}")
     try:
         reservation = get_object_or_404(
             Reservation,
