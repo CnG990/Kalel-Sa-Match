@@ -217,7 +217,8 @@ def generate_ticket_image(reservation: Reservation) -> bytes:
     
         logger.info("Before QR")
         qr_stream = _build_qr_code(reservation.code_ticket or str(reservation.id))
-        qr_image = ImageReader(qr_stream).getImage()
+        qr_stream.seek(0)
+        qr_image = Image.open(qr_stream)
         qr_size = 260
         qr_resized = qr_image.resize((qr_size, qr_size), Image.NEAREST)
         qr_x = width - content_padding - qr_size - 20
