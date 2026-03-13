@@ -14,6 +14,7 @@ from apps.core.utils.api_response import api_success, api_error, api_paginated
 from apps.notifications.firebase_service import notify_new_reservation_manager
 from apps.terrains.models import TerrainSynthetiquesDakar
 from .models import Reservation, Disponibilite, CreneauReservation
+from .utils import generate_ticket_pdf, generate_ticket_image
 from .serializers import (
     ReservationSerializer, 
     CreateReservationSerializer,
@@ -378,8 +379,6 @@ def user_tickets(request):
 @permission_classes([IsAuthenticated])
 def reservation_ticket(request, reservation_id):
     """Retourne le ticket d'une réservation spécifique"""
-    from .utils import generate_ticket_pdf
-
     try:
         reservation = get_object_or_404(
             Reservation,
@@ -389,10 +388,17 @@ def reservation_ticket(request, reservation_id):
             deleted_at__isnull=True
         )
 
-        if request.query_params.get('download') == 'pdf':
+        download_type = request.query_params.get('download')
+        if download_type == 'pdf':
             pdf_bytes = generate_ticket_pdf(reservation)
             filename = f"ticket-{reservation.code_ticket or reservation.id}.pdf"
             response = HttpResponse(pdf_bytes, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        if download_type in {'png', 'image'}:
+            image_bytes = generate_ticket_image(reservation)
+            filename = f"ticket-{reservation.code_ticket or reservation.id}.png"
+            response = HttpResponse(image_bytes, content_type='image/png')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
 

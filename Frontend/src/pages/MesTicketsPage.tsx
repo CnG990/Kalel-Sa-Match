@@ -96,21 +96,22 @@ const MesTicketsPage: React.FC = () => {
     }
   };
 
-  const downloadTicket = async (ticket: TicketData) => {
+  const downloadTicket = async (ticket: TicketData, format: 'pdf' | 'png') => {
     try {
-      const blob = await apiService.downloadFile(`/reservations/${ticket.reservation_id}/ticket/`, { download: 'pdf' });
+      const blob = await apiService.downloadFile(`/reservations/${ticket.reservation_id}/ticket/`, { download: format });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
+      const extension = format === 'png' ? 'png' : 'pdf';
       link.href = url;
-      link.setAttribute('download', `ticket-${ticket.code_ticket || ticket.reservation_id}.pdf`);
+      link.setAttribute('download', `ticket-${ticket.code_ticket || ticket.reservation_id}.${extension}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
       
-      toast.success('Ticket PDF téléchargé avec succès');
+      toast.success(`Ticket ${format.toUpperCase()} téléchargé avec succès`);
     } catch (error) {
-      console.error('Erreur lors du téléchargement PDF:', error);
+      console.error('Erreur lors du téléchargement:', error);
       toast.error('Impossible de télécharger le ticket');
     }
   };
@@ -267,13 +268,22 @@ const MesTicketsPage: React.FC = () => {
                         </div>
                         
                         <div className="flex space-x-2">
-                          <button
-                            onClick={() => downloadTicket(ticket)}
-                            className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            <Download className="w-3 h-3 mr-1" />
-                            Télécharger
-                          </button>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => downloadTicket(ticket, 'pdf')}
+                              className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              PDF
+                            </button>
+                            <button
+                              onClick={() => downloadTicket(ticket, 'png')}
+                              className="flex items-center px-3 py-1 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700 transition-colors"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              Image
+                            </button>
+                          </div>
                           
                           <button
                             onClick={() => {
