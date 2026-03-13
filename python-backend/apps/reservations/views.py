@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from django.http import HttpResponse
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -376,6 +378,8 @@ def user_tickets(request):
 @permission_classes([IsAuthenticated])
 def reservation_ticket(request, reservation_id):
     """Retourne le ticket d'une réservation spécifique"""
+    from .utils import generate_ticket_pdf
+
     try:
         reservation = get_object_or_404(
             Reservation,
@@ -384,6 +388,13 @@ def reservation_ticket(request, reservation_id):
             statut__in=['confirmee', 'en_cours', 'terminee'],
             deleted_at__isnull=True
         )
+
+        if request.query_params.get('format') == 'pdf':
+            pdf_bytes = generate_ticket_pdf(reservation)
+            filename = f"ticket-{reservation.code_ticket or reservation.id}.pdf"
+            response = HttpResponse(pdf_bytes, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
 
         terrain_photo = getattr(reservation.terrain, 'photo_url', None)
         montant_total = getattr(reservation, 'montant_total', None)

@@ -96,43 +96,22 @@ const MesTicketsPage: React.FC = () => {
     }
   };
 
-  const downloadTicket = async (ticketId: number) => {
+  const downloadTicket = async (ticket: TicketData) => {
     try {
-      const { data } = await apiService.get(`/reservations/${ticketId}/ticket/`);
-      
-      if (!data) {
-        toast.error('Ticket non disponible');
-        return;
-      }
-
-      const ticketData = normalizeTicket(data as TicketAPIResponse);
-      const ticketContent = `
-Ticket de Réservation - ${ticketData.terrain.nom}
-=====================================
-Code du ticket: ${ticketData.code_ticket}
-Terrain: ${ticketData.terrain.adresse}
-Date: ${new Date(ticketData.reservation.date_debut).toLocaleDateString('fr-FR')}
-Heure: ${new Date(ticketData.reservation.date_debut).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})} - ${new Date(ticketData.reservation.date_fin).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}
-Montant: ${ticketData.reservation.montant_total} FCFA
-
-Instructions:
-${ticketData.access_instructions.join('\n')}
-      `.trim();
-
-      const blob = new Blob([ticketContent], { type: 'text/plain' });
+      const blob = await apiService.downloadFile(`/reservations/${ticket.reservation_id}/ticket/`, { format: 'pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `ticket-${ticketData.code_ticket}.txt`);
+      link.setAttribute('download', `ticket-${ticket.code_ticket || ticket.reservation_id}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
       
-      toast.success('Ticket téléchargé avec succès');
+      toast.success('Ticket PDF téléchargé avec succès');
     } catch (error) {
-      console.error('Erreur lors du téléchargement:', error);
-      toast.error('Erreur lors du téléchargement du ticket');
+      console.error('Erreur lors du téléchargement PDF:', error);
+      toast.error('Impossible de télécharger le ticket');
     }
   };
 
@@ -289,11 +268,11 @@ ${ticketData.access_instructions.join('\n')}
                         
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => downloadTicket(ticket.reservation_id)}
+                            onClick={() => downloadTicket(ticket)}
                             className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
                           >
                             <Download className="w-3 h-3 mr-1" />
-                            PDF
+                            Télécharger
                           </button>
                           
                           <button
