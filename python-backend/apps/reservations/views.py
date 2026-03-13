@@ -343,6 +343,7 @@ def user_tickets(request):
         tickets = []
         for reservation in reservations:
             terrain_photo = getattr(reservation.terrain, 'photo_url', None)
+            montant_total = getattr(reservation, 'montant_total', None)
             ticket_data = {
                 'id': reservation.id,
                 'code_ticket': reservation.code_ticket,
@@ -355,7 +356,7 @@ def user_tickets(request):
                     'adresse': reservation.terrain.adresse,
                     'photo_url': terrain_photo
                 },
-                'prix_total': float(reservation.prix_total),
+                'montant_total': float(montant_total) if montant_total is not None else None,
                 'created_at': reservation.created_at
             }
             tickets.append(ticket_data)
@@ -384,6 +385,7 @@ def reservation_ticket(request, reservation_id):
         )
 
         terrain_photo = getattr(reservation.terrain, 'photo_url', None)
+        montant_total = getattr(reservation, 'montant_total', None)
         ticket_data = {
             'id': reservation.id,
             'code_ticket': reservation.code_ticket,
@@ -398,7 +400,7 @@ def reservation_ticket(request, reservation_id):
                 'photo_url': terrain_photo,
                 'prix_heure': float(reservation.terrain.prix_heure) if reservation.terrain.prix_heure else None
             },
-            'prix_total': float(reservation.prix_total),
+            'montant_total': float(montant_total) if montant_total is not None else None,
             'user_nom': f"{reservation.user.prenom} {reservation.user.nom}",
             'user_email': reservation.user.email,
             'created_at': reservation.created_at,
