@@ -1,10 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import CustomTokenObtainPairSerializer, RegisterSerializer, UserSerializer
 
@@ -53,6 +55,79 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class GoogleLoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        uid = request.data.get('uid')
+        email = request.data.get('email')
+        nom = request.data.get('nom', '')
+        prenom = request.data.get('prenom', '')
+        photo_url = request.data.get('photo_url')
+        firebase_token = request.data.get('firebase_token')
+
+        if not uid or not email:
+            return Response({
+                'data': None, 
+                'meta': {'success': False, 'message': 'UID et email sont requis'}
+            }, status=400)
+
+        try:
+            # Vérifier si l'utilisateur existe déjà avec ce Firebase UID
+            user = User.objects.filter(firebase_uid=uid).first()
+            
+            if user:
+                # Utilisateur Google existant - mettre à jour les infos si nécessaire
+                user.photo_url = photo_url
+                user.save(update_fields=['photo_url'])
+            else:
+                # Vérifier si un utilisateur avec le même email existe
+                existing_user = User.objects.filter(email=email).first()
+                if existing_user:
+                    if existing_user.firebase_uid:
+                        # Email déjà utilisé par un autre compte Google
+                        return Response({
+                            'data': None,
+                            'meta': {'success': False, 'message': 'Cet email est déjà associé à un compte Google'}
+                        }, status=400)
+                    else:
+                        # Lier le compte existant à Google
+                        existing_user.firebase_uid = uid
+                        existing_user.is_google_user = True
+                        existing_user.photo_url = photo_url
+                        existing_user.save(update_fields=['firebase_uid', 'is_google_user', 'photo_url'])
+                        user = existing_user
+                else:
+                    # Créer un nouvel utilisateur Google
+                    user = User.objects.create(
+                        email=email,
+                        nom=nom,
+                        prenom=prenom,
+                        firebase_uid=uid,
+                        photo_url=photo_url,
+                        is_google_user=True,
+                        statut_validation='approuve',  # Auto-approuver les utilisateurs Google
+                        email_verified_at=timezone.now(),
+                        is_active=True
+                    )
+
+            # Générer les tokens JWT
+            refresh = RefreshToken.for_user(user)
+            access_token = refresh.access_token
+
+            return Response({
+                'access': str(access_token),
+                'refresh': str(refresh),
+                'user': UserSerializer(user).data
+            })
+
+        except Exception as e:
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': f'Erreur lors de la connexion Google: {str(e)}'}
+            }, status=500)
 
 
 class ProfileView(APIView):

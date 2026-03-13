@@ -461,6 +461,7 @@ const API_ROOT = `${BASE_URL}/api`;
 const ENDPOINTS = {
   auth: {
     login: `${API_ROOT}/accounts/login/`,
+    googleLogin: `${API_ROOT}/accounts/google-login/`,
     register: `${API_ROOT}/accounts/register/`,
     profile: `${API_ROOT}/accounts/me/`,
     users: `${API_ROOT}/accounts/users/`,
@@ -586,6 +587,21 @@ class ApiService {
       method: 'POST',
       headers: this.headers(),
       body: JSON.stringify({ email, password }),
+    });
+  }
+
+  googleLogin(data: {
+    uid: string;
+    email: string;
+    nom: string;
+    prenom: string;
+    photo_url?: string | null;
+    firebase_token: string;
+  }) {
+    return this.request(ENDPOINTS.auth.googleLogin, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(data),
     });
   }
 

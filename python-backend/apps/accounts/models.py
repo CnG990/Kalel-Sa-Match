@@ -81,6 +81,23 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text='Firebase Cloud Messaging token pour notifications push'
     )
+    # Champs pour l'authentification Google
+    firebase_uid = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        unique=True,
+        help_text='UID Firebase pour les utilisateurs Google'
+    )
+    photo_url = models.URLField(
+        null=True,
+        blank=True,
+        help_text='URL de la photo de profil (Google)'
+    )
+    is_google_user = models.BooleanField(
+        default=False,
+        help_text='Indique si l\'utilisateur s\'est inscrit via Google'
+    )
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

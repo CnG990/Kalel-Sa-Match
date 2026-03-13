@@ -328,6 +328,90 @@ def terrain_disponibilites(request, terrain_id):
         return api_error("Erreur interne lors du calcul des disponibilités", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_tickets(request):
+    """Retourne tous les tickets de l'utilisateur connecté"""
+    try:
+        reservations = Reservation.objects.filter(
+            user=request.user,
+            statut__in=['confirmee', 'en_cours', 'terminee'],
+            deleted_at__isnull=True
+        ).order_by('-date_debut')
+
+        tickets = []
+        for reservation in reservations:
+            ticket_data = {
+                'id': reservation.id,
+                'code_ticket': reservation.code_ticket,
+                'statut': reservation.statut,
+                'date_debut': reservation.date_debut,
+                'date_fin': reservation.date_fin,
+                'terrain': {
+                    'id': reservation.terrain.id,
+                    'nom': reservation.terrain.nom,
+                    'adresse': reservation.terrain.adresse,
+                    'photo_url': reservation.terrain.photo_url
+                },
+                'prix_total': float(reservation.prix_total),
+                'created_at': reservation.created_at
+            }
+            tickets.append(ticket_data)
+
+        return api_success(
+            data=tickets,
+            message="Tickets récupérés avec succès"
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"user_tickets error: {e}", exc_info=True)
+        return api_error("Erreur lors de la récupération des tickets", status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def reservation_ticket(request, reservation_id):
+    """Retourne le ticket d'une réservation spécifique"""
+    try:
+        reservation = get_object_or_404(
+            Reservation,
+            id=reservation_id,
+            user=request.user,
+            statut__in=['confirmee', 'en_cours', 'terminee'],
+            deleted_at__isnull=True
+        )
+
+        ticket_data = {
+            'id': reservation.id,
+            'code_ticket': reservation.code_ticket,
+            'statut': reservation.statut,
+            'date_debut': reservation.date_debut,
+            'date_fin': reservation.date_fin,
+            'duree_heures': reservation.duree_heures,
+            'terrain': {
+                'id': reservation.terrain.id,
+                'nom': reservation.terrain.nom,
+                'adresse': reservation.terrain.adresse,
+                'photo_url': reservation.terrain.photo_url,
+                'prix_heure': float(reservation.terrain.prix_heure) if reservation.terrain.prix_heure else None
+            },
+            'prix_total': float(reservation.prix_total),
+            'user_nom': f"{reservation.user.prenom} {reservation.user.nom}",
+            'user_email': reservation.user.email,
+            'created_at': reservation.created_at,
+            'payment_status': getattr(reservation, 'payment_status', 'completed')
+        }
+
+        return api_success(
+            data=ticket_data,
+            message="Ticket récupéré avec succès"
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"reservation_ticket error: {e}", exc_info=True)
+        return api_error("Erreur lors de la récupération du ticket", status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 def _check_disponibilite(terrain, date_debut, date_fin):
     """Vérifier si un terrain est disponible pour une période donnée"""
     # Vérifier les réservations confirmées

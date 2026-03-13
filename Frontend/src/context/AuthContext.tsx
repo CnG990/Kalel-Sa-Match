@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import apiService, { type UserDTO } from '../services/api';
+import { firebaseAuthService } from '../services/firebase';
 
 export type User = UserDTO;
 
@@ -20,6 +21,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (userData: RegisterData) => Promise<{ success: boolean; message?: string; }>;
+  loginWithGoogle: () => Promise<boolean>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -42,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -104,10 +107,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Connexion avec Google
+  const loginWithGoogle = async (): Promise<boolean> => {
+    try {
+      // 1. Authentification Firebase
+      const firebaseUser = await firebaseAuthService.signInWithGoogle();
+      
+      // 2. Créer ou connecter l'utilisateur sur le backend
+      const response = await apiService.googleLogin({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        nom: firebaseUser.displayName?.split(' ').pop() || '',
+        prenom: firebaseUser.displayName?.split(' ').slice(0, -1).join(' ') || '',
+        photo_url: firebaseUser.photoURL,
+        firebase_token: firebaseUser.token
+      });
+      
+      const jwtResponse = response as any;
+      if (jwtResponse.access && jwtResponse.user) {
+        const { access: userToken, user: userData } = jwtResponse;
+        localStorage.setItem('token', userToken);
+        setUser(userData as UserDTO);
+        setToken(userToken);
+        setIsGoogleUser(true);
+        return true;
+      }
+      
+      console.error('Google login failed - Invalid response structure:', response);
+      return false;
+    } catch (error) {
+      console.error('Google login error:', error);
+      return false;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
     setToken(null);
+    setIsGoogleUser(false);
+    
+    // Déconnexion Firebase si utilisateur Google
+    if (isGoogleUser) {
+      firebaseAuthService.signOut().catch(console.error);
+    }
+    
     apiService.logout();
   };
 
@@ -131,6 +175,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user,
     login,
     register,
+    loginWithGoogle,
     logout,
     refreshUser
   };
