@@ -2,9 +2,8 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
-from django.http import HttpResponse
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -429,9 +428,11 @@ def reservation_ticket(request, reservation_id):
             data=ticket_data,
             message="Ticket récupéré avec succès"
         )
+    except Http404 as exc:
+        return api_error("Réservation introuvable", status.HTTP_404_NOT_FOUND)
     except Exception as e:
         import logging
-        logging.getLogger(__name__).error(f"reservation_ticket error: {e}", exc_info=True)
+        logging.getLogger(__name__).error("reservation_ticket error", exc_info=True)
         return api_error("Erreur lors de la récupération du ticket", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
