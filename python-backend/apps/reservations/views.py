@@ -395,6 +395,8 @@ def reservation_ticket(request, reservation_id):
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
         if download_type in {'png', 'image'}:
+            import logging
+            logging.getLogger(__name__).info("CALL generate_ticket_image")
             image_bytes = generate_ticket_image(reservation)
             filename = f"ticket-{reservation.code_ticket or reservation.id}.png"
             response = HttpResponse(image_bytes, content_type='image/png')
