@@ -238,7 +238,8 @@ def generate_ticket_image(reservation: Reservation) -> bytes:
     
         footer_text = 'Kalel Sa Match · kalelsamatch.duckdns.org'
         footer_font = _load_font(20)
-        text_w, text_h = draw.textsize(footer_text, font=footer_font)
+        bbox = draw.textbbox((0, 0), footer_text, font=footer_font)
+        text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
         draw.text(((width - text_w) / 2, height - 60), footer_text, font=footer_font, fill='#9CA3AF')
     
         logger.info("Before save")
