@@ -389,7 +389,7 @@ def reservation_ticket(request, reservation_id):
             deleted_at__isnull=True
         )
 
-        if request.query_params.get('format') == 'pdf':
+        if request.query_params.get('download') == 'pdf':
             pdf_bytes = generate_ticket_pdf(reservation)
             filename = f"ticket-{reservation.code_ticket or reservation.id}.pdf"
             response = HttpResponse(pdf_bytes, content_type='application/pdf')

@@ -98,7 +98,7 @@ const MesTicketsPage: React.FC = () => {
 
   const downloadTicket = async (ticket: TicketData) => {
     try {
-      const blob = await apiService.downloadFile(`/reservations/${ticket.reservation_id}/ticket/`, { format: 'pdf' });
+      const blob = await apiService.downloadFile(`/reservations/${ticket.reservation_id}/ticket/`, { download: 'pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
