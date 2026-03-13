@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
