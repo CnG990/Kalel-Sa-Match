@@ -211,7 +211,7 @@ def generate_ticket_image(reservation: Reservation) -> bytes:
     draw.text((content_padding + 40, code_y + 40), code, font=_load_font(40, bold=True), fill='#111827')
 
     qr_stream = _build_qr_code(reservation.code_ticket or str(reservation.id))
-    qr_image = Image.open(qr_stream).convert('RGB')
+    qr_image = ImageReader(qr_stream).getImage()
     qr_size = 260
     qr_resized = qr_image.resize((qr_size, qr_size), Image.NEAREST)
     qr_x = width - content_padding - qr_size - 20
