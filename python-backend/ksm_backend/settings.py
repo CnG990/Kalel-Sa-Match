@@ -180,6 +180,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
     "https://kalelsamatch.duckdns.org",
+    "https://kalelsamatch.com",
+    "https://www.kalelsamatch.com",
     "http://localhost:3000",
     "http://localhost:5173",
 ]

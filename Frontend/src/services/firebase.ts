@@ -8,14 +8,14 @@ import {
   onAuthStateChanged
 } from 'firebase/auth';
 
-// Configuration Firebase (remplacez avec vos vraies valeurs)
+// Configuration Firebase via variables d'environnement Vite
 const firebaseConfig = {
-  apiKey: "AIzaSyYOUR_API_KEY",
-  authDomain: "kalelsamatch.firebaseapp.com",
-  projectId: "kalelsamatch",
-  storageBucket: "kalelsamatch.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialiser Firebase

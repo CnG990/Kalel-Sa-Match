@@ -98,7 +98,11 @@ const MesTicketsPage: React.FC = () => {
 
   const downloadTicket = async (ticket: TicketData, format: 'pdf' | 'png') => {
     try {
-      const blob = await apiService.downloadFile(`/reservations/${ticket.reservation_id}/ticket/`, { download: format });
+      // Temp: use test-ticket (no auth) for PNG while JWT is fixed; PDF stays on secured endpoint
+      const path = format === 'png'
+        ? `/reservations/test-ticket/${ticket.reservation_id}/`
+        : `/reservations/${ticket.reservation_id}/ticket/`;
+      const blob = await apiService.downloadFile(path, { download: format });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       const extension = format === 'png' ? 'png' : 'pdf';
