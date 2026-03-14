@@ -1,11 +1,12 @@
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, permissions
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
@@ -443,9 +444,12 @@ def reservation_ticket(request, reservation_id):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def test_ticket(request, reservation_id):
     """Endpoint temporaire pour tester le ticket sans authentification"""
     try:
+        import logging
+        logging.getLogger(__name__).info("test_ticket called", extra={"reservation_id": reservation_id, "auth": request.META.get('HTTP_AUTHORIZATION', '')})
         reservation = Reservation.objects.get(id=reservation_id)
         image_bytes = generate_ticket_image(reservation)
         response = HttpResponse(image_bytes, content_type='image/png')
