@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Ticket, CheckCircle, XCircle, Users, Camera, Hash, Search } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import toast from 'react-hot-toast';
@@ -13,6 +14,7 @@ interface ValidationResult {
 type ScanMode = 'qr' | 'manual';
 
 const TicketValidationPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [ticketCode, setTicketCode] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -25,6 +27,7 @@ const TicketValidationPage: React.FC = () => {
   const qrScannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
   const isProcessingRef = useRef(false);
+  const autoValidatedRef = useRef(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -37,7 +40,18 @@ const TicketValidationPage: React.FC = () => {
     loadValidationHistory();
   }, []);
 
-  // ---------- QR camera lifecycle ----------
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code');
+    if (codeFromUrl && !autoValidatedRef.current) {
+      autoValidatedRef.current = true;
+      setScanMode('manual');
+      setTicketCode(codeFromUrl);
+      validateTicketCode(codeFromUrl);
+      // Clean URL
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
+
   const stopScanner = useCallback(async () => {
     if (qrScannerRef.current) {
       try {
@@ -91,7 +105,6 @@ const TicketValidationPage: React.FC = () => {
 
   useEffect(() => () => { stopScanner(); }, [stopScanner]);
 
-  // ---------- Validation ----------
   const loadValidationHistory = async () => {
     try {
       setIsLoading(true);
@@ -106,8 +119,18 @@ const TicketValidationPage: React.FC = () => {
     } catch { /* silent */ } finally { setIsLoading(false); }
   };
 
+  const extractCodeFromInput = (input: string): string => {
+    // If the scanned QR is a URL like https://kalelsamatch.com/manager/qr-scanner?code=ABC123
+    try {
+      const url = new URL(input);
+      const codeParam = url.searchParams.get('code');
+      if (codeParam) return codeParam.trim().toUpperCase();
+    } catch { /* not a URL, treat as raw code */ }
+    return input.trim().toUpperCase();
+  };
+
   const validateTicketCode = async (code: string) => {
-    const cleaned = code.trim().toUpperCase();
+    const cleaned = extractCodeFromInput(code);
     if (!cleaned) { toast.error('Code vide'); isProcessingRef.current = false; return; }
 
     setIsValidating(true);
