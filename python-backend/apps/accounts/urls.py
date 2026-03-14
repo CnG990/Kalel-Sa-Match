@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import LoginView, ProfileView, RegisterView, UserListView, GoogleLoginView
+from .views import LoginView, ProfileView, RegisterView, UserListView, GoogleLoginView, echo_token
 from .views_upload import upload_profile_image
 from .views_admin import list_users, dashboard_stats, update_user_status, delete_user
 
@@ -16,4 +16,5 @@ urlpatterns = [
     path('users/<int:user_id>/delete/', delete_user, name='delete-user'),
     path('change-password/', ProfileView.as_view(), name='change-password'),
     path('profile/upload-image/', upload_profile_image, name='upload-profile-image'),
+    path('echo-token/', echo_token, name='echo-token'),
 ]

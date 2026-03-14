@@ -1,4 +1,4 @@
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
@@ -442,6 +442,7 @@ def reservation_ticket(request, reservation_id):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def test_ticket(request, reservation_id):
     """Endpoint temporaire pour tester le ticket sans authentification"""
     try:
