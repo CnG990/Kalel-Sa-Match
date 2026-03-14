@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast, { Toaster } from 'react-hot-toast';
+import SEOMetaTags from '../components/SEOMetaTags';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || '/';
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -106,6 +107,11 @@ const LoginPage: React.FC = () => {
 
   return (
     <>
+      <SEOMetaTags 
+        title="Connexion - Accédez à votre compte"
+        description="Connectez-vous à Kalél Sa Match pour réserver des terrains de football partout au Sénégal. Accès rapide avec Google ou email/mot de passe."
+        url="https://kalelsamatch.com/login"
+      />
       <Toaster position="top-right" />
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 p-10 bg-white shadow-lg rounded-xl">

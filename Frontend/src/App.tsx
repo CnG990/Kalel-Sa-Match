@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 import Layout from './components/Layout';
@@ -102,8 +103,9 @@ const SmartRedirect = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <AuthProvider>
+      <HelmetProvider>
+        <Router>
+          <AuthProvider>
           <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Layout />}>
@@ -213,8 +215,9 @@ function App() {
             </div>
           } />
         </Routes>
-      </AuthProvider>
-    </Router>
+          </AuthProvider>
+        </Router>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 }

@@ -1,0 +1,49 @@
+const fs = require('fs');
+const path = require('path');
+
+// Create a simple placeholder script to generate OG image
+// In production, you would use a proper image generation library like sharp or canvas
+
+const generateOGImageHTML = () => {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .og-container { width: 1200px; height: 630px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .content { text-align: center; color: white; z-index: 2; padding: 40px; }
+    .logo { font-size: 48px; font-weight: bold; margin-bottom: 20px; }
+    .title { font-size: 56px; font-weight: 800; margin-bottom: 20px; line-height: 1.1; }
+    .subtitle { font-size: 24px; margin-bottom: 30px; opacity: 0.9; }
+    .features { display: flex; justify-content: center; gap: 30px; margin-top: 20px; }
+    .feature { background: rgba(255,255,255,0.1); padding: 15px 25px; border-radius: 12px; backdrop-filter: blur(10px); }
+    .bg-pattern { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1; }
+    .bg-pattern::before { content: ''; position: absolute; width: 100px; height: 100px; background: white; border-radius: 50%; top: 10%; left: 5%; }
+    .bg-pattern::after { content: ''; position: absolute; width: 150px; height: 150px; background: white; border-radius: 50%; bottom: 10%; right: 5%; }
+  </style>
+</head>
+<body>
+  <div class="og-container">
+    <div class="bg-pattern"></div>
+    <div class="content">
+      <div class="logo">⚽ KSM</div>
+      <div class="title">Kalél Sa Match</div>
+      <div class="subtitle">Réservez des terrains de football partout au Sénégal 🏟️</div>
+      <div class="features">
+        <div class="feature">⚡ 30s</div>
+        <div class="feature">💳 Wave/OM</div>
+        <div class="feature">📱 Mobile</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+};
+
+// Write the HTML file
+const htmlContent = generateOGImageHTML();
+fs.writeFileSync(path.join(__dirname, 'og-image.html'), htmlContent);
+
+console.log('OG Image HTML generated! Use a browser to screenshot it as 1200x630.jpg');
+console.log('Or use an online tool like htmlcsstoimage.com');

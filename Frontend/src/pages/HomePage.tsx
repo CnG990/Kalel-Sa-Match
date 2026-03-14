@@ -1,10 +1,17 @@
 import React from 'react';
 import { MapPin, Users, Calendar, ArrowRight, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEOMetaTags from '../components/SEOMetaTags';
 
 const HomePage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <SEOMetaTags 
+        title="Réservez des terrains de football partout au Sénégal"
+        description="🏟️ Trouvez et réservez des terrains synthétiques partout au Sénégal en 30s. Paiement Wave/Orange Money, carte interactive, confirmation instantanée."
+        url="https://kalelsamatch.com"
+      />
+      <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-green-600 to-blue-600 text-white">
         <div className="absolute inset-0 bg-black opacity-10"></div>
@@ -138,6 +145,7 @@ const HomePage: React.FC = () => {
         </div>
       </footer>
     </div>
+  </>
   );
 };
 

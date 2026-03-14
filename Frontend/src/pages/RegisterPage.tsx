@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast, { Toaster } from 'react-hot-toast';
+import SEOMetaTags from '../components/SEOMetaTags';
 
 const RegisterPage: React.FC = () => {
   const { loginWithGoogle } = useAuth();
@@ -26,6 +27,11 @@ const RegisterPage: React.FC = () => {
 
   return (
     <>
+      <SEOMetaTags 
+        title="Inscription - Créez votre compte gratuitement"
+        description="Inscrivez-vous sur Kalél Sa Match pour réserver des terrains de football partout au Sénégal. Devenez joueur ou gestionnaire en quelques clics."
+        url="https://kalelsamatch.com/register"
+      />
       <Toaster position="top-right" />
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="w-full max-w-lg p-8 text-center bg-white rounded-lg shadow-lg">
