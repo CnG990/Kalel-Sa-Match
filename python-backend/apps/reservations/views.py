@@ -441,6 +441,19 @@ def reservation_ticket(request, reservation_id):
         return api_error("Erreur lors de la récupération du ticket", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['GET'])
+def test_ticket(request, reservation_id):
+    """Endpoint temporaire pour tester le ticket sans authentification"""
+    try:
+        reservation = Reservation.objects.get(id=reservation_id)
+        image_bytes = generate_ticket_image(reservation)
+        response = HttpResponse(image_bytes, content_type='image/png')
+        response['Content-Disposition'] = f'attachment; filename="test-ticket-{reservation.id}.png"'
+        return response
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 def _check_disponibilite(terrain, date_debut, date_fin):
     """Vérifier si un terrain est disponible pour une période donnée"""
     # Vérifier les réservations confirmées
