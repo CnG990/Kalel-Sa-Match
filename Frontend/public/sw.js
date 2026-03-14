@@ -1,6 +1,6 @@
-const CACHE_NAME = 'terrains-synthetiques-v1.1.0';
-const STATIC_CACHE = 'static-v1.1.0';
-const DYNAMIC_CACHE = 'dynamic-v1.1.0';
+const CACHE_NAME = 'terrains-synthetiques-v2.0.0';
+const STATIC_CACHE = 'static-v2.0.0';
+const DYNAMIC_CACHE = 'dynamic-v2.0.0';
 
 // Ressources à mettre en cache immédiatement
 const STATIC_ASSETS = [
@@ -73,8 +73,11 @@ self.addEventListener('fetch', (event) => {
   // Ignorer les requêtes non-GET
   if (request.method !== 'GET') return;
 
-  // Ignorer les requêtes vers d'autres domaines (CDN, APIs externes)
-  if (url.origin !== self.location.origin && !url.pathname.startsWith('/api')) return;
+  // Ignorer les requêtes vers d'autres domaines (backend API, CDN, etc.)
+  if (url.origin !== self.location.origin) return;
+
+  // Ne jamais cacher les requêtes API (elles vont vers un autre domaine maintenant)
+  if (url.pathname.startsWith('/api/')) return;
 
   // Laisser le réseau gérer les assets fingerprintés pour éviter les caches obsolètes
   if (HASHED_ASSET_REGEX.test(url.pathname)) {
@@ -88,13 +91,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stratégie Network First pour les APIs
-  if (isAPIRequest(request)) {
-    event.respondWith(networkFirstWithCache(request));
+  // Navigation requests (pages) - toujours network first pour éviter le cache obsolète
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => caches.match(request).then(r => r || getOfflinePage()))
+    );
     return;
   }
 
-  // Stratégie Stale While Revalidate pour les pages
+  // Stratégie Stale While Revalidate pour le reste
   event.respondWith(staleWhileRevalidate(request));
 });
 
