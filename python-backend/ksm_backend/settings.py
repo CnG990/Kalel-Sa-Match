@@ -102,12 +102,16 @@ DATABASES = {
     }
 }
 
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
-    'https://kalelsamatch.web.app',
-    'https://kalelsamatch.firebaseapp.com',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-])
+CORS_ALLOWED_ORIGINS = [
+    "https://kalelsamatch.web.app",
+    "https://kalelsamatch.firebaseapp.com",
+    "https://kalelsamatch.duckdns.org",
+    "https://kalelsamatch.com",
+    "https://www.kalelsamatch.com",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -178,17 +182,6 @@ SIMPLE_JWT = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "https://kalelsamatch.duckdns.org",
-    "https://kalelsamatch.com",
-    "https://www.kalelsamatch.com",
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = False
-
 # Logging
 LOGGING = {
     'version': 1,

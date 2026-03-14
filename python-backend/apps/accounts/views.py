@@ -70,6 +70,13 @@ class LoginView(TokenObtainPairView):
 class GoogleLoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        response["Access-Control-Allow-Origin"] = "https://kalelsamatch.com"
+        response["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+        return response
+
     def post(self, request):
         uid = request.data.get('uid')
         email = request.data.get('email')
