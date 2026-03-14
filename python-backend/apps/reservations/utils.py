@@ -144,104 +144,139 @@ def generate_ticket_pdf(reservation: Reservation) -> bytes:
 
 
 def generate_ticket_image(reservation: Reservation) -> bytes:
-    """Generate a PNG ticket built with Pillow."""
+    """Generate a professional PNG ticket with QR scan section."""
     import logging
     logger = logging.getLogger(__name__)
     logger.info("START generate_ticket_image")
     try:
-        width, height = 900, 1400
-        image = Image.new('RGB', (width, height), '#F4F6FB')
+        width, height = 1000, 1600
+        image = Image.new('RGB', (width, height), '#F8FAFC')
         draw = ImageDraw.Draw(image)
         logger.info("Image created")
     
-        # Header background
-        header_height = 240
-        draw.rectangle((0, 0, width, header_height), fill='#0F9D58')
+        # Header with gradient effect
+        header_height = 280
+        draw.rectangle((0, 0, width, header_height), fill='#059669')
+        draw.rectangle((0, header_height - 40, width, header_height), fill='#047857')
     
+        # Logo
         logo_path = _get_logo_path()
         if logo_path and logo_path.exists():
             try:
                 logo = Image.open(logo_path).convert('RGBA')
-                max_w, max_h = 260, 120
+                max_w, max_h = 200, 100
                 ratio = min(max_w / logo.width, max_h / logo.height)
                 resized = logo.resize((int(logo.width * ratio), int(logo.height * ratio)), Image.LANCZOS)
-                image.paste(resized, (50, 50), resized)
+                image.paste(resized, (60, 60), resized)
             except Exception:
                 pass
     
-        title_font = _load_font(48, bold=True)
-        subtitle_font = _load_font(28)
-        draw.text((50, header_height - 110), 'Ticket de réservation', font=title_font, fill='white')
-        draw.text((50, header_height - 60), 'Kalel Sa Match', font=subtitle_font, fill='white')
+        # Title section
+        title_font = _load_font(56, bold=True)
+        subtitle_font = _load_font(32)
+        draw.text((60, header_height - 140), 'TICKET', font=title_font, fill='white')
+        draw.text((60, header_height - 80), 'Réservation Confirmée', font=subtitle_font, fill='#D1FAE5')
+        draw.text((60, header_height - 40), f'#{reservation.code_ticket or reservation.id}', font=_load_font(24), fill='#D1FAE5')
     
-        content_padding = 60
-        section_top = header_height + 40
-        card_radius = 40
-        draw.rounded_rectangle((content_padding, section_top, width - content_padding, height - 80), radius=card_radius, fill='white')
+        # Main content card
+        content_padding = 50
+        section_top = header_height + 30
+        card_radius = 20
+        draw.rounded_rectangle((content_padding, section_top, width - content_padding, height - 100), radius=card_radius, fill='white')
+        draw.rounded_rectangle((content_padding, section_top, width - content_padding, section_top + 80), radius=card_radius, fill='#F0FDF4')
     
-        heading_font = _load_font(32, bold=True)
-        body_font = _load_font(26)
-        label_font = _load_font(22, bold=True)
+        # Section titles
+        heading_font = _load_font(36, bold=True)
+        body_font = _load_font(28)
+        label_font = _load_font(24, bold=True)
+        small_font = _load_font(20)
     
+        # Terrain info
         terrain_name = reservation.terrain.nom
         terrain_address = reservation.terrain.adresse or 'Adresse non renseignée'
-        draw.text((content_padding + 40, section_top + 40), terrain_name, font=heading_font, fill='#111827')
-        draw.text((content_padding + 40, section_top + 90), terrain_address, font=body_font, fill='#4B5563')
+        draw.text((content_padding + 30, section_top + 25), 'TERRAIN', font=label_font, fill='#059669')
+        draw.text((content_padding + 30, section_top + 90), terrain_name, font=heading_font, fill='#111827')
+        draw.text((content_padding + 30, section_top + 140), terrain_address, font=body_font, fill='#6B7280')
     
+        # Date and time
         start = timezone.localtime(reservation.date_debut)
         end = timezone.localtime(reservation.date_fin)
         date_str = start.strftime('%d %B %Y')
         hour_str = f"{start.strftime('%Hh%M')} - {end.strftime('%Hh%M')}"
+        
+        info_x = width // 2 - 50
+        draw.text((info_x, section_top + 25), 'DATE & HEURE', font=label_font, fill='#059669')
+        draw.text((info_x, section_top + 90), date_str, font=body_font, fill='#111827')
+        draw.text((info_x, section_top + 130), hour_str, font=heading_font, fill='#111827')
     
-        info_y = section_top + 170
-        draw.text((content_padding + 40, info_y), 'Date', font=label_font, fill='#6B7280')
-        draw.text((content_padding + 40, info_y + 36), date_str, font=body_font, fill='#111827')
-        draw.text((content_padding + 40, info_y + 90), 'Heure', font=label_font, fill='#6B7280')
-        draw.text((content_padding + 40, info_y + 126), hour_str, font=body_font, fill='#111827')
+        # Client info
+        client_y = section_top + 220
+        draw.text((content_padding + 30, client_y), 'CLIENT', font=label_font, fill='#059669')
+        draw.text((content_padding + 30, client_y + 40), f"{reservation.user.prenom} {reservation.user.nom}", font=body_font, fill='#111827')
+        draw.text((content_padding + 30, client_y + 80), reservation.user.email or '', font=small_font, fill='#6B7280')
     
-        client_y = info_y + 210
-        draw.text((content_padding + 40, client_y), 'Client', font=label_font, fill='#6B7280')
-        draw.text((content_padding + 40, client_y + 36), f"{reservation.user.prenom} {reservation.user.nom}", font=body_font, fill='#111827')
-        draw.text((content_padding + 40, client_y + 80), reservation.user.email or '', font=body_font, fill='#4B5563')
-    
+        # Payment info
         montant_total = getattr(reservation, 'montant_total', None)
         montant_str = f"{float(montant_total):,.0f} FCFA" if montant_total is not None else 'N/A'
-        amount_y = client_y + 170
-        draw.text((content_padding + 40, amount_y), 'Montant réglé', font=label_font, fill='#6B7280')
-        draw.text((content_padding + 40, amount_y + 44), montant_str, font=heading_font, fill='#0F9D58')
+        draw.text((info_x, client_y), 'PAIEMENT', font=label_font, fill='#059669')
+        draw.text((info_x, client_y + 40), montant_str, font=heading_font, fill='#059669')
+        draw.text((info_x, client_y + 90), 'Payé avec succès', font=small_font, fill='#6B7280')
     
-        code = reservation.code_ticket or '---'
-        code_y = amount_y + 130
-        draw.text((content_padding + 40, code_y), 'Code ticket', font=label_font, fill='#6B7280')
-        draw.text((content_padding + 40, code_y + 40), code, font=_load_font(40, bold=True), fill='#111827')
-    
+        # QR Code section
+        qr_section_y = client_y + 180
+        qr_section_height = 320
+        
+        # QR section background
+        draw.rounded_rectangle((content_padding, qr_section_y, width - content_padding, qr_section_y + qr_section_height), radius=15, fill='#F9FAFB')
+        draw.rectangle((content_padding, qr_section_y, width - content_padding, qr_section_y + 2), fill='#059669')
+        
+        # QR code title
+        draw.text((content_padding + 30, qr_section_y + 20), 'CODE QR', font=label_font, fill='#111827')
+        draw.text((content_padding + 30, qr_section_y + 55), 'Présentez ce code à l\'entrée', font=small_font, fill='#6B7280')
+        
+        # QR code
         logger.info("Before QR")
         qr_stream = _build_qr_code(reservation.code_ticket or str(reservation.id))
         qr_stream.seek(0)
         qr_image = Image.open(qr_stream)
-        qr_size = 260
+        qr_size = 200
         qr_resized = qr_image.resize((qr_size, qr_size), Image.NEAREST)
-        qr_x = width - content_padding - qr_size - 20
-        qr_y = client_y
+        qr_x = width - content_padding - qr_size - 30
+        qr_y = qr_section_y + 40
         image.paste(qr_resized, (qr_x, qr_y))
         logger.info("QR pasted")
-    
-        instructions_y = height - 220
-        draw.text((content_padding + 40, instructions_y), 'Instructions', font=label_font, fill='#6B7280')
-        bullets = [
-            'Présentez ce ticket ou le QR code à l’entrée.',
-            'Arrivez 15 minutes avant la session.',
-            'Contactez le gestionnaire pour toute modification.',
+        
+        # QR scan instructions for manager
+        scan_y = qr_section_y + 260
+        draw.text((content_padding + 30, scan_y), 'SCAN GESTIONNAIRE', font=label_font, fill='#DC2626')
+        draw.text((content_padding + 30, scan_y + 30), 'Scanner pour valider la réservation', font=small_font, fill='#6B7280')
+        
+        # Reservation code
+        code = reservation.code_ticket or '---'
+        code_y = qr_section_y + qr_section_height + 30
+        draw.text((content_padding + 30, code_y), 'CODE RÉSERVATION', font=label_font, fill='#111827')
+        draw.text((content_padding + 30, code_y + 40), code, font=_load_font(48, bold=True), fill='#111827')
+        
+        # Instructions
+        instructions_y = code_y + 120
+        instructions = [
+            '• Présentez ce ticket ou le QR code à l\'entrée',
+            '• Arrivez 15 minutes avant la session',
+            '• Contactez le gestionnaire pour toute modification',
+            '• Ce ticket est non transférable et non remboursable'
         ]
-        for idx, instruction in enumerate(bullets):
-            draw.text((content_padding + 60, instructions_y + 36 + idx * 34), f"• {instruction}", font=_load_font(22), fill='#4B5563')
-    
+        for idx, instruction in enumerate(instructions):
+            draw.text((content_padding + 30, instructions_y + idx * 30), instruction, font=small_font, fill='#4B5563')
+        
+        # Footer
+        footer_y = height - 80
+        draw.rectangle((0, footer_y, width, height), fill='#059669')
         footer_text = 'Kalel Sa Match · kalelsamatch.duckdns.org'
-        footer_font = _load_font(20)
+        footer_font = _load_font(18)
         bbox = draw.textbbox((0, 0), footer_text, font=footer_font)
         text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        draw.text(((width - text_w) / 2, height - 60), footer_text, font=footer_font, fill='#9CA3AF')
-    
+        draw.text(((width - text_w) / 2, footer_y + 25), footer_text, font=footer_font, fill='white')
+        
         logger.info("Before save")
         output = BytesIO()
         image.save(output, format='PNG')
