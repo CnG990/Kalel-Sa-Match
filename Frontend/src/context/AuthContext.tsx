@@ -76,18 +76,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await apiService.login(email, password);
       const jwtResponse = response as any;
-      if (jwtResponse.access && jwtResponse.refresh && jwtResponse.user) {
-        const { access: userToken, user: userData } = jwtResponse;
+
+      if (!jwtResponse.ok || !jwtResponse.data) {
+        const msg = jwtResponse.meta?.message || 'Email ou mot de passe incorrect';
+        console.error('Login failed:', msg, jwtResponse);
+        throw new Error(msg);
+      }
+
+      // Backend Django/simplejwt retourne { access, refresh, user }
+      // (après normalisation par api.ts, ces champs sont dans .data)
+      const data = jwtResponse.data;
+      const userToken = data.access || data.token; // access = JWT, token = Sanctum
+      const userData = data.user;
+
+      if (userToken && userData) {
         localStorage.setItem('token', userToken);
         setUser(userData as UserDTO);
         setToken(userToken);
         return true;
       }
-      console.error('Login failed - Invalid response structure:', response);
-      return false;
+      console.error('Login failed - Missing access token or user in response:', response);
+      throw new Error('Réponse du serveur invalide');
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      throw error; // Re-throw so LoginPage can display the real error message via toast
     }
   };
 
@@ -114,6 +126,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const firebaseUser = await firebaseAuthService.signInWithGoogle();
       
       // 2. Créer ou connecter l'utilisateur sur le backend
+      console.log('Envoi des données Google au backend:', {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        nom: firebaseUser.displayName?.split(' ').pop() || '',
+        prenom: firebaseUser.displayName?.split(' ').slice(0, -1).join(' ') || '',
+        photo_url: firebaseUser.photoURL,
+        firebase_token: firebaseUser.token
+      });
+      
       const response = await apiService.googleLogin({
         uid: firebaseUser.uid,
         email: firebaseUser.email,
@@ -123,9 +144,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         firebase_token: firebaseUser.token
       });
       
+      console.log('Réponse du backend:', response);
+      
       const jwtResponse = response as any;
-      if (jwtResponse.access && jwtResponse.user) {
-        const { access: userToken, user: userData } = jwtResponse;
+      const hasOkFlag = typeof jwtResponse.ok !== 'undefined';
+      const isOk = hasOkFlag ? jwtResponse.ok : true;
+
+      // Vérifier si la réponse contient une erreur (data: null, meta success=false, ou ok=false)
+      if (!isOk || !jwtResponse.data || (jwtResponse.meta && jwtResponse.meta.success === false)) {
+        const errorMessage = jwtResponse.meta?.message || 'Cet email est déjà associé à un compte Google';
+        console.error('Erreur du backend:', errorMessage, jwtResponse);
+        throw new Error(errorMessage);
+      }
+
+      if (jwtResponse.data && jwtResponse.data.access && jwtResponse.data.user) {
+        const { access: userToken, user: userData } = jwtResponse.data;
         localStorage.setItem('token', userToken);
         setUser(userData as UserDTO);
         setToken(userToken);

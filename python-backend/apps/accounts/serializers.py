@@ -32,11 +32,22 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    mot_de_passe = serializers.CharField(write_only=True, min_length=8)
+    mot_de_passe = serializers.CharField(write_only=True, min_length=8, required=False)
+    password = serializers.CharField(write_only=True, min_length=8, required=False)
 
     class Meta:
         model = User
-        fields = ['nom', 'prenom', 'email', 'telephone', 'role', 'mot_de_passe']
+        fields = ['nom', 'prenom', 'email', 'telephone', 'role', 'mot_de_passe', 'password']
+
+    def validate(self, attrs):
+        # Accepter 'password' comme alias de 'mot_de_passe'
+        password = attrs.pop('password', None)
+        mot_de_passe = attrs.get('mot_de_passe')
+        if not mot_de_passe and password:
+            attrs['mot_de_passe'] = password
+        elif not mot_de_passe and not password:
+            raise serializers.ValidationError({'password': 'Le mot de passe est obligatoire.'})
+        return attrs
 
     def create(self, validated_data):
         mot_de_passe = validated_data.pop('mot_de_passe')

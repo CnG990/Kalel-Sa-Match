@@ -583,10 +583,35 @@ class ApiService {
 
   // Auth --------------------------------------------------
   login(email: string, password: string) {
-    return this.request(ENDPOINTS.auth.login, {
+    // Custom handler: lit le body brut pour inspecter les erreurs 4xx
+    return fetch(ENDPOINTS.auth.login, {
       method: 'POST',
       headers: this.headers(),
       body: JSON.stringify({ email, password }),
+    }).then(async (response) => {
+      const rawText = await response.text();
+      let payload: any;
+      try {
+        payload = rawText ? JSON.parse(rawText) : {};
+      } catch (e) {
+        console.error('login JSON parse error:', e, 'raw:', rawText);
+        payload = {};
+      }
+      if (!response.ok) {
+        const meta = {
+          success: false,
+          // simplejwt retourne { detail: '...' }, Django standard { message: '...' }
+          message: payload?.detail || payload?.message || payload?.error || 'Email ou mot de passe incorrect'
+        };
+        return { ok: false, status: response.status, data: null, meta };
+      }
+      // Backend Django/simplejwt retourne { access, refresh, user }
+      // normalizeResponse: pas de cle 'data' donc retourne raw comme .data
+      const normalized = normalizeResponse<any>(payload);
+      return { ok: true, status: response.status, data: normalized.data, meta: normalized.meta };
+    }).catch((error) => {
+      console.error('login fetch error:', error);
+      return { ok: false, status: 0, data: null, meta: { success: false, message: 'Erreur réseau login' } };
     });
   }
 
@@ -598,10 +623,21 @@ class ApiService {
     photo_url?: string | null;
     firebase_token: string;
   }) {
-    return this.request(ENDPOINTS.auth.googleLogin, {
+    // Custom handler to avoid throwing on 4xx so the caller can inspect payload/meta
+    return fetch(ENDPOINTS.auth.googleLogin, {
       method: 'POST',
       headers: this.headers(),
       body: JSON.stringify(data),
+    }).then(async (response) => {
+      const contentType = response.headers.get('content-type');
+      const payload = contentType?.includes('application/json') ? await response.json() : undefined;
+      if (!response.ok) {
+        return { ok: false, status: response.status, data: null, meta: payload || {} };
+      }
+      return normalizeResponse(payload);
+    }).catch((error) => {
+      console.error('googleLogin fetch error:', error);
+      return { ok: false, status: 0, data: null, meta: { success: false, message: 'Erreur réseau Google login' } };
     });
   }
 

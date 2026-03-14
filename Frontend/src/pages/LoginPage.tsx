@@ -55,7 +55,8 @@ const LoginPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Google login error:', error);
-      toast.error('Une erreur est survenue lors de la connexion Google');
+      const msg = (error as any)?.message || 'Une erreur est survenue lors de la connexion Google';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -82,9 +83,10 @@ const LoginPage: React.FC = () => {
       } else {
         toast.error('Email ou mot de passe incorrect');
       }
-    } catch (error: any) {
-      console.error('Erreur de connexion:', error);
-      toast.error('Une erreur est survenue lors de la connexion');
+    } catch (error) {
+      console.error('Login error:', error);
+      const msg = (error as any)?.message || 'Email ou mot de passe incorrect';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
