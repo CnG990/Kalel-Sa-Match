@@ -16,6 +16,14 @@ from .serializers import CustomTokenObtainPairSerializer, RegisterSerializer, Us
 User = get_user_model()
 
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def echo_token(request):
+    """Endpoint de diagnostic: renvoie le header Authorization reçu."""
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    return Response({"auth_header": auth_header})
+
+
 class IsAdminRole(permissions.BasePermission):
     def has_permission(self, request, view):
         return bool(
