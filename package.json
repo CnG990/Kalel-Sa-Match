@@ -1,0 +1,37 @@
+{
+  "name": "terrains-synthetiques",
+  "version": "1.0.0",
+  "description": "Plateforme de réservation de terrains synthétiques",
+  "scripts": {
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "dev-alt": "concurrently \"npm run backend-alt\" \"npm run frontend-alt\"",
+    "backend": "cd Backend && php artisan serve --host=127.0.0.1 --port=8000",
+    "backend-alt": "cd Backend && php artisan serve --host=127.0.0.1 --port=8080",
+    "frontend": "cd Frontend && npm run dev",
+    "frontend-alt": "cd Frontend && npm run dev -- --port 3080 --host 0.0.0.0",
+    "backend-prod": "cd Backend && php artisan serve --host=0.0.0.0 --port=8000",
+    "frontend-prod": "cd Frontend && npm run build && npm run preview",
+    "test": "npm run test-backend && npm run test-frontend",
+    "test-backend": "cd Backend && php artisan test",
+    "test-frontend": "cd Frontend && npm test",
+    "install-all": "cd Backend && composer install && cd ../Frontend && npm install",
+    "setup": "npm run install-all && cd Backend && php artisan migrate:fresh --seed"
+  },
+  "dependencies": {
+    "@types/mapbox-gl": "^3.4.1",
+    "lucide-react": "^0.519.0",
+    "mapbox-gl": "^3.13.0",
+    "react-dropzone": "^14.3.8",
+    "react-hot-toast": "^2.5.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.10",
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "author": "Terrains Synthétiques Dakar",
+  "license": "MIT"
+}

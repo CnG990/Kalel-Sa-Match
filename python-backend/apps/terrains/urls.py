@@ -1,0 +1,27 @@
+from rest_framework.routers import DefaultRouter
+from .views import (
+    TerrainViewSet,
+    TicketSupportViewSet,
+    AbonnementViewSet,
+    PlanAbonnementViewSet,
+    DemandeAbonnementViewSet,
+    SouscriptionViewSet,
+    PaiementViewSet,
+    NotificationViewSet,
+    CommissionViewSet,
+    PaiementAbonnementViewSet,
+)
+
+router = DefaultRouter()
+router.register(r'terrains', TerrainViewSet, basename='terrain')
+router.register(r'tickets', TicketSupportViewSet, basename='ticket')
+router.register(r'abonnements', AbonnementViewSet, basename='abonnement')
+router.register(r'plans', PlanAbonnementViewSet, basename='plan-abonnement')
+router.register(r'demandes-abonnement', DemandeAbonnementViewSet, basename='demande-abonnement')
+router.register(r'souscriptions', SouscriptionViewSet, basename='souscription')
+router.register(r'paiements', PaiementViewSet, basename='paiement')
+router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'commissions', CommissionViewSet, basename='commission')
+router.register(r'paiements-abonnement', PaiementAbonnementViewSet, basename='paiement-abonnement')
+
+urlpatterns = router.urls

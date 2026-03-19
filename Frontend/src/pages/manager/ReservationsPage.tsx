@@ -1,0 +1,338 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import apiService, { type ManagerReservationDTO } from '../../services/api';
+import RefundModal from '../../components/RefundModal';
+import { 
+  Calendar, 
+  Clock, 
+  User, 
+  MapPin, 
+  DollarSign,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Banknote
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
+type Reservation = ManagerReservationDTO;
+
+const ReservationsPage: React.FC = () => {
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('toutes');
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+
+  const normalizeStatus = (statut: string) => {
+    const value = (statut || '').toLowerCase();
+    if (value === 'annulée') return 'annulee';
+    return statut;
+  };
+
+  const fetchReservations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await apiService.getManagerReservations();
+      const raw = Array.isArray(data) ? data : (data as any)?.results ?? (data as any)?.data;
+      setReservations(
+        Array.isArray(raw)
+          ? raw.map((reservation) => ({ ...reservation, statut: normalizeStatus(reservation.statut) }))
+          : [],
+      );
+    } catch (error: any) {
+      console.error('Erreur lors du chargement:', error);
+
+      if (error.message?.includes('404') || error.message?.includes('Endpoint non trouvé')) {
+        toast.error('Service de réservations temporairement indisponible. Veuillez réessayer plus tard.');
+      } else if (error.message?.includes('401') || error.message?.includes('Unauthenticated')) {
+        toast.error('Session expirée. Veuillez vous reconnecter.');
+      } else if (error.message?.includes('500')) {
+        toast.error('Erreur serveur. Veuillez contacter le support technique.');
+      } else {
+        toast.error('Erreur lors du chargement des réservations.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReservations();
+  }, [fetchReservations]);
+
+  const updateReservationStatus = async (reservationId: number, newStatus: string) => {
+    const canonicalStatus = normalizeStatus(newStatus);
+    try {
+      const { meta } = await apiService.updateManagerReservationStatus(reservationId, canonicalStatus);
+      setReservations(prev =>
+        prev.map(r => (r.id === reservationId ? { ...r, statut: canonicalStatus } : r)),
+      );
+      toast.success(meta.message || `Réservation ${newStatus === 'confirmee' ? 'confirmée' : 'annulée'}.`);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
+      toast.error("Erreur lors de la mise à jour.");
+    }
+  };
+
+  const handleRefundRequest = (reservation: Reservation) => {
+    setSelectedReservation(reservation);
+    setShowRefundModal(true);
+  };
+
+  const handleRefundProcessed = () => {
+    fetchReservations(); // Recharger les réservations
+    setSelectedReservation(null);
+    setShowRefundModal(false);
+  };
+
+  const approveReservation = async (reservationId: number) => {
+    try {
+      const { meta } = await apiService.approveReservation(reservationId);
+      setReservations(prev =>
+        prev.map(r => (r.id === reservationId ? { ...r, statut: 'en_attente' } : r)),
+      );
+      toast.success(meta.message || 'Réservation approuvée — le client peut maintenant payer.');
+    } catch (error) {
+      console.error('Erreur approbation:', error);
+      toast.error('Erreur lors de l\'approbation.');
+    }
+  };
+
+  const rejectReservation = async (reservationId: number) => {
+    const motif = window.prompt('Motif du refus (optionnel) :') ?? '';
+    try {
+      const { meta } = await apiService.rejectReservation(reservationId, motif);
+      setReservations(prev =>
+        prev.map(r => (r.id === reservationId ? { ...r, statut: 'refusee' } : r)),
+      );
+      toast.success(meta.message || 'Réservation refusée.');
+    } catch (error) {
+      console.error('Erreur refus:', error);
+      toast.error('Erreur lors du refus.');
+    }
+  };
+
+  const getStatusColor = (statut: string) => {
+    const normalized = normalizeStatus(statut);
+    switch (normalized) {
+      case 'confirmee': return 'text-green-600 bg-green-100 border-green-200';
+      case 'en_attente': return 'text-yellow-600 bg-yellow-100 border-yellow-200';
+      case 'en_attente_validation': return 'text-orange-600 bg-orange-100 border-orange-200';
+      case 'refusee': return 'text-red-600 bg-red-100 border-red-200';
+      case 'annulee':
+        return 'text-red-600 bg-red-100 border-red-200';
+      case 'terminee': return 'text-gray-600 bg-gray-100 border-gray-200';
+      default: return 'text-gray-600 bg-gray-100 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (statut: string) => {
+    const normalized = normalizeStatus(statut);
+    switch (normalized) {
+      case 'confirmee': return <CheckCircle className="w-4 h-4" />;
+      case 'en_attente': return <AlertCircle className="w-4 h-4" />;
+      case 'en_attente_validation': return <Clock className="w-4 h-4" />;
+      case 'refusee': return <XCircle className="w-4 h-4" />;
+      case 'annulee': return <XCircle className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const filteredReservations = reservations.filter(reservation => {
+    if (filter === 'toutes') return true;
+    return normalizeStatus(reservation.statut) === filter;
+  });
+
+  const formatAmount = (reservation: Reservation) => (reservation.prix_total ?? reservation.montant_total ?? 0).toLocaleString();
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Réservations</h1>
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="bg-white p-6 rounded-lg shadow-lg">
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Réservations</h1>
+          <p className="text-gray-600">Gérez les réservations sur vos terrains</p>
+        </div>
+        <div className="flex space-x-2">
+          {['toutes', 'en_attente_validation', 'en_attente', 'acompte_paye', 'confirmee', 'annulee', 'terminee'].map(status => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === status
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {status === 'toutes' ? 'Toutes' : status.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filteredReservations.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune réservation</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {filter === 'toutes' 
+              ? 'Aucune réservation trouvée.' 
+              : `Aucune réservation ${filter.replace('_', ' ')}.`}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredReservations.map((reservation) => (
+            <div key={reservation.id} className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {reservation.terrain?.nom ?? 'Terrain'}
+                    </h3>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(reservation.statut)}`}>
+                      {getStatusIcon(reservation.statut)}
+                      <span className="ml-1 capitalize">{normalizeStatus(reservation.statut).replace('_', ' ')}</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
+                    <div className="flex items-center">
+                      <User className="w-4 h-4 mr-2" />
+                      <span>{reservation.client?.prenom} {reservation.client?.nom}</span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <span>
+                        {new Date(reservation.date_debut).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2" />
+                      <span>
+                        {new Date(reservation.date_debut).toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })} - {new Date(reservation.date_fin).toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      <span className="font-medium text-green-600">
+                        {formatAmount(reservation)} CFA
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center text-sm text-gray-600">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    <span>{reservation.terrain?.adresse ?? 'Adresse non disponible'}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="ml-6 flex space-x-2">
+                  {reservation.statut === 'en_attente_validation' && (
+                    <>
+                      <button
+                        onClick={() => approveReservation(reservation.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        Approuver
+                      </button>
+                      <button
+                        onClick={() => rejectReservation(reservation.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        Refuser
+                      </button>
+                    </>
+                  )}
+                  {reservation.statut === 'en_attente' && (
+                    <>
+                      <button
+                        onClick={() => updateReservationStatus(reservation.id, 'confirmee')}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        Confirmer
+                      </button>
+                      <button
+                        onClick={() => updateReservationStatus(reservation.id, 'annulee')}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        Annuler
+                      </button>
+                    </>
+                  )}
+                  
+                  {/* Bouton de remboursement pour réservations confirmées */}
+                  {reservation.statut === 'confirmee' && (
+                    <button
+                      onClick={() => handleRefundRequest(reservation)}
+                      className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm transition-colors flex items-center space-x-1"
+                      title="Traiter une demande de remboursement"
+                    >
+                      <Banknote className="w-4 h-4" />
+                      <span>Rembourser</span>
+                    </button>
+                  )}
+                  
+                  {reservation.code_ticket && (
+                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-mono">
+                      {reservation.code_ticket}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de remboursement */}
+      {selectedReservation && (
+        <RefundModal
+          isOpen={showRefundModal}
+          onClose={() => {
+            setShowRefundModal(false);
+            setSelectedReservation(null);
+          }}
+          reservation={{
+            ...selectedReservation,
+            montant_total: selectedReservation.prix_total || 0
+          } as any}
+          onRefundSuccess={handleRefundProcessed}
+        />
+      )}
+    </div>
+  );
+};
+
+export default ReservationsPage; 

@@ -1,0 +1,210 @@
+/* Styles personnalisés pour l'application */
+/* Les styles principaux sont gérés par Tailwind CSS */
+
+/* Animations et transitions */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Animation pour les boutons */
+.btn-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Effet de survol pour les liens de navigation */
+.nav-link {
+  position: relative;
+  transition: color 0.2s ease-in-out;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #f59e0b);
+  transition: width 0.3s ease-in-out;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Amélioration des sections Hero */
+.hero-gradient {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(245, 158, 11, 0.9));
+}
+
+/* Styles pour les cartes de terrain */
+.terrain-card {
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.terrain-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Animation de chargement */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Styles pour les modales et popups */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Amélioration des formulaires */
+.form-input {
+  transition: all 0.2s ease-in-out;
+}
+
+.form-input:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+/* Styles pour les notifications */
+.notification-slide {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Amélioration de la section des features */
+.feature-icon {
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Styles pour les éléments interactifs */
+.interactive-element {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Amélioration du footer */
+.footer-link {
+  transition: color 0.2s ease-in-out;
+}
+
+.footer-link:hover {
+  color: #10b981;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .hero-text {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-2px);
+  }
+  
+  .terrain-card:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom utility classes */
+.gradient-text {
+  background: linear-gradient(135deg, #10b981, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+body.modal-open .leaflet-pane,
+body.modal-open .leaflet-control,
+body.modal-open .leaflet-control-container,
+body.modal-open .leaflet-top,
+body.modal-open .leaflet-bottom {
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+body.modal-open .leaflet-container {
+  display: none !important;
+}

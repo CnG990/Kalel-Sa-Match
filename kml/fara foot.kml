@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>fara foot.kml</name>
+    <StyleMap id="m_ylw-pushpin">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#s_ylw-pushpin</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#s_ylw-pushpin_hl</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="s_ylw-pushpin">
+      <IconStyle>
+        <scale>1.1</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+    </Style>
+    <Style id="s_ylw-pushpin_hl">
+      <IconStyle>
+        <scale>1.3</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+    </Style>
+    <Placemark>
+      <name>fara foot</name>
+      <LookAt>
+        <longitude>-17.47249566199687</longitude>
+        <latitude>14.69771976436627</latitude>
+        <altitude>0</altitude>
+        <heading>4.987030353015921e-05</heading>
+        <tilt>24.65077051576748</tilt>
+        <range>134.619989215592</range>
+        <gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+      </LookAt>
+      <styleUrl>#m_ylw-pushpin</styleUrl>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -17.47268582326106,14.69749830068176,0 -17.47225393646001,14.69770543464769,0 -17.4723458502311,14.6978838496092,0 -17.47278774174435,14.69767658959806,0 -17.47268582326106,14.69749830068176,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+      <description>
+        Type: Football
+        Surface: artificial_turf
+        Etat: (À déterminer)
+        Disponibilite: (À déterminer)
+        Gestionnaire: (À déterminer)
+        Latitude: 14° 41' 51.8" N
+        Longitude: 17° 28' 20.9" W
+      </description>
+      <atom:link rel="app" href="https://www.google.com/earth/about/versions/#earth-pro" title="Google Earth Pro 7.3.6.10201"></atom:link>
+    </Placemark>
+  </Document>
+</kml>

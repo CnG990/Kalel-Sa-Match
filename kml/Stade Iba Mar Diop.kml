@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>Stade Iba Mar Diop.kml</name>
+    <StyleMap id="m_ylw-pushpin">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#s_ylw-pushpin</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#s_ylw-pushpin_hl</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="s_ylw-pushpin">
+      <IconStyle>
+        <scale>1.1</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+    </Style>
+    <Style id="s_ylw-pushpin_hl">
+      <IconStyle>
+        <scale>1.3</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+    </Style>
+    <Placemark>
+      <name>Stade Iba Mar Diop</name>
+      <LookAt>
+        <longitude>-17.44657317885384</longitude>
+        <latitude>14.67934518758691</latitude>
+        <altitude>0</altitude>
+        <heading>-6.849225308211738e-06</heading>
+        <tilt>28.13041407353496</tilt>
+        <range>246.9122960144804</range>
+        <gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+      </LookAt>
+      <styleUrl>#m_ylw-pushpin</styleUrl>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -17.44725384250989,14.67907541585717,0 -17.4471585302,14.67903067057224,0 -17.44715468383196,14.67902720878769,0 -17.44715014716681,14.67902718892702,0 -17.44701701697612,14.67896815192449,0 -17.44701104381483,14.67896468725804,0 -17.44682450749312,14.67889529058704,0 -17.44681892727055,14.6788931692792,0 -17.44681553057459,14.67889102632415,0 -17.44658999275619,14.67884617371436,0 -17.44658565366764,14.6788461739372,0 -17.44635510436651,14.67883936009917,0 -17.44627789427733,14.67889372602503,0 -17.44627352593815,14.67889369734973,0 -17.44609088722739,14.6790360620174,0 -17.44605994406307,14.67921722936883,0 -17.44605926757656,14.67922348411208,0 -17.44603735616978,14.67950388012403,0 -17.44609761769167,14.67984739528155,0 -17.44613381439728,14.68019590025154,0 -17.44613354703633,14.68019950159399,0 -17.44623983659222,14.68036481266845,0 -17.44669523440696,14.6804430322372,0 -17.44683906858349,14.68038549185743,0 -17.4468420812756,14.68038714469956,0 -17.44710257521945,14.68039117645499,0 -17.44723918055788,14.68037885865522,0 -17.44731284401709,14.68033944106894,0 -17.44731358058097,14.67984878966092,0 -17.44725384250989,14.67907541585717,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+      <description>
+        Type: Football
+        Surface: artificial_turf
+        Etat: Bon
+        Disponibilite: 8h-12h, 14h-18h
+        Gestionnaire: Municipalité
+        Latitude: 14° 40' 45.6" N
+        Longitude: 17° 26' 47.7" W
+      </description>
+      <atom:link rel="app" href="https://www.google.com/earth/about/versions/#earth-pro" title="Google Earth Pro 7.3.6.10201"></atom:link>
+    </Placemark>
+  </Document>
+</kml>

@@ -1,0 +1,56 @@
+{
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://kalel-sa-match-api.loca.lt/api"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://kalel-sa-match-api.loca.lt/api"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/dashboard/map",
+      "destination": "/"
+    },
+    {
+      "source": "/dashboard/map/",
+      "destination": "/"
+    },
+    {
+      "source": "/terrains",
+      "destination": "/"
+    },
+    {
+      "source": "/terrains/",
+      "destination": "/"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/"
+    },
+    {
+      "source": "/dashboard/",
+      "destination": "/"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "comment": "API URL updated to localtunnel - Force redeploy - Remove old ngrok URL completely - Cache busting added - Expected 12 terrains"
+} 

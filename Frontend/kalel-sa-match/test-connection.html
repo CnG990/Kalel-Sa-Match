@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Connexion Frontend-Backend</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .loading { background: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Connexion Frontend ↔ Backend</h1>
+    
+    <button onclick="runAllTests()">Lancer tous les tests</button>
+    
+    <div id="test-health" class="test">
+        <h3>1. Test Health Check</h3>
+        <div id="result-health">Pas encore testé</div>
+    </div>
+    
+    <div id="test-terrains" class="test">
+        <h3>2. Test Liste des Terrains</h3>
+        <div id="result-terrains">Pas encore testé</div>
+    </div>
+    
+    <div id="test-register" class="test">
+        <h3>3. Test Inscription</h3>
+        <div id="result-register">Pas encore testé</div>
+    </div>
+    
+    <div id="test-login" class="test">
+        <h3>4. Test Connexion</h3>
+        <div id="result-login">Pas encore testé</div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000/api';
+        
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const data = await response.json();
+                return { success: response.ok, status: response.status, data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function updateResult(testId, success, message, details = null) {
+            const resultDiv = document.getElementById(`result-${testId}`);
+            const testDiv = document.getElementById(`test-${testId}`);
+            
+            testDiv.className = `test ${success ? 'success' : 'error'}`;
+            
+            let html = `<strong>${success ? '✅' : '❌'} ${message}</strong>`;
+            if (details) {
+                html += `<pre>${JSON.stringify(details, null, 2)}</pre>`;
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+
+        function setLoading(testId, message) {
+            const resultDiv = document.getElementById(`result-${testId}`);
+            const testDiv = document.getElementById(`test-${testId}`);
+            
+            testDiv.className = 'test loading';
+            resultDiv.innerHTML = `<strong>⏳ ${message}...</strong>`;
+        }
+
+        async function testHealth() {
+            setLoading('health', 'Test en cours');
+            
+            const result = await makeRequest(`${API_BASE_URL}/health`);
+            
+            if (result.success) {
+                updateResult('health', true, 'Health Check OK', result.data);
+            } else {
+                updateResult('health', false, `Health Check Failed (${result.status})`, result.error || result.data);
+            }
+        }
+
+        async function testTerrains() {
+            setLoading('terrains', 'Récupération des terrains');
+            
+            const result = await makeRequest(`${API_BASE_URL}/terrains`);
+            
+            if (result.success && result.data.success) {
+                const count = result.data.data ? result.data.data.length : 0;
+                updateResult('terrains', true, `${count} terrains trouvés`, { 
+                    count, 
+                    example: result.data.data && result.data.data[0] ? result.data.data[0] : null 
+                });
+            } else {
+                updateResult('terrains', false, 'Erreur lors de la récupération des terrains', result.data || result.error);
+            }
+        }
+
+        async function testRegister() {
+            setLoading('register', 'Test d\'inscription');
+            
+            const userData = {
+                nom: 'Test',
+                prenom: 'Frontend',
+                email: `frontend${Date.now()}@example.com`,
+                telephone: `+22178${Date.now()}`,
+                password: 'password123',
+                password_confirmation: 'password123',
+                role: 'client',
+                accept_terms: true
+            };
+            
+            const result = await makeRequest(`${API_BASE_URL}/auth/register`, {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            });
+            
+            if (result.success && result.data.success) {
+                window.testToken = result.data.data.token;
+                updateResult('register', true, 'Inscription réussie', {
+                    user: result.data.data.user.nom_complet,
+                    token: result.data.data.token ? 'Token généré' : 'Pas de token'
+                });
+            } else {
+                updateResult('register', false, 'Erreur lors de l\'inscription', result.data || result.error);
+            }
+        }
+
+        async function testLogin() {
+            setLoading('login', 'Test de connexion');
+            
+            if (!window.testToken) {
+                updateResult('login', false, 'Aucun token disponible (l\'inscription a échoué)');
+                return;
+            }
+            
+            const result = await makeRequest(`${API_BASE_URL}/auth/me`, {
+                headers: {
+                    'Authorization': `Bearer ${window.testToken}`
+                }
+            });
+            
+            if (result.success && result.data.success) {
+                updateResult('login', true, 'Authentification réussie', {
+                    user: result.data.data.nom_complet,
+                    role: result.data.data.role
+                });
+            } else {
+                updateResult('login', false, 'Erreur d\'authentification', result.data || result.error);
+            }
+        }
+
+        async function runAllTests() {
+            console.log('Démarrage des tests...');
+            
+            await testHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testTerrains();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testRegister();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testLogin();
+            
+            console.log('Tests terminés!');
+        }
+
+        // Démarrer automatiquement au chargement de la page
+        window.addEventListener('load', runAllTests);
+    </script>
+</body>
+</html> 

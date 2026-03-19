@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+  
+  /* Kalèl sa match color palette */
+  --kalel-primary: 27, 67, 50;      /* #1B4332 */
+  --kalel-secondary: 232, 93, 4;    /* #E85D04 */
+  --kalel-accent: 255, 184, 0;      /* #FFB800 */
+}
+
+@layer base {
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: rgb(var(--background-rgb));
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-kalel-primary font-bold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-kalel-primary text-white px-4 py-2 rounded-lg hover:bg-kalel-primary-dark transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-kalel-secondary text-white px-4 py-2 rounded-lg hover:bg-kalel-secondary-dark transition-colors;
+  }
+
+  .btn-accent {
+    @apply bg-kalel-accent text-kalel-primary px-4 py-2 rounded-lg hover:brightness-95 transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6 border border-gray-100;
+  }
+
+  .input-field {
+    @apply border-kalel-primary/20 focus:border-kalel-primary focus:ring-kalel-primary/20 rounded-lg;
+  }
+} 

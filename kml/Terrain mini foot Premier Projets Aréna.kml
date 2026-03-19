@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>Terrain mini foot Premier Projets Aréna.kml</name>
+    <StyleMap id="m_ylw-pushpin">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#s_ylw-pushpin</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#s_ylw-pushpin_hl</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="s_ylw-pushpin">
+      <IconStyle>
+        <scale>1.1</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+    </Style>
+    <Style id="s_ylw-pushpin_hl">
+      <IconStyle>
+        <scale>1.3</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+    </Style>
+    <Placemark>
+      <name>Terrain mini foot Premier Projets Aréna</name>
+      <LookAt>
+        <longitude>-17.45473634453503</longitude>
+        <latitude>14.69928594787893</latitude>
+        <altitude>0</altitude>
+        <heading>4.170811019574481e-06</heading>
+        <tilt>28.87016152622043</tilt>
+        <range>112.9709535591092</range>
+        <gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+      </LookAt>
+      <styleUrl>#m_ylw-pushpin</styleUrl>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -17.45486727212723,14.6992274016699,0 -17.45481265101394,14.69918260668183,0 -17.45478638746499,14.6991881773688,0 -17.45463450164623,14.69933984471147,0 -17.45463255223698,14.6993677386502,0 -17.45476450935737,14.69952603347359,0 -17.45495332872191,14.69934295086596,0 -17.45486727212723,14.6992274016699,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+      <description>
+        Type: Football
+        Surface: artificial_turf
+        Etat: Bon
+        Disponibilite: (À déterminer)
+        Gestionnaire: (À déterminer)
+        Latitude: 14° 41' 57.4" N
+        Longitude: 17° 27' 16.9" W
+      </description>
+      <atom:link rel="app" href="https://www.google.com/earth/about/versions/#earth-pro" title="Google Earth Pro 7.3.6.10201"></atom:link>
+    </Placemark>
+  </Document>
+</kml>
