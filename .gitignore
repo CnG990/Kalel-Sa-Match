@@ -57,3 +57,8 @@ Thumbs.db
 # Fichiers de test
 tests/
 test/
+
+python-backend/.venv/
+python-backend/staticfiles/
+*.pyc
+__pycache__/
