@@ -353,10 +353,7 @@ const MapPage: React.FC = () => {
       const payload = await response.json();
       const terrainsData: any[] = Array.isArray(payload.data) ? payload.data : [];
 
-      if (terrainsData.length === 0) {
-        throw new Error('Aucun terrain reçu depuis le serveur.');
-      }
-
+      // Pas d'erreur si aucun terrain : on affiche simplement une carte vide
       const normalized: Terrain[] = terrainsData
         .map((t) => ({
           id: t.id,
