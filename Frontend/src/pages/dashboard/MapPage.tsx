@@ -624,7 +624,7 @@ const MapPage: React.FC = () => {
         <button
           onClick={() => setShowMobilePanel(true)}
           className="lg:hidden leaflet-map-controls absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-full shadow-xl border-2 border-white font-semibold text-sm transition-all active:scale-95"
-          style={{ zIndex: 1000 }}
+          style={{ zIndex: showMobilePanel ? 40 : 1000 }}
         >
           <List className="w-4 h-4" />
           {sortedTerrains.length} terrains
