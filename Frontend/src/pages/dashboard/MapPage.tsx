@@ -580,7 +580,7 @@ const MapPage: React.FC = () => {
         )}
 
         {/* ====== Contrôles carte overlay ====== */}
-        <div className="leaflet-map-controls absolute top-3 left-3 space-y-2 lg:top-3 lg:left-3" style={{ zIndex: 1000 }}>
+        <div className="leaflet-map-controls absolute top-3 left-3 space-y-2" style={{ zIndex: showMobilePanel ? 40 : 1000 }}>
           {/* Dropdown fond de carte — compact sur mobile */}
           <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-2 border border-gray-200">
             <div className="relative">
