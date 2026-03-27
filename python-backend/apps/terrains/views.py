@@ -110,12 +110,13 @@ class TerrainViewSet(BaseViewSet):
         url_path='all-for-map'
     )
     def all_for_map(self, request):
-        """Endpoint pour la carte - retourne tous les terrains actifs avec coordonnées"""
+        """Endpoint pour la carte - retourne tous les terrains avec coordonnées (actifs et inactifs)"""
         from apps.reservations.models import Reservation
         from django.utils import timezone
         from django.db.models import Q
         
-        terrains = self.get_queryset().select_related('gestionnaire')
+        # Pour la carte publique, on montre tous les terrains (actifs et inactifs)
+        terrains = TerrainSynthetiquesDakar.objects.all().select_related('gestionnaire')
         terrain_data = []
         
         now = timezone.now()
