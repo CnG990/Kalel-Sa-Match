@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { PlusCircle, RefreshCw, Power, MapPin, Users, Trash2 } from 'lucide-react';
+import { PlusCircle, RefreshCw, Power, MapPin, Users, Trash2, Upload, Download } from 'lucide-react';
 
 import apiService from '../../services/api';
 import AddTerrainOnSiteModal from './AddTerrainOnSiteModal';
 import AddTerrainRemoteModal from './AddTerrainRemoteModal';
 import EditTerrainModal from './EditTerrainModal';
 import TerrainManagerAssignment from '../../components/TerrainManagerAssignment';
+import CSVTerrainImport from '../../components/CSVTerrainImport';
 
 interface Terrain {
   id: number;
@@ -48,6 +49,7 @@ const ManageTerrainsPageSimple: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRemoteModal, setShowRemoteModal] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -137,6 +139,67 @@ const ManageTerrainsPageSimple: React.FC = () => {
     }
   };
 
+  const exportCSV = () => {
+    if (terrains.length === 0) {
+      toast.error('Aucun terrain à exporter');
+      return;
+    }
+
+    const headers = [
+      'nom',
+      'description',
+      'adresse',
+      'latitude',
+      'longitude',
+      'prix_heure',
+      'capacite',
+      'telephone',
+      'email',
+      'est_actif',
+      'type_surface',
+      'nombre_joueurs',
+      'eclairage',
+      'vestiaires',
+      'parking',
+      'douches',
+      'buvette'
+    ];
+
+    const rows = terrains.map(t => [
+      t.nom || '',
+      t.description || '',
+      t.adresse || '',
+      t.latitude || '',
+      t.longitude || '',
+      t.prix_heure || '',
+      t.capacite || '',
+      t.telephone || '',
+      '', // email non disponible dans l'interface
+      t.est_actif ? 'True' : 'False',
+      t.type_surface || 'synthetique',
+      t.nombre_joueurs || '',
+      t.eclairage ? 'True' : 'False',
+      t.vestiaires ? 'True' : 'False',
+      t.parking ? 'True' : 'False',
+      t.douches ? 'True' : 'False',
+      t.buvette ? 'True' : 'False'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `terrains_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    toast.success(`${terrains.length} terrain(s) exporté(s)`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -152,6 +215,20 @@ const ManageTerrainsPageSimple: React.FC = () => {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
             >
               <RefreshCw className="w-4 h-4" /> Rafraîchir
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCSVImport(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+            >
+              <Upload className="w-4 h-4" /> Import CSV
+            </button>
+            <button
+              type="button"
+              onClick={exportCSV}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-300 text-purple-700 hover:bg-purple-50"
+            >
+              <Download className="w-4 h-4" /> Export CSV
             </button>
             <button
               type="button"
@@ -489,6 +566,17 @@ const ManageTerrainsPageSimple: React.FC = () => {
           }}
           onSuccess={() => {
             setShowEditModal(false);
+            fetchTerrains();
+          }}
+        />
+      )}
+
+      {showCSVImport && (
+        <CSVTerrainImport
+          isOpen={showCSVImport}
+          onClose={() => setShowCSVImport(false)}
+          onSuccess={() => {
+            setShowCSVImport(false);
             fetchTerrains();
           }}
         />
