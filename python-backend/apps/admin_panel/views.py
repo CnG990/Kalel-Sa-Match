@@ -258,6 +258,184 @@ class AdminTerrainViewSet(BaseViewSet):
     serializer_class = TerrainSerializer
     queryset = TerrainSynthetiquesDakar.objects.all()
 
+    @action(detail=False, methods=['post'], url_path='import-kml')
+    def import_kml(self, request):
+        """Importer des terrains depuis un fichier KML"""
+        if 'file' not in request.FILES:
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Aucun fichier fourni'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        kml_file = request.FILES['file']
+        
+        if not kml_file.name.endswith('.kml'):
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Le fichier doit être au format KML'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            from xml.etree import ElementTree as ET
+            
+            # Lire et parser le fichier KML
+            content = kml_file.read().decode('utf-8')
+            root = ET.fromstring(content)
+            
+            # Namespace KML
+            ns = {'kml': 'http://www.opengis.net/kml/2.2'}
+            
+            imported_count = 0
+            errors = []
+            terrain_ids = []
+            
+            # Extraire les Placemarks
+            for idx, placemark in enumerate(root.findall('.//kml:Placemark', ns), start=1):
+                try:
+                    name_elem = placemark.find('kml:name', ns)
+                    desc_elem = placemark.find('kml:description', ns)
+                    point_elem = placemark.find('.//kml:Point/kml:coordinates', ns)
+                    
+                    if name_elem is None or point_elem is None:
+                        errors.append(f"Placemark {idx}: Nom ou coordonnées manquants")
+                        continue
+                    
+                    # Parser les coordonnées (format: longitude,latitude,altitude)
+                    coords = point_elem.text.strip().split(',')
+                    if len(coords) < 2:
+                        errors.append(f"Placemark {idx}: Format de coordonnées invalide")
+                        continue
+                    
+                    terrain_data = {
+                        'nom': name_elem.text.strip(),
+                        'description': desc_elem.text.strip() if desc_elem is not None else '',
+                        'longitude': float(coords[0]),
+                        'latitude': float(coords[1]),
+                        'adresse': f"Terrain {name_elem.text.strip()} - Dakar",
+                        'est_actif': True,
+                        'type_surface': 'synthetique',
+                        'capacite': 15,
+                    }
+                    
+                    serializer = self.get_serializer(data=terrain_data)
+                    if serializer.is_valid():
+                        terrain = serializer.save()
+                        terrain_ids.append(terrain.id)
+                        imported_count += 1
+                    else:
+                        errors.append(f"Placemark {idx}: {serializer.errors}")
+                
+                except Exception as e:
+                    errors.append(f"Placemark {idx}: {str(e)}")
+            
+            return Response({
+                'data': {
+                    'success': True,
+                    'imported_count': imported_count,
+                    'errors': errors,
+                    'terrain_ids': terrain_ids
+                },
+                'meta': {
+                    'success': True,
+                    'message': f'{imported_count} terrain(s) importé(s) depuis KML'
+                }
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            logger.exception('Erreur lors de l\'import KML')
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': f'Erreur lors de l\'import: {str(e)}'}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'], url_path='import-geojson')
+    def import_geojson(self, request):
+        """Importer des terrains depuis un fichier GeoJSON"""
+        import json
+        
+        if 'file' not in request.FILES:
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Aucun fichier fourni'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        geojson_file = request.FILES['file']
+        
+        if not (geojson_file.name.endswith('.geojson') or geojson_file.name.endswith('.json')):
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Le fichier doit être au format GeoJSON'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Lire et parser le fichier GeoJSON
+            content = geojson_file.read().decode('utf-8')
+            geojson_data = json.loads(content)
+            
+            imported_count = 0
+            errors = []
+            terrain_ids = []
+            
+            # Extraire les features
+            features = geojson_data.get('features', [])
+            
+            for idx, feature in enumerate(features, start=1):
+                try:
+                    geometry = feature.get('geometry', {})
+                    properties = feature.get('properties', {})
+                    
+                    if geometry.get('type') != 'Point':
+                        errors.append(f"Feature {idx}: Seuls les points sont supportés")
+                        continue
+                    
+                    coords = geometry.get('coordinates', [])
+                    if len(coords) < 2:
+                        errors.append(f"Feature {idx}: Coordonnées invalides")
+                        continue
+                    
+                    terrain_data = {
+                        'nom': properties.get('nom') or properties.get('name') or f"Terrain {idx}",
+                        'description': properties.get('description', ''),
+                        'longitude': float(coords[0]),
+                        'latitude': float(coords[1]),
+                        'adresse': properties.get('adresse') or properties.get('address') or f"Terrain - Dakar",
+                        'prix_heure': properties.get('prix_heure') or properties.get('price'),
+                        'capacite': properties.get('capacite') or properties.get('capacity') or 15,
+                        'est_actif': properties.get('est_actif', True),
+                        'type_surface': properties.get('type_surface', 'synthetique'),
+                    }
+                    
+                    serializer = self.get_serializer(data=terrain_data)
+                    if serializer.is_valid():
+                        terrain = serializer.save()
+                        terrain_ids.append(terrain.id)
+                        imported_count += 1
+                    else:
+                        errors.append(f"Feature {idx}: {serializer.errors}")
+                
+                except Exception as e:
+                    errors.append(f"Feature {idx}: {str(e)}")
+            
+            return Response({
+                'data': {
+                    'success': True,
+                    'imported_count': imported_count,
+                    'errors': errors,
+                    'terrain_ids': terrain_ids
+                },
+                'meta': {
+                    'success': True,
+                    'message': f'{imported_count} terrain(s) importé(s) depuis GeoJSON'
+                }
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            logger.exception('Erreur lors de l\'import GeoJSON')
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': f'Erreur lors de l\'import: {str(e)}'}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['post'], url_path='import-csv')
     def import_csv(self, request):
         """Importer des terrains depuis un fichier CSV"""

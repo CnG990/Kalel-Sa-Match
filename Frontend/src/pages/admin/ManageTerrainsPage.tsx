@@ -8,6 +8,7 @@ import AddTerrainRemoteModal from './AddTerrainRemoteModal';
 import EditTerrainModal from './EditTerrainModal';
 import TerrainManagerAssignment from '../../components/TerrainManagerAssignment';
 import CSVTerrainImport from '../../components/CSVTerrainImport';
+import GeoImport from '../../components/GeoImport';
 
 interface Terrain {
   id: number;
@@ -50,6 +51,8 @@ const ManageTerrainsPageSimple: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRemoteModal, setShowRemoteModal] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
+  const [showKMLImport, setShowKMLImport] = useState(false);
+  const [showGeoJSONImport, setShowGeoJSONImport] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -221,14 +224,28 @@ const ManageTerrainsPageSimple: React.FC = () => {
               onClick={() => setShowCSVImport(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
             >
-              <Upload className="w-4 h-4" /> Import CSV
+              <Upload className="w-4 h-4" /> CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowKMLImport(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              <Upload className="w-4 h-4" /> KML
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowGeoJSONImport(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700"
+            >
+              <Upload className="w-4 h-4" /> GeoJSON
             </button>
             <button
               type="button"
               onClick={exportCSV}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-300 text-purple-700 hover:bg-purple-50"
             >
-              <Download className="w-4 h-4" /> Export CSV
+              <Download className="w-4 h-4" /> Export
             </button>
             <button
               type="button"
@@ -577,6 +594,30 @@ const ManageTerrainsPageSimple: React.FC = () => {
           onClose={() => setShowCSVImport(false)}
           onSuccess={() => {
             setShowCSVImport(false);
+            fetchTerrains();
+          }}
+        />
+      )}
+
+      {showKMLImport && (
+        <GeoImport
+          isOpen={showKMLImport}
+          importType="kml"
+          onClose={() => setShowKMLImport(false)}
+          onSuccess={() => {
+            setShowKMLImport(false);
+            fetchTerrains();
+          }}
+        />
+      )}
+
+      {showGeoJSONImport && (
+        <GeoImport
+          isOpen={showGeoJSONImport}
+          importType="geojson"
+          onClose={() => setShowGeoJSONImport(false)}
+          onSuccess={() => {
+            setShowGeoJSONImport(false);
             fetchTerrains();
           }}
         />
