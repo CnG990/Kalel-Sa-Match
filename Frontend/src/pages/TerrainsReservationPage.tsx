@@ -127,7 +127,7 @@ const TerrainsReservationPage: React.FC = () => {
           {/* Hero avec skeleton */}
           <div className="bg-gradient-to-r from-green-600 to-orange-500 text-white py-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Réservez votre </h1>
+              <h1 className="text-3xl md:text-5xl font-bold mb-4">Réservez votre </h1>
               <p className="text-xl opacity-90">Trouvez et réservez le parfait en quelques clics</p>
             </div>
           </div>
@@ -164,7 +164,7 @@ const TerrainsReservationPage: React.FC = () => {
       <div className="bg-gradient-to-r from-green-600 to-orange-500 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <h1 className="text-3xl md:text-5xl font-bold mb-4">
               Réservez votre </h1>
             <p className="text-xl opacity-90 mb-8">
               Trouvez et réservez le parfait en quelques clics
@@ -191,7 +191,7 @@ const TerrainsReservationPage: React.FC = () => {
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -209,7 +209,7 @@ const TerrainsReservationPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-3">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -259,7 +259,7 @@ const TerrainsReservationPage: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {terrains.map((terrain) => (
             <div key={terrain.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               {/* Image */}

@@ -236,7 +236,7 @@ const LitigeDetailsPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       {/* En-tête avec bouton retour */}
       <div className="flex items-center mb-6">
         <button
@@ -363,7 +363,7 @@ const LitigeDetailsPage: React.FC = () => {
 
         {/* Conversation */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm border h-[600px] flex flex-col">
+          <div className="bg-white rounded-lg shadow-sm border h-[400px] sm:h-[600px] flex flex-col">
             <div className="p-4 border-b">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center">
                 <MessageSquare className="mr-2" size={20} />

@@ -87,14 +87,14 @@ const ClientDashboardPage: React.FC = () => {
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Bonjour, {user.prenom} !
               </h1>
               <p className="mt-1 text-lg text-gray-600">
                 Bienvenue sur votre espace personnel.
               </p>
             </div>
-            <div className="mt-4 md:mt-0 flex space-x-3">
+            <div className="mt-4 md:mt-0 flex flex-wrap gap-3">
               <Link
                 to="/dashboard/map"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-green-600 to-orange-500 hover:from-green-700 hover:to-orange-600"
@@ -132,7 +132,7 @@ const ClientDashboardPage: React.FC = () => {
                 ) : upcomingReservations.length > 0 ? (
                   <ul className="divide-y divide-gray-200">
                     {upcomingReservations.map(res => (
-                      <li key={res.id} className="py-4 flex items-center justify-between">
+                      <li key={res.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                           <p className="font-semibold text-gray-800">{res.terrain.name}</p>
                           <p className="text-sm text-gray-600">{new Date(res.date_debut).toLocaleString('fr-FR')}</p>
@@ -165,7 +165,7 @@ const ClientDashboardPage: React.FC = () => {
                 ) : pastReservations.length > 0 ? (
                   <ul className="divide-y divide-gray-200">
                     {pastReservations.map(res => (
-                       <li key={res.id} className="py-4 flex items-center justify-between">
+                       <li key={res.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                           <p className="font-semibold text-gray-800">{res.terrain.name}</p>
                           <p className="text-sm text-gray-600">{new Date(res.date_debut).toLocaleString('fr-FR')}</p>

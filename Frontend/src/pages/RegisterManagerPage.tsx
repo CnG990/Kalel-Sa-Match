@@ -68,7 +68,7 @@ const RegisterManagerPage: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-2xl p-8 space-y-6 bg-white rounded-lg shadow-lg">
+      <div className="w-full max-w-2xl p-5 sm:p-8 space-y-6 bg-white rounded-lg shadow-lg mx-4 sm:mx-auto">
         {/* Logo et lien de retour */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center justify-center mb-6 hover:opacity-80 transition-opacity">
@@ -84,7 +84,7 @@ const RegisterManagerPage: React.FC = () => {
 
         {!success ? (
           <>
-            <h2 className="text-3xl font-extrabold text-center text-gray-900">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-center text-gray-900">
               Devenez partenaire
             </h2>
             <p className="text-center text-gray-600">Inscrivez-vous en tant que gestionnaire de terrain.</p>

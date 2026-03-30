@@ -203,7 +203,7 @@ const MesLitigesPage: React.FC = () => {
               className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => voirDetailsLitige(litige.id)}
             >
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-3">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="font-semibold text-blue-600">
@@ -344,7 +344,7 @@ const CreateLitigeModal: React.FC<CreateLitigeModalProps> = ({ onClose, onSucces
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-5 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-900">Créer un nouveau litige</h2>
           <button

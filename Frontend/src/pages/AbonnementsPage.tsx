@@ -221,7 +221,8 @@ const AbonnementsPage: React.FC = () => {
   }
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-12">
+    <div className="overflow-x-auto -mx-4 px-4 pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+    <div className="flex items-center justify-center mb-12 min-w-max">
       {['Terrain', 'Forfait (optionnel)', 'Config', 'Créneaux', 'Récap'].map((label, idx) => {
         const step = idx + 1;
         const isActive = currentStep === step;
@@ -249,6 +250,7 @@ const AbonnementsPage: React.FC = () => {
         );
       })}
     </div>
+    </div>
   );
 
   return (
@@ -274,7 +276,7 @@ const AbonnementsPage: React.FC = () => {
             </div>
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
             Boostez votre expérience <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">sportive</span>
           </h1>
           <p className="text-blue-100/80 text-lg max-w-2xl mb-8 leading-relaxed">
@@ -284,7 +286,7 @@ const AbonnementsPage: React.FC = () => {
       </div>
 
       <div className="max-w-6xl mx-auto w-full px-4 -mt-16 mb-20 relative z-20">
-        <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 p-8 md:p-12 mb-8">
+        <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 md:p-12 mb-8">
           
           {renderStepIndicator()}
 
@@ -430,14 +432,14 @@ const AbonnementsPage: React.FC = () => {
                   </div>
                 )}
 
-                <div className="mt-12 flex justify-between">
+                <div className="mt-12 flex flex-col sm:flex-row justify-between gap-3">
                   <button
                     onClick={() => setCurrentStep(1)}
                     className="px-8 py-4 text-gray-500 font-bold hover:text-gray-900 transition-colors"
                   >
                     Précédent
                   </button>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={() => {
                         setTypeAbonnementSelectionneId(null);
@@ -611,7 +613,7 @@ const AbonnementsPage: React.FC = () => {
 
                     <div>
                       <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">2. Choisissez vos heures</h3>
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'].map((creneau) => (
                           <button
                             key={creneau}
@@ -691,7 +693,7 @@ const AbonnementsPage: React.FC = () => {
                 <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
                   <CheckCircle className="w-12 h-12" />
                 </div>
-                <h2 className="text-4xl font-black text-gray-900 mb-4">C'est presque fini !</h2>
+                <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">C'est presque fini !</h2>
                 <p className="text-gray-500 mb-12">Révisez les détails de votre abonnement avant de finaliser.</p>
 
                 <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100 text-left space-y-6 mb-12">
@@ -727,7 +729,7 @@ const AbonnementsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => setCurrentStep(4)}
                     className="flex-1 py-4 bg-gray-100 text-gray-900 rounded-2xl font-bold hover:bg-gray-200 transition-all"
@@ -755,7 +757,7 @@ const AbonnementsPage: React.FC = () => {
         </div>
 
         {/* Info Card */}
-        <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl p-8 flex items-start gap-6">
+        <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
           <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
             <Info className="w-6 h-6" />
           </div>

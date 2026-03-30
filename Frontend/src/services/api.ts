@@ -1512,12 +1512,19 @@ class ApiService {
   }
 
   // Admin - Geo Import ----------------------------------------
-  importGeoData(geoData: Record<string, unknown>) {
-    const url = `${API_ROOT}/admin/terrains/`;
+  importGeoData(formData: FormData) {
+    const url = `${API_ROOT}/admin/terrains/import-csv/`;
+    // Ne pas inclure Content-Type header pour FormData (le navigateur le gère automatiquement)
+    const headers: Record<string, string> = {};
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     return this.requestNormalized(url, {
       method: 'POST',
-      headers: this.headers(),
-      body: JSON.stringify(geoData),
+      headers,
+      body: formData,
     });
   }
 

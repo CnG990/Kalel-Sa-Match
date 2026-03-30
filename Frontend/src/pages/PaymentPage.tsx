@@ -157,8 +157,8 @@ const PaymentPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-xl">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-4">Finaliser votre réservation</h1>
+      <div className="max-w-2xl mx-auto bg-white p-5 sm:p-8 rounded-xl shadow-xl">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4">Finaliser votre réservation</h1>
         
         <div className="bg-gray-50 p-6 rounded-lg mb-8">
           <h2 className="text-xl font-bold mb-2">Récapitulatif</h2>
@@ -272,7 +272,7 @@ const PaymentPage: React.FC = () => {
         )}
 
         {reservationId && (
-          <div className={`mb-6 p-4 rounded-lg flex items-center justify-between text-sm font-medium ${
+          <div className={`mb-6 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm font-medium ${
             reservationStatus === 'en_attente_validation'
               ? 'bg-yellow-100 text-yellow-900'
               : reservationStatus === 'refusee'

@@ -165,25 +165,36 @@ const ReservationsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Réservations</h1>
-          <p className="text-gray-600">Gérez les réservations sur vos terrains</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Réservations</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Gérez les réservations sur vos terrains</p>
         </div>
-        <div className="flex space-x-2">
-          {['toutes', 'en_attente_validation', 'en_attente', 'acompte_paye', 'confirmee', 'annulee', 'terminee'].map(status => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === status
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {status === 'toutes' ? 'Toutes' : status.replace('_', ' ')}
-            </button>
-          ))}
+        <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-2 min-w-max">
+            {[
+              { key: 'toutes', label: 'Toutes', dot: 'bg-gray-400' },
+              { key: 'en_attente_validation', label: 'À valider', dot: 'bg-orange-500' },
+              { key: 'en_attente', label: 'En attente', dot: 'bg-yellow-500' },
+              { key: 'acompte_paye', label: 'Acompte payé', dot: 'bg-blue-500' },
+              { key: 'confirmee', label: 'Confirmée', dot: 'bg-green-500' },
+              { key: 'annulee', label: 'Annulée', dot: 'bg-red-500' },
+              { key: 'terminee', label: 'Terminée', dot: 'bg-gray-500' },
+            ].map(({ key, label, dot }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 border ${
+                  filter === key
+                    ? 'bg-green-600 text-white border-green-600 shadow-md'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${filter === key ? 'bg-white' : dot}`} />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -200,10 +211,10 @@ const ReservationsPage: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {filteredReservations.map((reservation) => (
-            <div key={reservation.id} className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-4 mb-4">
+            <div key={reservation.id} className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       {reservation.terrain?.nom ?? 'Terrain'}
                     </h3>
@@ -213,7 +224,7 @@ const ReservationsPage: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-sm text-gray-600">
                     <div className="flex items-center">
                       <User className="w-4 h-4 mr-2" />
                       <span>{reservation.client?.prenom} {reservation.client?.nom}</span>
@@ -258,7 +269,7 @@ const ReservationsPage: React.FC = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="ml-6 flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                   {reservation.statut === 'en_attente_validation' && (
                     <>
                       <button

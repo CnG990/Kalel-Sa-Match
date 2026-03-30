@@ -14,7 +14,7 @@ const ContactPage: React.FC = () => {
         <div className="bg-gradient-to-r from-green-600 to-orange-500 text-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h1 className="text-4xl font-bold mb-4">Contactez-nous</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Contactez-nous</h1>
               <p className="text-xl opacity-90">
                 Nous sommes là pour vous aider. N'hésitez pas à nous contacter !
               </p>
@@ -85,7 +85,7 @@ const ContactPage: React.FC = () => {
             </div>
 
             {/* Contact Form */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-5 sm:p-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-8">Envoyez-nous un message</h2>
               
               <form className="space-y-6">

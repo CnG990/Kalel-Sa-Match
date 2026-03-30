@@ -23,13 +23,13 @@ const mapReservationDtoToReservation = (dto: ReservationDTO): Reservation => ({
 });
 
 const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string | number; color: string }> = ({ icon, label, value, color }) => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md flex items-center border border-gray-100 dark:border-gray-700 min-w-0">
     <div className={`mr-4 p-3 rounded-full ${color}`}>
       {icon}
     </div>
     <div>
       <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{label}</p>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+      <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{value}</p>
     </div>
   </div>
 );
@@ -67,7 +67,7 @@ const DashboardOverview: React.FC = () => {
 
   return (
     <div className="text-gray-900 dark:text-gray-100">
-      <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">
         Bienvenue, {user.prenom} !
       </h1>
       <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
@@ -75,7 +75,7 @@ const DashboardOverview: React.FC = () => {
       </p>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
         <StatCard 
           icon={<Calendar size={24} className="text-white" />} 
           label="Matchs joués" 
@@ -97,7 +97,7 @@ const DashboardOverview: React.FC = () => {
       </div>
 
       {/* Next Reservation & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         <div className="lg:col-span-2">
           <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Prochaine réservation</h2>
           {nextReservation ? (

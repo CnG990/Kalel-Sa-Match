@@ -128,7 +128,7 @@ const TerrainDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Colonne gauche: Informations détaillées */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white p-8 rounded-xl shadow-lg">
+          <div className="bg-white p-5 sm:p-8 rounded-xl shadow-lg">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Informations détaillées</h2>
             <div className="space-y-4">
               <div>
@@ -216,8 +216,8 @@ const TerrainDetailPage: React.FC = () => {
 
         {/* Colonne droite: Réservation */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 bg-white p-8 rounded-xl shadow-xl">
-            <h1 className="text-3xl font-extrabold text-gray-900">{terrain.nom}</h1>
+          <div className="sticky top-24 bg-white p-5 sm:p-8 rounded-xl shadow-xl">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">{terrain.nom}</h1>
             <p className="mt-2 text-gray-600">{terrain.adresse}</p>
             
             {/* Status badge - Toujours ouvert */}
@@ -228,7 +228,7 @@ const TerrainDetailPage: React.FC = () => {
             </div>
             
             <div className="mt-6 pt-6 border-t">
-              <span className="text-3xl font-bold text-orange-600">
+              <span className="text-2xl sm:text-3xl font-bold text-orange-600">
                 {terrain.prix_heure ? `${terrain.prix_heure.toLocaleString()} FCFA` : 'Prix sur demande'}
                 <span className="text-lg font-normal text-gray-500"> / heure</span>
               </span>

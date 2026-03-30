@@ -193,15 +193,15 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6">
       <div className="bg-white rounded-lg shadow-md">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mon Profil</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Mon Profil</h1>
             <p className="text-gray-600">Gérez vos informations personnelles et professionnelles</p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             {getStatusBadge(profile.statut_validation)}
             {!editing ? (
               <button

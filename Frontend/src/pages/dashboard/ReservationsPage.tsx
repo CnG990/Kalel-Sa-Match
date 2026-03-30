@@ -64,12 +64,12 @@ const ReservationCard = ({ reservation, onCancel, onPayDeposit, onPayBalance, on
     typeof onPayBalance === 'function';
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col sm:flex-row transition-transform hover:scale-105 duration-300">
-                    <img src="/terrain-foot.jpg" alt={reservation.terrain.nom} className="w-full sm:w-48 h-48 sm:h-auto object-cover" />
-      <div className="p-5 flex-grow flex flex-col justify-between">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col sm:flex-row transition-transform hover:scale-[1.02] duration-300">
+      <img src="/terrain-foot.jpg" alt={reservation.terrain.nom} className="w-full sm:w-40 md:w-48 h-40 sm:h-auto object-cover flex-shrink-0" />
+      <div className="p-4 sm:p-5 flex-grow flex flex-col justify-between min-w-0">
         <div>
-          <div className="flex justify-between items-start mb-1">
-            <h3 className="text-xl font-bold text-gray-800">{reservation.terrain.nom}</h3>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2 mb-1">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800 truncate">{reservation.terrain.nom}</h3>
             {getStatusBadge(reservation.statut)}
           </div>
 
@@ -87,7 +87,7 @@ const ReservationCard = ({ reservation, onCancel, onPayDeposit, onPayBalance, on
           )}
         </div>
         
-        <div className="mt-4 pt-4 border-t flex flex-wrap gap-2">
+        <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-2">
           {/* Bouton Partager */}
           <button
             onClick={() => {
@@ -343,8 +343,8 @@ const ReservationsPage: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-4xl font-bold text-gray-800">Mes Réservations</h1>
-      <p className="text-lg text-gray-600 mt-2 mb-8">Consultez et gérez toutes vos réservations passées et à venir.</p>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">Mes Réservations</h1>
+      <p className="text-base sm:text-lg text-gray-600 mt-2 mb-6 sm:mb-8">Consultez et gérez toutes vos réservations passées et à venir.</p>
       
       <section>
         <h2 className="text-2xl font-semibold text-gray-700 mb-4">À venir</h2>

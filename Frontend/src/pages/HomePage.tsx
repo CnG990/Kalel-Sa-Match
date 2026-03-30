@@ -29,13 +29,13 @@ const HomePage: React.FC = () => {
         <div className="absolute inset-0 bg-black opacity-10"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="flex flex-col items-center gap-4 mb-6">
               <img 
                 src="/logo sans background.png" 
                 alt="Kalél Sa Match" 
                 className="h-16 w-auto"
               />
-              <h1 className="text-4xl md:text-6xl font-bold">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold">
                 🏟️ Trouvez votre terrain de foot partout au Sénégal
               </h1>
             </div>
@@ -79,7 +79,7 @@ const HomePage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {/* Carte interactive */}
             <div className="text-center p-6 bg-gray-50 rounded-xl">
               <div className="w-16 h-16 bg-blue-600 rounded-lg mx-auto mb-4 flex items-center justify-center">

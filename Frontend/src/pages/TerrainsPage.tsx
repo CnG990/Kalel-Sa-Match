@@ -264,7 +264,7 @@ const TerrainsPage: React.FC = () => {
       <div className="bg-gradient-to-r from-green-600 to-orange-500 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Nos Terrains</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Nos Terrains</h1>
             <p className="text-xl opacity-90">
               Découvrez nos terrains synthétiques de qualité à Dakar
             </p>
@@ -275,7 +275,7 @@ const TerrainsPage: React.FC = () => {
       {/* Filtres et recherche */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Recherche */}
             <div>
               <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
@@ -401,7 +401,7 @@ const TerrainsPage: React.FC = () => {
       {/* Liste des terrains */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Informations sur les résultats */}
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <p className="text-gray-600">
             {loading ? 'Chargement...' : `${totalTerrains} ${totalTerrains > 1 ? 's' : ''} trouvé${totalTerrains > 1 ? 's' : ''}`}
           </p>
@@ -414,7 +414,7 @@ const TerrainsPage: React.FC = () => {
 
         {/* État de chargement */}
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {[...Array(6)].map((_, index) => (
               <div key={index} className="bg-white rounded-lg shadow-lg overflow-hidden animate-pulse">
                 <div className="h-48 bg-gray-200"></div>
@@ -436,7 +436,7 @@ const TerrainsPage: React.FC = () => {
         {/* Liste des terrains */}
         {!loading && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {terrains.map((terrain) => (
                 <div key={terrain.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                   {/* Image du */}
@@ -466,7 +466,7 @@ const TerrainsPage: React.FC = () => {
                   {/* Informations du */}
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">{terrain.name}</h3>
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{terrain.name}</h3>
                       <div className="flex items-center space-x-1">
                         <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />

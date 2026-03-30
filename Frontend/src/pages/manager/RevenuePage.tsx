@@ -116,7 +116,7 @@ const RevenuePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Revenus</h1>
           <p className="text-gray-600">Suivez vos revenus et commissions</p>
@@ -133,7 +133,7 @@ const RevenuePage: React.FC = () => {
       </div>
 
       {/* Statistiques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -198,7 +198,7 @@ const RevenuePage: React.FC = () => {
       {/* Détail Acomptes & Soldes */}
       <div className="bg-gradient-to-r from-orange-50 to-green-50 rounded-lg shadow-lg p-6 border border-orange-100">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Détail Acomptes & Soldes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <p className="text-sm text-gray-600 mb-1">Acomptes reçus</p>
             <p className="text-xl font-bold text-orange-600">

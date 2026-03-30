@@ -180,7 +180,7 @@ const MesTicketsPage: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center">
             <Ticket className="w-8 h-8 mr-3 text-green-600" />
             Mes Tickets
           </h1>
@@ -248,7 +248,7 @@ const MesTicketsPage: React.FC = () => {
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-600">
                           <div className="flex items-center">
                             <MapPin className="w-4 h-4 mr-2 text-gray-400" />
                             {ticket.terrain.adresse}
@@ -271,8 +271,8 @@ const MesTicketsPage: React.FC = () => {
                           {formatPrice(ticket.reservation.montant_total)} FCFA
                         </div>
                         
-                        <div className="flex space-x-2">
-                          <div className="flex space-x-2">
+                        <div className="flex flex-wrap gap-2">
+                          <div className="flex gap-2">
                             <button
                               onClick={() => downloadTicket(ticket, 'pdf')}
                               className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"

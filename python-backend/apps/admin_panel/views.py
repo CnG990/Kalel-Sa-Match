@@ -258,6 +258,126 @@ class AdminTerrainViewSet(BaseViewSet):
     serializer_class = TerrainSerializer
     queryset = TerrainSynthetiquesDakar.objects.all()
 
+    @action(detail=False, methods=['post'], url_path='import-csv')
+    def import_csv(self, request):
+        """Importer des terrains depuis un fichier CSV"""
+        import csv
+        import io
+        
+        if 'file' not in request.FILES:
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Aucun fichier fourni'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        csv_file = request.FILES['file']
+        
+        if not csv_file.name.endswith('.csv'):
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': 'Le fichier doit être au format CSV'}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Lire le fichier CSV
+            decoded_file = csv_file.read().decode('utf-8')
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+            
+            imported_count = 0
+            errors = []
+            terrain_ids = []
+            
+            for row_num, row in enumerate(reader, start=2):
+                try:
+                    # Préparer les données du terrain
+                    terrain_data = {
+                        'nom': row.get('nom', '').strip(),
+                        'description': row.get('description', '').strip(),
+                        'adresse': row.get('adresse', '').strip(),
+                        'latitude': row.get('latitude', '').strip(),
+                        'longitude': row.get('longitude', '').strip(),
+                        'prix_heure': row.get('prix_heure', '').strip(),
+                        'capacite': row.get('capacite', '15').strip(),
+                        'telephone': row.get('telephone', '').strip(),
+                        'email': row.get('email', '').strip(),
+                        'est_actif': row.get('est_actif', 'True').strip().lower() in ['true', '1', 'yes'],
+                        'type_surface': row.get('type_surface', 'synthetique').strip(),
+                        'nombre_joueurs': row.get('nombre_joueurs', '').strip(),
+                        'eclairage': row.get('eclairage', 'True').strip().lower() in ['true', '1', 'yes'],
+                        'vestiaires': row.get('vestiaires', 'True').strip().lower() in ['true', '1', 'yes'],
+                        'parking': row.get('parking', 'True').strip().lower() in ['true', '1', 'yes'],
+                        'douches': row.get('douches', 'False').strip().lower() in ['true', '1', 'yes'],
+                        'buvette': row.get('buvette', 'False').strip().lower() in ['true', '1', 'yes'],
+                    }
+                    
+                    # Validation des champs obligatoires
+                    if not terrain_data['nom']:
+                        errors.append(f"Ligne {row_num}: Le nom est obligatoire")
+                        continue
+                    
+                    # Convertir les coordonnées GPS
+                    if terrain_data['latitude'] and terrain_data['longitude']:
+                        try:
+                            terrain_data['latitude'] = float(terrain_data['latitude'])
+                            terrain_data['longitude'] = float(terrain_data['longitude'])
+                        except ValueError:
+                            errors.append(f"Ligne {row_num}: Coordonnées GPS invalides")
+                            continue
+                    else:
+                        terrain_data['latitude'] = None
+                        terrain_data['longitude'] = None
+                    
+                    # Convertir le prix
+                    if terrain_data['prix_heure']:
+                        try:
+                            terrain_data['prix_heure'] = float(terrain_data['prix_heure'])
+                        except ValueError:
+                            terrain_data['prix_heure'] = None
+                    else:
+                        terrain_data['prix_heure'] = None
+                    
+                    # Convertir la capacité
+                    if terrain_data['capacite']:
+                        try:
+                            terrain_data['capacite'] = int(terrain_data['capacite'])
+                        except ValueError:
+                            terrain_data['capacite'] = 15
+                    else:
+                        terrain_data['capacite'] = 15
+                    
+                    # Créer le terrain
+                    serializer = self.get_serializer(data=terrain_data)
+                    if serializer.is_valid():
+                        terrain = serializer.save()
+                        terrain_ids.append(terrain.id)
+                        imported_count += 1
+                    else:
+                        errors.append(f"Ligne {row_num}: {serializer.errors}")
+                
+                except Exception as e:
+                    errors.append(f"Ligne {row_num}: {str(e)}")
+            
+            return Response({
+                'data': {
+                    'success': True,
+                    'imported_count': imported_count,
+                    'errors': errors,
+                    'terrain_ids': terrain_ids
+                },
+                'meta': {
+                    'success': True,
+                    'message': f'{imported_count} terrain(s) importé(s) avec succès'
+                }
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            logger.exception('Erreur lors de l\'import CSV')
+            return Response({
+                'data': None,
+                'meta': {'success': False, 'message': f'Erreur lors de l\'import: {str(e)}'}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class AdminPaymentViewSet(BaseViewSet):
     serializer_class = PaymentSerializer

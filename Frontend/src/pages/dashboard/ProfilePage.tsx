@@ -213,7 +213,7 @@ const ProfilePage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-xl p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">👤 Mon Profil</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">👤 Mon Profil</h1>
         <p className="text-blue-100">Gérez vos informations personnelles et préférences</p>
       </div>
 
@@ -223,8 +223,8 @@ const ProfilePage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             {/* En-tête du profil */}
             <div className="bg-gradient-to-r from-orange-500 to-red-600 p-6 text-white relative">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4">
                   <div className="relative">
                     <img
                       src={imageFile ? URL.createObjectURL(imageFile) : getImageUrl(profile.profile_image_url)}
@@ -246,7 +246,7 @@ const ProfilePage: React.FC = () => {
                   <div>
                     {editing ? (
                       <div className="space-y-2">
-                        <div className="flex space-x-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             value={formData.prenom}
@@ -284,7 +284,7 @@ const ProfilePage: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                   {editing ? (
                     <>
                       <button
@@ -315,7 +315,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               {/* Badges de statut */}
-              <div className="flex items-center space-x-3 mt-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4">
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatutColor(profile.statut_abonnement)}`}>
                   <Shield className="w-4 h-4 inline mr-1" />
                   {profile.statut_abonnement || 'Standard'}

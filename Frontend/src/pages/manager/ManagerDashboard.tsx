@@ -49,7 +49,7 @@ const ManagerDashboard: React.FC = () => {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold text-gray-900">Tableau de bord</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-white p-6 rounded-lg shadow-lg">
               <div className="animate-pulse space-y-4">
@@ -157,7 +157,7 @@ const ManagerDashboard: React.FC = () => {
       )}
 
       {/* Statistiques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -208,7 +208,7 @@ const ManagerDashboard: React.FC = () => {
       </div>
 
       {/* Statistiques secondaires */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -249,7 +249,7 @@ const ManagerDashboard: React.FC = () => {
       {/* Stats Acompte/Solde */}
       <div className="bg-gradient-to-r from-orange-50 to-blue-50 rounded-lg shadow-lg p-6 border border-orange-100">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Paiements - Acomptes & Soldes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <p className="text-sm text-gray-600 mb-1">Acomptes reçus</p>
             <p className="text-xl font-bold text-orange-600">
@@ -281,7 +281,7 @@ const ManagerDashboard: React.FC = () => {
         {stats?.prochaines_reservations && stats.prochaines_reservations.length > 0 ? (
           <div className="space-y-4">
             {stats.prochaines_reservations.map((reservation, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-lg gap-2">
                 <div className="flex items-center">
                   <Calendar className="w-5 h-5 text-gray-400 mr-3" />
                   <div>
@@ -289,7 +289,7 @@ const ManagerDashboard: React.FC = () => {
                     <p className="text-sm text-gray-600">{reservation.client_nom ?? 'Client'}</p>
                   </div>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 sm:text-right">
                   {reservation.date_debut
                     ? new Date(reservation.date_debut).toLocaleDateString('fr-FR', {
                         day: 'numeric',
