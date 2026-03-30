@@ -466,8 +466,28 @@ class AdminTerrainViewSet(BaseViewSet):
             errors = []
             terrain_ids = []
             
+            # Mapping pour type_surface
+            TYPE_SURFACE_MAP = {
+                'synthetique': 'gazon_synthetique',
+                'gazon_synthetique': 'gazon_synthetique',
+                'gazon synthetique': 'gazon_synthetique',
+                'naturel': 'gazon_naturel',
+                'gazon_naturel': 'gazon_naturel',
+                'gazon naturel': 'gazon_naturel',
+                'terre_battue': 'terre_battue',
+                'terre battue': 'terre_battue',
+                'beton': 'beton',
+                'béton': 'beton',
+                'sable': 'sable',
+                'autre': 'autre',
+            }
+            
             for row_num, row in enumerate(reader, start=2):
                 try:
+                    # Mapper le type de surface
+                    raw_type_surface = row.get('type_surface', 'gazon_synthetique').strip().lower()
+                    mapped_type_surface = TYPE_SURFACE_MAP.get(raw_type_surface, 'gazon_synthetique')
+                    
                     # Préparer les données du terrain
                     terrain_data = {
                         'nom': row.get('nom', '').strip(),
@@ -480,7 +500,7 @@ class AdminTerrainViewSet(BaseViewSet):
                         'telephone': row.get('telephone', '').strip(),
                         'email': row.get('email', '').strip(),
                         'est_actif': row.get('est_actif', 'True').strip().lower() in ['true', '1', 'yes'],
-                        'type_surface': row.get('type_surface', 'synthetique').strip(),
+                        'type_surface': mapped_type_surface,
                         'nombre_joueurs': row.get('nombre_joueurs', '').strip(),
                         'eclairage': row.get('eclairage', 'True').strip().lower() in ['true', '1', 'yes'],
                         'vestiaires': row.get('vestiaires', 'True').strip().lower() in ['true', '1', 'yes'],
@@ -494,17 +514,19 @@ class AdminTerrainViewSet(BaseViewSet):
                         errors.append(f"Ligne {row_num}: Le nom est obligatoire")
                         continue
                     
-                    # Convertir les coordonnées GPS
+                    # Convertir les coordonnées GPS (avec valeurs par défaut Dakar si vides)
                     if terrain_data['latitude'] and terrain_data['longitude']:
                         try:
                             terrain_data['latitude'] = float(terrain_data['latitude'])
                             terrain_data['longitude'] = float(terrain_data['longitude'])
                         except ValueError:
-                            errors.append(f"Ligne {row_num}: Coordonnées GPS invalides")
-                            continue
+                            # Utiliser des coordonnées par défaut de Dakar si invalides
+                            terrain_data['latitude'] = 14.6937
+                            terrain_data['longitude'] = -17.4441
                     else:
-                        terrain_data['latitude'] = None
-                        terrain_data['longitude'] = None
+                        # Utiliser des coordonnées par défaut de Dakar si vides
+                        terrain_data['latitude'] = 14.6937
+                        terrain_data['longitude'] = -17.4441
                     
                     # Convertir le prix
                     if terrain_data['prix_heure']:
